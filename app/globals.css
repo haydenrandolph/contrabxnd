@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+:root {
+  --contraband-black: #0a0a0a;
+  --contraband-off-black: #141414;
+  --contraband-dark-gray: #1a1a1a;
+  --contraband-mid-gray: #3a3a3a;
+  --contraband-light-gray: #8a8a8a;
+  --contraband-cream: #e8e4dc;
+  --contraband-rust: #F7931A;
+  --contraband-rust-light: #ff6600;
+  --contraband-white: #f5f3f0;
+}
+
+@theme inline {
+  --color-background: var(--contraband-black);
+  --color-foreground: var(--contraband-cream);
+}
+
+* {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--contraband-black);
+  color: var(--contraband-cream);
+  font-family: 'Space Mono', monospace;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* Hide scrollbar for horizontal scroll sections */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth hardware-accelerated animations */
+.will-change-transform {
+  will-change: transform;
+  transform: translateZ(0);
+}
