@@ -5,35 +5,42 @@ import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 
 // Bitcoin hub cities with coordinates (percentage-based for map positioning)
+// Adjusted to match the fla-shop.com world map SVG (viewBox 0 0 2000 1280)
 const BITCOIN_NODES = [
-  { id: 1, city: 'New York', x: 28, y: 38, major: true },
-  { id: 2, city: 'Los Angeles', x: 15, y: 42, major: true },
-  { id: 3, city: 'San Francisco', x: 12, y: 40, major: true },
-  { id: 4, city: 'Miami', x: 26, y: 48, major: false },
-  { id: 5, city: 'Chicago', x: 24, y: 36, major: false },
-  { id: 6, city: 'Toronto', x: 27, y: 34, major: false },
-  { id: 7, city: 'London', x: 48, y: 32, major: true },
-  { id: 8, city: 'Amsterdam', x: 50, y: 30, major: false },
-  { id: 9, city: 'Frankfurt', x: 52, y: 32, major: true },
-  { id: 10, city: 'Paris', x: 49, y: 34, major: false },
-  { id: 11, city: 'Zurich', x: 51, y: 35, major: false },
-  { id: 12, city: 'Dubai', x: 62, y: 46, major: false },
-  { id: 13, city: 'Singapore', x: 75, y: 58, major: true },
-  { id: 14, city: 'Hong Kong', x: 78, y: 46, major: true },
-  { id: 15, city: 'Tokyo', x: 86, y: 38, major: true },
-  { id: 16, city: 'Seoul', x: 82, y: 38, major: false },
-  { id: 17, city: 'Sydney', x: 88, y: 72, major: true },
-  { id: 18, city: 'Melbourne', x: 86, y: 76, major: false },
-  { id: 19, city: 'São Paulo', x: 34, y: 68, major: false },
-  { id: 20, city: 'Buenos Aires', x: 32, y: 76, major: false },
-  { id: 21, city: 'Moscow', x: 58, y: 28, major: false },
-  { id: 22, city: 'Mumbai', x: 68, y: 50, major: false },
-  { id: 23, city: 'Johannesburg', x: 55, y: 70, major: false },
-  { id: 24, city: 'Tel Aviv', x: 57, y: 42, major: false },
-  { id: 25, city: 'Berlin', x: 52, y: 30, major: false },
-  { id: 26, city: 'Stockholm', x: 53, y: 24, major: false },
-  { id: 27, city: 'Vancouver', x: 14, y: 32, major: false },
-  { id: 28, city: 'Austin', x: 20, y: 46, major: false },
+  // North America
+  { id: 1, city: 'New York', x: 24, y: 35, major: true },
+  { id: 2, city: 'Los Angeles', x: 11, y: 40, major: true },
+  { id: 3, city: 'San Francisco', x: 9, y: 38, major: true },
+  { id: 4, city: 'Miami', x: 22, y: 44, major: false },
+  { id: 5, city: 'Chicago', x: 20, y: 35, major: false },
+  { id: 6, city: 'Toronto', x: 23, y: 33, major: false },
+  { id: 27, city: 'Vancouver', x: 10, y: 32, major: false },
+  { id: 28, city: 'Austin', x: 16, y: 42, major: false },
+  // Europe
+  { id: 7, city: 'London', x: 45, y: 30, major: true },
+  { id: 8, city: 'Amsterdam', x: 47, y: 28, major: false },
+  { id: 9, city: 'Frankfurt', x: 48, y: 30, major: true },
+  { id: 10, city: 'Paris', x: 46, y: 32, major: false },
+  { id: 11, city: 'Zurich', x: 48, y: 33, major: false },
+  { id: 25, city: 'Berlin', x: 49, y: 28, major: false },
+  { id: 26, city: 'Stockholm', x: 50, y: 22, major: false },
+  { id: 21, city: 'Moscow', x: 55, y: 25, major: false },
+  // Middle East & Africa
+  { id: 24, city: 'Tel Aviv', x: 54, y: 40, major: false },
+  { id: 12, city: 'Dubai', x: 58, y: 44, major: false },
+  { id: 23, city: 'Johannesburg', x: 52, y: 68, major: false },
+  // Asia
+  { id: 22, city: 'Mumbai', x: 63, y: 46, major: false },
+  { id: 13, city: 'Singapore', x: 70, y: 55, major: true },
+  { id: 14, city: 'Hong Kong', x: 73, y: 44, major: true },
+  { id: 16, city: 'Seoul', x: 77, y: 36, major: false },
+  { id: 15, city: 'Tokyo', x: 80, y: 38, major: true },
+  // Australia
+  { id: 17, city: 'Sydney', x: 82, y: 70, major: true },
+  { id: 18, city: 'Melbourne', x: 81, y: 73, major: false },
+  // South America
+  { id: 19, city: 'São Paulo', x: 30, y: 66, major: false },
+  { id: 20, city: 'Buenos Aires', x: 28, y: 73, major: false },
 ];
 
 interface Transaction {
