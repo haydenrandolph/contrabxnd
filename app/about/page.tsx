@@ -477,6 +477,7 @@ export default function AboutPage() {
             <span className="about-logo-text">Contra₿and</span>
           </Link>
           <div className="about-nav-links">
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
@@ -497,6 +498,7 @@ export default function AboutPage() {
 
         <div className={`about-mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>
           <nav className="about-mobile-menu-nav">
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>

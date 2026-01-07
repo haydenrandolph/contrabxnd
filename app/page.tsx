@@ -838,6 +838,7 @@ export default function HomePage() {
             <span className="contraband-logo-text">Contra₿and</span>
           </Link>
           <div className="contraband-nav-links">
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
@@ -859,6 +860,7 @@ export default function HomePage() {
         {/* Mobile Menu Overlay */}
         <div className={`mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>
           <nav className="mobile-menu-nav">
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>

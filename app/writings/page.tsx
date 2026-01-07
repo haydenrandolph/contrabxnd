@@ -758,6 +758,7 @@ export default function WritingsPage() {
             <span className="writings-logo-text">Contra₿and</span>
           </Link>
           <div className="writings-nav-links">
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings" className="active">Writings</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
@@ -778,6 +779,7 @@ export default function WritingsPage() {
 
         <div className={`mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>
           <nav className="mobile-menu-nav">
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>

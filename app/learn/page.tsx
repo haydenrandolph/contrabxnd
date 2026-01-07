@@ -771,6 +771,7 @@ export default function LearnPage() {
             <span className="learn-logo-text">Contra₿and</span>
           </Link>
           <div className="learn-nav-links">
+            <Link href="/dashboard">Dashboard</Link>
             <Link href="/learn" className="active">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
@@ -791,6 +792,7 @@ export default function LearnPage() {
 
         <div className={`mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>
           <nav className="mobile-menu-nav">
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
