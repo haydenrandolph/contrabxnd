@@ -399,11 +399,13 @@ export default function DashboardPage() {
           background-size: 50px 50px;
         }
 
-        .map-continents {
+        .world-map-svg {
           position: absolute;
           inset: 0;
-          opacity: 0.15;
-          background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 500'%3E%3Cpath fill='%23b5673a' d='M150 120 Q200 100 250 110 Q300 90 350 100 L380 140 Q350 180 300 170 Q250 190 200 160 Z M420 80 Q500 60 580 70 Q620 90 600 130 Q560 150 500 140 Q450 130 420 100 Z M620 100 Q700 80 780 90 Q820 110 800 150 Q750 170 680 160 Q640 140 620 110 Z M200 200 Q280 180 350 190 L400 250 Q380 300 320 290 Q260 310 200 270 Z M450 200 Q530 180 600 200 Q640 230 620 280 Q560 300 500 280 Q460 260 450 220 Z M700 200 Q780 180 850 200 Q880 240 860 290 Q800 320 740 290 Q700 260 700 220 Z M250 350 Q300 330 350 340 Q380 370 360 400 Q320 420 280 400 Q250 380 250 360 Z M550 350 Q630 330 700 350 Q740 380 720 420 Q660 450 600 420 Q560 390 550 360 Z M800 300 Q860 280 900 300 Q920 340 900 380 Q860 400 820 380 Q800 350 800 320 Z'/%3E%3C/svg%3E") center/contain no-repeat;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          z-index: 1;
         }
 
         .sonar-overlay {
@@ -413,6 +415,8 @@ export default function DashboardPage() {
           align-items: center;
           justify-content: center;
           pointer-events: none;
+          z-index: 2;
+          opacity: 0.8;
         }
 
         .sonar-rings {
@@ -763,7 +767,8 @@ export default function DashboardPage() {
             <div className="map-container">
               <div className="world-map">
                 <div className="map-grid"></div>
-                <div className="map-continents"></div>
+                {/* World map SVG - CC-BY-4.0 fla-shop.com */}
+                <img src="/map.svg" alt="" className="world-map-svg" />
               </div>
 
               <div className="sonar-overlay">
