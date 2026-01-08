@@ -3,44 +3,52 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Marker,
+} from '@vnedyalk0v/react19-simple-maps';
 
-// Bitcoin hub cities with coordinates (percentage-based for map positioning)
-// Adjusted to match the fla-shop.com world map SVG (viewBox 0 0 2000 1280)
+// World map TopoJSON URL
+const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+
+// Bitcoin hub cities with geographic coordinates [longitude, latitude]
 const BITCOIN_NODES = [
   // North America
-  { id: 1, city: 'New York', x: 24, y: 35, major: true },
-  { id: 2, city: 'Los Angeles', x: 11, y: 40, major: true },
-  { id: 3, city: 'San Francisco', x: 9, y: 38, major: true },
-  { id: 4, city: 'Miami', x: 22, y: 44, major: false },
-  { id: 5, city: 'Chicago', x: 20, y: 35, major: false },
-  { id: 6, city: 'Toronto', x: 23, y: 33, major: false },
-  { id: 27, city: 'Vancouver', x: 10, y: 32, major: false },
-  { id: 28, city: 'Austin', x: 16, y: 42, major: false },
+  { id: 27, city: 'Vancouver', coordinates: [-123.12, 49.28] as [number, number], major: false },
+  { id: 3, city: 'San Francisco', coordinates: [-122.42, 37.77] as [number, number], major: true },
+  { id: 2, city: 'Los Angeles', coordinates: [-118.24, 34.05] as [number, number], major: true },
+  { id: 28, city: 'Austin', coordinates: [-97.74, 30.27] as [number, number], major: false },
+  { id: 5, city: 'Chicago', coordinates: [-87.63, 41.88] as [number, number], major: false },
+  { id: 4, city: 'Miami', coordinates: [-80.19, 25.76] as [number, number], major: false },
+  { id: 1, city: 'New York', coordinates: [-74.01, 40.71] as [number, number], major: true },
+  { id: 6, city: 'Toronto', coordinates: [-79.38, 43.65] as [number, number], major: false },
   // Europe
-  { id: 7, city: 'London', x: 45, y: 30, major: true },
-  { id: 8, city: 'Amsterdam', x: 47, y: 28, major: false },
-  { id: 9, city: 'Frankfurt', x: 48, y: 30, major: true },
-  { id: 10, city: 'Paris', x: 46, y: 32, major: false },
-  { id: 11, city: 'Zurich', x: 48, y: 33, major: false },
-  { id: 25, city: 'Berlin', x: 49, y: 28, major: false },
-  { id: 26, city: 'Stockholm', x: 50, y: 22, major: false },
-  { id: 21, city: 'Moscow', x: 55, y: 25, major: false },
+  { id: 7, city: 'London', coordinates: [-0.13, 51.51] as [number, number], major: true },
+  { id: 10, city: 'Paris', coordinates: [2.35, 48.86] as [number, number], major: false },
+  { id: 8, city: 'Amsterdam', coordinates: [4.90, 52.37] as [number, number], major: false },
+  { id: 9, city: 'Frankfurt', coordinates: [8.68, 50.11] as [number, number], major: true },
+  { id: 11, city: 'Zurich', coordinates: [8.54, 47.38] as [number, number], major: false },
+  { id: 25, city: 'Berlin', coordinates: [13.40, 52.52] as [number, number], major: false },
+  { id: 26, city: 'Stockholm', coordinates: [18.07, 59.33] as [number, number], major: false },
+  { id: 21, city: 'Moscow', coordinates: [37.62, 55.76] as [number, number], major: false },
   // Middle East & Africa
-  { id: 24, city: 'Tel Aviv', x: 54, y: 40, major: false },
-  { id: 12, city: 'Dubai', x: 58, y: 44, major: false },
-  { id: 23, city: 'Johannesburg', x: 52, y: 68, major: false },
+  { id: 24, city: 'Tel Aviv', coordinates: [34.78, 32.09] as [number, number], major: false },
+  { id: 12, city: 'Dubai', coordinates: [55.27, 25.20] as [number, number], major: false },
+  { id: 23, city: 'Johannesburg', coordinates: [28.04, -26.20] as [number, number], major: false },
   // Asia
-  { id: 22, city: 'Mumbai', x: 63, y: 46, major: false },
-  { id: 13, city: 'Singapore', x: 70, y: 55, major: true },
-  { id: 14, city: 'Hong Kong', x: 73, y: 44, major: true },
-  { id: 16, city: 'Seoul', x: 77, y: 36, major: false },
-  { id: 15, city: 'Tokyo', x: 80, y: 38, major: true },
+  { id: 22, city: 'Mumbai', coordinates: [72.88, 19.08] as [number, number], major: false },
+  { id: 13, city: 'Singapore', coordinates: [103.82, 1.35] as [number, number], major: true },
+  { id: 14, city: 'Hong Kong', coordinates: [114.17, 22.32] as [number, number], major: true },
+  { id: 16, city: 'Seoul', coordinates: [126.98, 37.57] as [number, number], major: false },
+  { id: 15, city: 'Tokyo', coordinates: [139.69, 35.68] as [number, number], major: true },
   // Australia
-  { id: 17, city: 'Sydney', x: 82, y: 70, major: true },
-  { id: 18, city: 'Melbourne', x: 81, y: 73, major: false },
+  { id: 17, city: 'Sydney', coordinates: [151.21, -33.87] as [number, number], major: true },
+  { id: 18, city: 'Melbourne', coordinates: [144.96, -37.81] as [number, number], major: false },
   // South America
-  { id: 19, city: 'São Paulo', x: 30, y: 66, major: false },
-  { id: 20, city: 'Buenos Aires', x: 28, y: 73, major: false },
+  { id: 19, city: 'São Paulo', coordinates: [-46.63, -23.55] as [number, number], major: false },
+  { id: 20, city: 'Buenos Aires', coordinates: [-58.38, -34.60] as [number, number], major: false },
 ];
 
 interface Transaction {
@@ -203,8 +211,13 @@ export default function DashboardPage() {
       type,
     };
 
-    // Add ping at node location
-    setPings(prev => [...prev.slice(-20), { id: tx.id, x: node.x, y: node.y, type }]);
+    // Add ping at node location (using coordinates [lon, lat])
+    setPings(prev => [...prev.slice(-20), {
+      id: tx.id,
+      x: node.coordinates[0],
+      y: node.coordinates[1],
+      type
+    }]);
 
     // Remove ping after animation
     setTimeout(() => {
@@ -381,38 +394,30 @@ export default function DashboardPage() {
         .map-container {
           position: relative;
           width: 100%;
-          max-width: 900px;
+          max-width: 1000px;
           aspect-ratio: 16/9;
-          background: #0d0d0d;
+          background:
+            radial-gradient(ellipse at center, rgba(181, 103, 58, 0.03) 0%, transparent 70%),
+            linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%);
           border: 1px solid #1a1a1a;
           border-radius: 4px;
           overflow: hidden;
         }
 
-        .world-map {
+        .map-container svg {
           position: absolute;
           inset: 0;
-          background:
-            radial-gradient(ellipse at center, rgba(181, 103, 58, 0.03) 0%, transparent 70%),
-            linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%);
-        }
-
-        .map-grid {
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(181, 103, 58, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(181, 103, 58, 0.05) 1px, transparent 1px);
-          background-size: 50px 50px;
-        }
-
-        .world-map-svg {
-          position: absolute;
-          inset: 0;
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
           z-index: 1;
+        }
+
+        .major-node {
+          filter: drop-shadow(0 0 6px rgba(247, 147, 26, 0.6));
+          animation: nodePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes nodePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
         }
 
         .sonar-overlay {
@@ -772,11 +777,70 @@ export default function DashboardPage() {
         <div className="dashboard-container">
           <div className="map-section">
             <div className="map-container">
-              <div className="world-map">
-                <div className="map-grid"></div>
-                {/* World map SVG - CC-BY-4.0 fla-shop.com */}
-                <img src="/map.svg" alt="" className="world-map-svg" />
-              </div>
+              <ComposableMap
+                projection="geoMercator"
+                projectionConfig={{
+                  scale: 120,
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  center: [10, 20] as any,
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                }}
+              >
+                <Geographies geography={GEO_URL}>
+                  {({ geographies }) =>
+                    geographies.map((geo) => (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill="transparent"
+                        stroke="#b5673a"
+                        strokeWidth={0.3}
+                        strokeOpacity={0.5}
+                        style={{
+                          default: { outline: 'none' },
+                          hover: { outline: 'none', fill: 'rgba(181, 103, 58, 0.1)' },
+                          pressed: { outline: 'none' },
+                        }}
+                      />
+                    ))
+                  }
+                </Geographies>
+                {BITCOIN_NODES.map((node) => (
+                  <Marker
+                    key={node.id}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    coordinates={node.coordinates as any}
+                    onMouseEnter={() => setHoveredNode(node.id)}
+                    onMouseLeave={() => setHoveredNode(null)}
+                  >
+                    <circle
+                      r={node.major ? 5 : 3}
+                      fill="#b5673a"
+                      stroke="#F7931A"
+                      strokeWidth={node.major ? 2 : 1}
+                      style={{ cursor: 'pointer' }}
+                      className={node.major ? 'major-node' : ''}
+                    />
+                    {hoveredNode === node.id && (
+                      <text
+                        textAnchor="middle"
+                        y={-12}
+                        style={{
+                          fontFamily: 'Space Mono, monospace',
+                          fontSize: '10px',
+                          fill: '#e8e4dc',
+                          background: '#000',
+                        }}
+                      >
+                        {node.city}
+                      </text>
+                    )}
+                  </Marker>
+                ))}
+              </ComposableMap>
 
               <div className="sonar-overlay">
                 <div className="radar-sweep"></div>
@@ -787,28 +851,6 @@ export default function DashboardPage() {
                   <div className="sonar-ring"></div>
                 </div>
               </div>
-
-              {BITCOIN_NODES.map(node => (
-                <div
-                  key={node.id}
-                  className={`node-dot ${node.major ? 'major' : ''}`}
-                  style={{ left: `${node.x}%`, top: `${node.y}%` }}
-                  onMouseEnter={() => setHoveredNode(node.id)}
-                  onMouseLeave={() => setHoveredNode(null)}
-                >
-                  {hoveredNode === node.id && (
-                    <div className="node-label">{node.city}</div>
-                  )}
-                </div>
-              ))}
-
-              {pings.map(ping => (
-                <div
-                  key={ping.id}
-                  className={`tx-ping ${ping.type}`}
-                  style={{ left: `${ping.x}%`, top: `${ping.y}%` }}
-                />
-              ))}
 
               <div className="center-display">
                 <div className="center-label">Bitcoin Network</div>
