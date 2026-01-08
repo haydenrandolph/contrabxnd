@@ -108,6 +108,7 @@ export default function DashboardPage() {
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const { isLightMode, toggleTheme } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
@@ -1208,6 +1209,226 @@ export default function DashboardPage() {
           color: #3a3a3a;
         }
 
+        /* Transaction Modal */
+        .tx-modal-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(4px);
+          z-index: 2000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 2rem;
+          animation: modalFadeIn 0.2s ease;
+        }
+
+        .dashboard-page.light-mode .tx-modal-overlay {
+          background: rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes modalFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .tx-modal {
+          background: #0d0d0d;
+          border: 1px solid #2a2a2a;
+          border-radius: 8px;
+          max-width: 500px;
+          width: 100%;
+          max-height: 90vh;
+          overflow-y: auto;
+          animation: modalSlideIn 0.2s ease;
+        }
+
+        .dashboard-page.light-mode .tx-modal {
+          background: #ffffff;
+          border-color: #c8c4bc;
+        }
+
+        @keyframes modalSlideIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tx-modal-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.5rem;
+          border-bottom: 1px solid #1a1a1a;
+        }
+
+        .dashboard-page.light-mode .tx-modal-header {
+          border-bottom-color: #e0dcd4;
+        }
+
+        .tx-modal-title {
+          font-size: 12px;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: #b5673a;
+        }
+
+        .tx-modal-close {
+          width: 32px;
+          height: 32px;
+          background: transparent;
+          border: 1px solid #3a3a3a;
+          border-radius: 4px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+
+        .tx-modal-close:hover {
+          background: #F7931A;
+          border-color: #F7931A;
+        }
+
+        .tx-modal-close svg {
+          width: 16px;
+          height: 16px;
+          stroke: #8a8a8a;
+        }
+
+        .tx-modal-close:hover svg {
+          stroke: #fff;
+        }
+
+        .dashboard-page.light-mode .tx-modal-close {
+          border-color: #c8c4bc;
+        }
+
+        .dashboard-page.light-mode .tx-modal-close svg {
+          stroke: #5a5a5a;
+        }
+
+        .tx-modal-body {
+          padding: 1.5rem;
+        }
+
+        .tx-modal-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding: 1rem 0;
+          border-bottom: 1px solid #1a1a1a;
+        }
+
+        .dashboard-page.light-mode .tx-modal-row {
+          border-bottom-color: #e0dcd4;
+        }
+
+        .tx-modal-row:last-child {
+          border-bottom: none;
+        }
+
+        .tx-modal-label {
+          font-size: 10px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #5a5a5a;
+        }
+
+        .dashboard-page.light-mode .tx-modal-label {
+          color: #8a8a8a;
+        }
+
+        .tx-modal-value {
+          font-size: 14px;
+          color: #e8e4dc;
+          text-align: right;
+          word-break: break-all;
+          max-width: 60%;
+        }
+
+        .dashboard-page.light-mode .tx-modal-value {
+          color: #0a0a0a;
+        }
+
+        .tx-modal-value.hash {
+          font-size: 11px;
+          font-family: 'Space Mono', monospace;
+          color: #8a8a8a;
+        }
+
+        .tx-modal-value.amount {
+          font-size: 18px;
+          font-weight: 700;
+        }
+
+        .tx-modal-value.amount.normal { color: #22c55e; }
+        .tx-modal-value.amount.large { color: #f59e0b; }
+        .tx-modal-value.amount.whale { color: #a855f7; }
+
+        .tx-modal-route {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #e8e4dc;
+          font-size: 13px;
+        }
+
+        .dashboard-page.light-mode .tx-modal-route {
+          color: #0a0a0a;
+        }
+
+        .tx-modal-route svg {
+          width: 16px;
+          height: 16px;
+          stroke: #b5673a;
+        }
+
+        .tx-modal-footer {
+          padding: 1.5rem;
+          border-top: 1px solid #1a1a1a;
+        }
+
+        .dashboard-page.light-mode .tx-modal-footer {
+          border-top-color: #e0dcd4;
+        }
+
+        .tx-modal-link {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          width: 100%;
+          padding: 0.75rem 1.5rem;
+          background: transparent;
+          border: 1px solid #3a3a3a;
+          border-radius: 4px;
+          color: #e8e4dc;
+          font-family: 'Space Mono', monospace;
+          font-size: 11px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .tx-modal-link:hover {
+          background: #F7931A;
+          border-color: #F7931A;
+          color: #fff;
+        }
+
+        .dashboard-page.light-mode .tx-modal-link {
+          border-color: #c8c4bc;
+          color: #0a0a0a;
+        }
+
+        .tx-modal-link svg {
+          width: 14px;
+          height: 14px;
+        }
+
         @media (max-width: 1024px) {
           .dashboard-nav {
             padding: 1.5rem 2rem;
@@ -1513,12 +1734,10 @@ export default function DashboardPage() {
               <div className="sidebar-title">Live Transactions</div>
               <div className="feed-container">
                 {transactions.map(tx => (
-                  <a
+                  <div
                     key={tx.id}
-                    href={`https://mempool.space/tx/${tx.hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="tx-item"
+                    onClick={() => setSelectedTx(tx)}
                   >
                     <div className="tx-hash">{tx.hash.slice(0, 16)}...</div>
                     <div className="tx-details">
@@ -1527,7 +1746,7 @@ export default function DashboardPage() {
                         {tx.amount < 1 ? tx.amount.toFixed(4) : tx.amount.toFixed(2)} BTC
                       </span>
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
             </div>
@@ -1555,6 +1774,72 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Transaction Detail Modal */}
+        {selectedTx && (
+          <div className="tx-modal-overlay" onClick={() => setSelectedTx(null)}>
+            <div className="tx-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="tx-modal-header">
+                <span className="tx-modal-title">Transaction Details</span>
+                <button className="tx-modal-close" onClick={() => setSelectedTx(null)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+              <div className="tx-modal-body">
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Amount</span>
+                  <span className={`tx-modal-value amount ${selectedTx.type}`}>
+                    {selectedTx.amount < 1 ? selectedTx.amount.toFixed(6) : selectedTx.amount.toFixed(4)} BTC
+                  </span>
+                </div>
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">USD Value</span>
+                  <span className="tx-modal-value">
+                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(selectedTx.amount * networkData.price)}
+                  </span>
+                </div>
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Route</span>
+                  <div className="tx-modal-route">
+                    <span>{selectedTx.fromNode.city}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                    <span>{selectedTx.toNode.city}</span>
+                  </div>
+                </div>
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Type</span>
+                  <span className={`tx-modal-value amount ${selectedTx.type}`}>
+                    {selectedTx.type === 'whale' ? 'Whale' : selectedTx.type === 'large' ? 'Large' : 'Standard'}
+                  </span>
+                </div>
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Transaction Hash</span>
+                  <span className="tx-modal-value hash">{selectedTx.hash}</span>
+                </div>
+              </div>
+              <div className="tx-modal-footer">
+                <a
+                  href={`https://mempool.space/tx/${selectedTx.hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tx-modal-link"
+                >
+                  View on Mempool.space
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
