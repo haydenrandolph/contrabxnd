@@ -99,8 +99,11 @@ export default function ArticleLayout({
         }
 
         .article-nav-links {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
-          gap: 3rem;
+          gap: 2.5rem;
         }
 
         .article-nav-links a {

@@ -175,8 +175,11 @@ export default function WritingsPage() {
         }
 
         .writings-nav-links {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
-          gap: 3rem;
+          gap: 2.5rem;
         }
 
         .writings-nav-links a {

@@ -142,8 +142,11 @@ export default function LearnPage() {
         }
 
         .learn-nav-links {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
-          gap: 3rem;
+          gap: 2.5rem;
         }
 
         .learn-nav-links a {

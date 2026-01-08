@@ -2,13 +2,84 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
+import {
+  ComposableMap,
+  Geographies,
+  Geography,
+  Marker,
+  Line,
+} from '@vnedyalk0v/react19-simple-maps';
+import worldAtlas from 'world-atlas/countries-110m.json';
+
+// Bitcoin hub cities for the hero map
+const HERO_NODES = [
+  { id: 1, coordinates: [-74.01, 40.71] as [number, number], major: true },
+  { id: 2, coordinates: [-122.42, 37.77] as [number, number], major: true },
+  { id: 3, coordinates: [-0.13, 51.51] as [number, number], major: true },
+  { id: 4, coordinates: [139.69, 35.68] as [number, number], major: true },
+  { id: 5, coordinates: [103.82, 1.35] as [number, number], major: true },
+  { id: 6, coordinates: [151.21, -33.87] as [number, number], major: false },
+  { id: 7, coordinates: [8.68, 50.11] as [number, number], major: false },
+  { id: 8, coordinates: [-46.63, -23.55] as [number, number], major: false },
+  { id: 9, coordinates: [55.27, 25.20] as [number, number], major: false },
+  { id: 10, coordinates: [114.17, 22.32] as [number, number], major: false },
+];
+
+interface HeroArc {
+  id: string;
+  from: [number, number];
+  to: [number, number];
+  type: 'normal' | 'large' | 'whale';
+}
 
 export default function HomePage() {
   const [email, setEmail] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [heroArcs, setHeroArcs] = useState<HeroArc[]>([]);
   const { isLightMode, toggleTheme } = useTheme();
+
+  // Generate random transaction arcs for the hero map
+  const createHeroArc = useCallback(() => {
+    const fromIndex = Math.floor(Math.random() * HERO_NODES.length);
+    let toIndex = Math.floor(Math.random() * HERO_NODES.length);
+    while (toIndex === fromIndex) {
+      toIndex = Math.floor(Math.random() * HERO_NODES.length);
+    }
+
+    const types: Array<'normal' | 'large' | 'whale'> = ['normal', 'normal', 'normal', 'large', 'whale'];
+    const type = types[Math.floor(Math.random() * types.length)];
+
+    const arc: HeroArc = {
+      id: `arc-${Date.now()}-${Math.random()}`,
+      from: HERO_NODES[fromIndex].coordinates,
+      to: HERO_NODES[toIndex].coordinates,
+      type,
+    };
+
+    setHeroArcs(prev => [...prev.slice(-8), arc]);
+
+    // Remove arc after animation
+    setTimeout(() => {
+      setHeroArcs(prev => prev.filter(a => a.id !== arc.id));
+    }, 2500);
+  }, []);
+
+  // Animate arcs on the hero map
+  useEffect(() => {
+    // Create initial arcs
+    createHeroArc();
+    setTimeout(createHeroArc, 400);
+    setTimeout(createHeroArc, 800);
+
+    // Continue creating arcs
+    const interval = setInterval(() => {
+      createHeroArc();
+    }, 1200);
+
+    return () => clearInterval(interval);
+  }, [createHeroArc]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,8 +209,11 @@ export default function HomePage() {
         }
 
         .contraband-nav-links {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
-          gap: 3rem;
+          gap: 2.5rem;
         }
 
         .contraband-nav-links a {
@@ -337,6 +411,172 @@ export default function HomePage() {
           opacity: 0;
           animation: fadeUp 1s ease 0.3s forwards;
           object-fit: contain;
+        }
+
+        .hero-map-container {
+          position: relative;
+          width: 100%;
+          max-width: 900px;
+          aspect-ratio: 16/8;
+          margin-bottom: 2rem;
+          cursor: pointer;
+          opacity: 0;
+          animation: fadeUp 1s ease 0.2s forwards;
+          border-radius: 8px;
+          overflow: hidden;
+          background: radial-gradient(ellipse at center, rgba(181, 103, 58, 0.05) 0%, transparent 70%);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .hero-map-container:hover {
+          transform: scale(1.02);
+          box-shadow: 0 0 40px rgba(247, 147, 26, 0.15);
+        }
+
+        .hero-map-container svg {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+        }
+
+        .hero-map-node {
+          filter: drop-shadow(0 0 4px rgba(247, 147, 26, 0.5));
+          animation: heroNodePulse 3s ease-in-out infinite;
+        }
+
+        .hero-map-node.major {
+          filter: drop-shadow(0 0 8px rgba(247, 147, 26, 0.7));
+        }
+
+        @keyframes heroNodePulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+
+        .hero-sonar-overlay {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          pointer-events: none;
+          z-index: 2;
+          opacity: 0.6;
+        }
+
+        .hero-sonar-rings {
+          position: absolute;
+          width: 80%;
+          height: 80%;
+          border-radius: 50%;
+        }
+
+        .hero-sonar-ring {
+          position: absolute;
+          inset: 0;
+          border: 1px solid rgba(181, 103, 58, 0.15);
+          border-radius: 50%;
+          animation: heroSonarPulse 4s ease-out infinite;
+        }
+
+        .hero-sonar-ring:nth-child(2) { animation-delay: 1s; }
+        .hero-sonar-ring:nth-child(3) { animation-delay: 2s; }
+        .hero-sonar-ring:nth-child(4) { animation-delay: 3s; }
+
+        @keyframes heroSonarPulse {
+          0% { transform: scale(0.3); opacity: 0.5; }
+          100% { transform: scale(1); opacity: 0; }
+        }
+
+        .hero-radar-sweep {
+          position: absolute;
+          width: 80%;
+          height: 80%;
+          background: conic-gradient(
+            from 0deg,
+            transparent 0deg,
+            rgba(181, 103, 58, 0.12) 30deg,
+            transparent 60deg
+          );
+          border-radius: 50%;
+          animation: heroRadarSweep 6s linear infinite;
+        }
+
+        @keyframes heroRadarSweep {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .hero-map-cta {
+          position: absolute;
+          bottom: 1rem;
+          right: 1rem;
+          font-size: 10px;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: var(--contraband-rust);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          z-index: 10;
+        }
+
+        .hero-map-container:hover .hero-map-cta {
+          opacity: 1;
+        }
+
+        /* Transaction arc styles */
+        .hero-tx-arc {
+          fill: none;
+          stroke-linecap: round;
+          animation: heroArcPulse 2.5s ease-out forwards;
+        }
+
+        .hero-tx-arc.normal {
+          stroke: #22c55e;
+          stroke-width: 1.5;
+          filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.6));
+        }
+
+        .hero-tx-arc.large {
+          stroke: #f59e0b;
+          stroke-width: 2;
+          filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+        }
+
+        .hero-tx-arc.whale {
+          stroke: #a855f7;
+          stroke-width: 2.5;
+          filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.8));
+        }
+
+        @keyframes heroArcPulse {
+          0% {
+            stroke-dashoffset: 1000;
+            opacity: 0.8;
+          }
+          60% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+          }
+          100% {
+            stroke-dashoffset: 0;
+            opacity: 0;
+          }
+        }
+
+        .hero-arc-endpoint {
+          animation: heroEndpointPulse 2.5s ease-out forwards;
+        }
+
+        .hero-arc-endpoint.normal { fill: #22c55e; }
+        .hero-arc-endpoint.large { fill: #f59e0b; }
+        .hero-arc-endpoint.whale { fill: #a855f7; }
+
+        @keyframes heroEndpointPulse {
+          0% { r: 0; opacity: 0; }
+          20% { r: 5; opacity: 1; }
+          60% { r: 5; opacity: 1; }
+          100% { r: 7; opacity: 0; }
         }
 
         .contraband-hero-title {
@@ -797,6 +1037,18 @@ export default function HomePage() {
           .contraband-hero {
             padding: 0 2rem;
           }
+
+          .hero-map-container {
+            max-width: 100%;
+            aspect-ratio: 16/10;
+            margin-bottom: 1.5rem;
+          }
+
+          .hero-map-cta {
+            font-size: 9px;
+            bottom: 0.5rem;
+            right: 0.5rem;
+          }
         }
       `}</style>
 
@@ -871,13 +1123,92 @@ export default function HomePage() {
         </div>
 
         <section className="contraband-hero">
-          <Image
-            src="/contraband-logo-v3.png"
-            alt="Contraband symbol"
-            width={180}
-            height={180}
-            className="contraband-hero-symbol"
-          />
+          <Link href="/dashboard" className="hero-map-container">
+            <ComposableMap
+              projection="geoMercator"
+              projectionConfig={{
+                scale: 100,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                center: [10, 20] as any,
+              }}
+              style={{
+                width: '100%',
+                height: '100%',
+              }}
+            >
+              <Geographies geography={worldAtlas}>
+                {({ geographies }) =>
+                  geographies.map((geo) => (
+                    <Geography
+                      key={geo.rsmKey}
+                      geography={geo}
+                      fill="#1a1a1a"
+                      stroke="#b5673a"
+                      strokeWidth={0.3}
+                      style={{
+                        default: { outline: 'none' },
+                        hover: { outline: 'none' },
+                        pressed: { outline: 'none' },
+                      }}
+                    />
+                  ))
+                }
+              </Geographies>
+              {HERO_NODES.map((node) => (
+                <Marker
+                  key={node.id}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  coordinates={node.coordinates as any}
+                >
+                  <circle
+                    r={node.major ? 4 : 2.5}
+                    fill="#F7931A"
+                    className={`hero-map-node ${node.major ? 'major' : ''}`}
+                  />
+                </Marker>
+              ))}
+              {/* Transaction arcs */}
+              {heroArcs.map((arc) => (
+                <Line
+                  key={arc.id}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  from={arc.from as any}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  to={arc.to as any}
+                  stroke={arc.type === 'whale' ? '#a855f7' : arc.type === 'large' ? '#f59e0b' : '#22c55e'}
+                  strokeWidth={arc.type === 'whale' ? 2 : arc.type === 'large' ? 1.5 : 1}
+                  strokeLinecap="round"
+                  className={`hero-tx-arc ${arc.type}`}
+                  style={{
+                    strokeDasharray: 1000,
+                  }}
+                />
+              ))}
+              {/* Arc endpoints */}
+              {heroArcs.map((arc) => (
+                <Marker
+                  key={`${arc.id}-end`}
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  coordinates={arc.to as any}
+                >
+                  <circle
+                    className={`hero-arc-endpoint ${arc.type}`}
+                    r={3}
+                  />
+                </Marker>
+              ))}
+            </ComposableMap>
+            <div className="hero-sonar-overlay">
+              <div className="hero-radar-sweep"></div>
+              <div className="hero-sonar-rings">
+                <div className="hero-sonar-ring"></div>
+                <div className="hero-sonar-ring"></div>
+                <div className="hero-sonar-ring"></div>
+                <div className="hero-sonar-ring"></div>
+              </div>
+            </div>
+            <span className="hero-map-cta">View Live Dashboard →</span>
+          </Link>
           <h1 className="contraband-hero-title">Contra₿and</h1>
           <p className="contraband-hero-tagline">Ideas that refuse to stay buried</p>
           <p className="contraband-hero-subtitle">Stu₿y · Writings · Podcasts · Videos · Merch</p>

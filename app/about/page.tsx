@@ -79,8 +79,11 @@ export default function AboutPage() {
         }
 
         .about-nav-links {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
-          gap: 3rem;
+          gap: 2.5rem;
         }
 
         .about-nav-links a {

@@ -2,16 +2,16 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ComposableMap,
   Geographies,
   Geography,
   Marker,
+  Line,
 } from '@vnedyalk0v/react19-simple-maps';
-
-// World map TopoJSON URL
-const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+import worldAtlas from 'world-atlas/countries-110m.json';
+import { useTheme } from '@/contexts/ThemeContext';
 
 // Bitcoin hub cities with geographic coordinates [longitude, latitude]
 const BITCOIN_NODES = [
@@ -55,9 +55,18 @@ interface Transaction {
   id: string;
   hash: string;
   amount: number;
-  nodeId: number;
+  fromNode: typeof BITCOIN_NODES[number];
+  toNode: typeof BITCOIN_NODES[number];
   timestamp: number;
   type: 'normal' | 'large' | 'whale';
+}
+
+interface Arc {
+  id: string;
+  from: [number, number];
+  to: [number, number];
+  type: 'normal' | 'large' | 'whale';
+  progress: number;
 }
 
 interface Block {
@@ -95,15 +104,22 @@ export default function DashboardPage() {
   });
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [recentBlocks, setRecentBlocks] = useState<Block[]>([]);
-  const [pings, setPings] = useState<Array<{ id: string; x: number; y: number; type: string }>>([]);
+  const [arcs, setArcs] = useState<Arc[]>([]);
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { isLightMode, toggleTheme } = useTheme();
+  const wsRef = useRef<WebSocket | null>(null);
+  const seenTxIds = useRef<Set<string>>(new Set());
 
   // Fetch price data from CoinGecko
   const fetchPriceData = useCallback(async () => {
     try {
       const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true'
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true',
+        { mode: 'cors' }
       );
+      if (!response.ok) throw new Error('Price fetch failed');
       const data = await response.json();
       if (data.bitcoin) {
         setNetworkData(prev => ({
@@ -114,8 +130,8 @@ export default function DashboardPage() {
           volume24h: data.bitcoin.usd_24h_vol,
         }));
       }
-    } catch (error) {
-      console.error('Error fetching price data:', error);
+    } catch {
+      // Silently fail - will retry on next interval
     }
   }, []);
 
@@ -181,47 +197,55 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Generate simulated transaction
-  const generateTransaction = useCallback(() => {
-    const nodeId = BITCOIN_NODES[Math.floor(Math.random() * BITCOIN_NODES.length)].id;
-    const node = BITCOIN_NODES.find(n => n.id === nodeId)!;
+  // Process incoming transaction and create arc animation
+  const processTransaction = useCallback((txData: { txid: string; value: number }) => {
+    // Pick random source and destination nodes
+    const fromIndex = Math.floor(Math.random() * BITCOIN_NODES.length);
+    let toIndex = Math.floor(Math.random() * BITCOIN_NODES.length);
+    while (toIndex === fromIndex) {
+      toIndex = Math.floor(Math.random() * BITCOIN_NODES.length);
+    }
 
-    // Realistic value distribution: mostly small, occasionally large, rarely whale
-    const rand = Math.random();
-    let amount: number;
+    const fromNode = BITCOIN_NODES[fromIndex];
+    const toNode = BITCOIN_NODES[toIndex];
+    const amount = txData.value / 100000000; // Convert satoshis to BTC
+
+    // Determine transaction type based on amount
     let type: 'normal' | 'large' | 'whale';
-
-    if (rand < 0.85) {
-      amount = Math.random() * 0.5 + 0.001; // 0.001 - 0.5 BTC
+    if (amount < 1) {
       type = 'normal';
-    } else if (rand < 0.97) {
-      amount = Math.random() * 9 + 1; // 1 - 10 BTC
+    } else if (amount < 10) {
       type = 'large';
     } else {
-      amount = Math.random() * 90 + 10; // 10 - 100 BTC
       type = 'whale';
     }
 
+    const txId = txData.txid.slice(0, 9);
+
     const tx: Transaction = {
-      id: Math.random().toString(36).substr(2, 9),
-      hash: Array(64).fill(0).map(() => Math.floor(Math.random() * 16).toString(16)).join(''),
+      id: txId,
+      hash: txData.txid,
       amount,
-      nodeId,
+      fromNode,
+      toNode,
       timestamp: Date.now(),
       type,
     };
 
-    // Add ping at node location (using coordinates [lon, lat])
-    setPings(prev => [...prev.slice(-20), {
-      id: tx.id,
-      x: node.coordinates[0],
-      y: node.coordinates[1],
-      type
-    }]);
+    // Add arc animation
+    const arc: Arc = {
+      id: txId,
+      from: fromNode.coordinates,
+      to: toNode.coordinates,
+      type,
+      progress: 0,
+    };
 
-    // Remove ping after animation
+    setArcs(prev => [...prev.slice(-15), arc]);
+
+    // Remove arc after animation completes
     setTimeout(() => {
-      setPings(prev => prev.filter(p => p.id !== tx.id));
+      setArcs(prev => prev.filter(a => a.id !== txId));
     }, 2000);
 
     setTransactions(prev => [tx, ...prev.slice(0, 19)]);
@@ -245,16 +269,117 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, [fetchNetworkData]);
 
-  // Transaction simulation (3-7 tx/s)
+  // Fetch real transactions from mempool.space
+  const fetchRecentTransactions = useCallback(async () => {
+    try {
+      const response = await fetch('https://mempool.space/api/mempool/recent');
+      if (!response.ok) return;
+
+      const txs: Array<{ txid: string; value: number; fee: number }> = await response.json();
+
+      // Process new transactions we haven't seen
+      let newTxCount = 0;
+      for (const tx of txs) {
+        if (!seenTxIds.current.has(tx.txid) && newTxCount < 5) {
+          seenTxIds.current.add(tx.txid);
+          // Stagger the animations
+          setTimeout(() => {
+            processTransaction({ txid: tx.txid, value: tx.value });
+          }, newTxCount * 400);
+          newTxCount++;
+        }
+      }
+
+      // Keep seen set from growing too large
+      if (seenTxIds.current.size > 500) {
+        const entries = Array.from(seenTxIds.current);
+        seenTxIds.current = new Set(entries.slice(-250));
+      }
+    } catch {
+      // Silently fail - will retry on next poll
+    }
+  }, [processTransaction]);
+
+  // WebSocket connection to Mempool.space for real-time stats + poll for transactions
   useEffect(() => {
-    const generateTx = () => {
-      generateTransaction();
-      const nextDelay = Math.random() * 200 + 150; // 150-350ms between tx
-      setTimeout(generateTx, nextDelay);
+    let txPollInterval: NodeJS.Timeout;
+
+    const connectWebSocket = () => {
+      try {
+        const ws = new WebSocket('wss://mempool.space/api/v1/ws');
+        wsRef.current = ws;
+
+        ws.onopen = () => {
+          setWsConnected(true);
+          // Subscribe to blocks and mempool data
+          ws.send(JSON.stringify({ action: 'want', data: ['blocks', 'stats', 'mempool-blocks'] }));
+
+          // Poll for real transactions every 2 seconds
+          fetchRecentTransactions();
+          txPollInterval = setInterval(fetchRecentTransactions, 2000);
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+
+            // Handle block data
+            if (data.block) {
+              setNetworkData(prev => ({
+                ...prev,
+                blockHeight: data.block.height || prev.blockHeight,
+              }));
+              // Fetch transactions immediately on new block
+              fetchRecentTransactions();
+            }
+
+            // Handle mempool info
+            if (data.mempoolInfo) {
+              setNetworkData(prev => ({
+                ...prev,
+                mempoolCount: data.mempoolInfo.size || prev.mempoolCount,
+              }));
+            }
+
+            // Handle fee estimates
+            if (data.fees) {
+              setNetworkData(prev => ({
+                ...prev,
+                priorityFee: data.fees.fastestFee || prev.priorityFee,
+              }));
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        };
+
+        ws.onclose = () => {
+          setWsConnected(false);
+          clearInterval(txPollInterval);
+          // Reconnect after 3 seconds
+          setTimeout(connectWebSocket, 3000);
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
+      } catch {
+        setWsConnected(false);
+        // Fallback: just poll for transactions without WebSocket
+        fetchRecentTransactions();
+        txPollInterval = setInterval(fetchRecentTransactions, 2000);
+      }
     };
-    const timeout = setTimeout(generateTx, 500);
-    return () => clearTimeout(timeout);
-  }, [generateTransaction]);
+
+    connectWebSocket();
+
+    return () => {
+      clearInterval(txPollInterval);
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, [fetchRecentTransactions]);
 
   const formatNumber = (num: number, decimals: number = 2) => {
     if (num >= 1e12) return (num / 1e12).toFixed(decimals) + 'T';
@@ -285,7 +410,7 @@ export default function DashboardPage() {
   return (
     <>
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
 
         .dashboard-page {
           background: #0a0a0a;
@@ -295,17 +420,64 @@ export default function DashboardPage() {
           overflow-x: hidden;
         }
 
+        .dashboard-page.light-mode {
+          background: #e8e4dc;
+          color: #0a0a0a;
+        }
+
+        .dashboard-theme-toggle {
+          position: fixed;
+          bottom: 2rem;
+          right: 2rem;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          background: #1a1a1a;
+          border: 1px solid #3a3a3a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          z-index: 1001;
+          transition: all 0.3s ease;
+        }
+
+        .dashboard-theme-toggle:hover {
+          background: #F7931A;
+          border-color: #F7931A;
+          transform: scale(1.1);
+        }
+
+        .dashboard-theme-toggle svg {
+          width: 24px;
+          height: 24px;
+          stroke: #e8e4dc;
+        }
+
+        .dashboard-page.light-mode .dashboard-theme-toggle {
+          background: #f5f3f0;
+          border-color: #c8c4bc;
+        }
+
+        .dashboard-page.light-mode .dashboard-theme-toggle svg {
+          stroke: #0a0a0a;
+        }
+
         .dashboard-nav {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
-          padding: 1.5rem 2rem;
+          padding: 2rem 3rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
           z-index: 100;
           background: linear-gradient(to bottom, #0a0a0a 0%, transparent 100%);
+        }
+
+        .dashboard-page.light-mode .dashboard-nav {
+          background: linear-gradient(to bottom, #e8e4dc 0%, transparent 100%);
         }
 
         .dashboard-logo {
@@ -316,6 +488,10 @@ export default function DashboardPage() {
           color: #f5f3f0;
         }
 
+        .dashboard-page.light-mode .dashboard-logo {
+          color: #0a0a0a;
+        }
+
         .dashboard-logo-text {
           font-size: 11px;
           letter-spacing: 0.3em;
@@ -323,8 +499,17 @@ export default function DashboardPage() {
         }
 
         .dashboard-nav-links {
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
           gap: 2.5rem;
+        }
+
+        .dashboard-nav-right {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
         }
 
         .dashboard-nav-links a {
@@ -335,6 +520,10 @@ export default function DashboardPage() {
           text-transform: uppercase;
           position: relative;
           padding: 0.25rem 0;
+        }
+
+        .dashboard-page.light-mode .dashboard-nav-links a {
+          color: #0a0a0a;
         }
 
         .dashboard-nav-links a::after {
@@ -351,6 +540,147 @@ export default function DashboardPage() {
         .dashboard-nav-links a:hover::after,
         .dashboard-nav-links a.active::after {
           width: 100%;
+        }
+
+        .dashboard-nav-links a.coming-soon {
+          text-decoration: line-through;
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .dashboard-nav-links a.coming-soon:hover::after {
+          width: 0;
+        }
+
+
+        .dashboard-mobile-menu-btn {
+          display: none;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          width: 44px;
+          height: 44px;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          z-index: 1001;
+        }
+
+        .dashboard-mobile-menu-btn span {
+          display: block;
+          width: 24px;
+          height: 2px;
+          background: #f5f3f0;
+          transition: all 0.3s ease;
+          margin: 3px 0;
+        }
+
+        .dashboard-page.light-mode .dashboard-mobile-menu-btn span {
+          background: #0a0a0a;
+        }
+
+        .dashboard-mobile-menu-btn.open span:nth-child(1) {
+          transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .dashboard-mobile-menu-btn.open span:nth-child(2) {
+          opacity: 0;
+        }
+
+        .dashboard-mobile-menu-btn.open span:nth-child(3) {
+          transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        .dashboard-mobile-menu-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: #0a0a0a;
+          z-index: 999;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .dashboard-page.light-mode .dashboard-mobile-menu-overlay {
+          background: #e8e4dc;
+        }
+
+        .dashboard-mobile-menu-overlay.open {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        .dashboard-mobile-menu-nav {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2rem;
+        }
+
+        .dashboard-mobile-menu-nav a {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 2rem;
+          color: #e8e4dc;
+          text-decoration: none;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          transition: color 0.3s ease;
+        }
+
+        .dashboard-page.light-mode .dashboard-mobile-menu-nav a {
+          color: #0a0a0a;
+        }
+
+        .dashboard-mobile-menu-nav a:active {
+          color: #F7931A;
+        }
+
+        .dashboard-mobile-menu-nav a.coming-soon {
+          text-decoration: line-through;
+          opacity: 0.5;
+        }
+
+        .dashboard-mobile-close-btn {
+          position: absolute;
+          top: 1.5rem;
+          right: 2rem;
+          width: 44px;
+          height: 44px;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          z-index: 1002;
+        }
+
+        .dashboard-mobile-close-btn span {
+          display: block;
+          position: absolute;
+          width: 24px;
+          height: 2px;
+          background: #f5f3f0;
+          left: 50%;
+          top: 50%;
+        }
+
+        .dashboard-page.light-mode .dashboard-mobile-close-btn span {
+          background: #0a0a0a;
+        }
+
+        .dashboard-mobile-close-btn span:first-child {
+          transform: translate(-50%, -50%) rotate(45deg);
+        }
+
+        .dashboard-mobile-close-btn span:last-child {
+          transform: translate(-50%, -50%) rotate(-45deg);
         }
 
         .live-indicator {
@@ -377,10 +707,11 @@ export default function DashboardPage() {
         }
 
         .dashboard-container {
-          display: grid;
-          grid-template-columns: 1fr 320px;
+          display: flex;
+          flex-direction: column;
           min-height: 100vh;
           padding-top: 70px;
+          overflow: auto;
         }
 
         .map-section {
@@ -402,6 +733,13 @@ export default function DashboardPage() {
           border: 1px solid #1a1a1a;
           border-radius: 4px;
           overflow: hidden;
+        }
+
+        .dashboard-page.light-mode .map-container {
+          background:
+            radial-gradient(ellipse at center, rgba(181, 103, 58, 0.05) 0%, transparent 70%),
+            linear-gradient(180deg, #f5f3f0 0%, #e8e4dc 100%);
+          border-color: #c8c4bc;
         }
 
         .map-container svg {
@@ -542,40 +880,106 @@ export default function DashboardPage() {
           100% { transform: scale(2); opacity: 0; }
         }
 
-        .center-display {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          text-align: center;
-          z-index: 15;
-          background: rgba(10, 10, 10, 0.8);
-          padding: 1.5rem 2.5rem;
-          border: 1px solid rgba(181, 103, 58, 0.3);
+        /* Arc animation styles */
+        .tx-arc {
+          fill: none;
+          stroke-linecap: round;
+          animation: arcPulse 2s ease-out forwards;
         }
 
-        .center-label {
-          font-size: 9px;
+        .tx-arc.normal {
+          stroke: #22c55e;
+          stroke-width: 1.5;
+          filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.6));
+        }
+
+        .tx-arc.large {
+          stroke: #f59e0b;
+          stroke-width: 2;
+          filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+        }
+
+        .tx-arc.whale {
+          stroke: #a855f7;
+          stroke-width: 3;
+          filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.8));
+        }
+
+        @keyframes arcPulse {
+          0% {
+            stroke-dashoffset: 1000;
+            opacity: 1;
+          }
+          70% {
+            stroke-dashoffset: 0;
+            opacity: 1;
+          }
+          100% {
+            stroke-dashoffset: 0;
+            opacity: 0;
+          }
+        }
+
+        .arc-endpoint {
+          animation: endpointPulse 2s ease-out forwards;
+        }
+
+        .arc-endpoint.normal { fill: #22c55e; }
+        .arc-endpoint.large { fill: #f59e0b; }
+        .arc-endpoint.whale { fill: #a855f7; }
+
+        @keyframes endpointPulse {
+          0% { r: 0; opacity: 0; }
+          20% { r: 6; opacity: 1; }
+          70% { r: 6; opacity: 1; }
+          100% { r: 8; opacity: 0; }
+        }
+
+        .price-header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 2rem;
+          padding: 1rem 2rem;
+          background: #0d0d0d;
+          border-bottom: 1px solid #1a1a1a;
+        }
+
+        .dashboard-page.light-mode .price-header {
+          background: #f5f3f0;
+          border-bottom-color: #c8c4bc;
+        }
+
+        .price-label {
+          font-size: 10px;
           letter-spacing: 0.3em;
           text-transform: uppercase;
           color: #b5673a;
-          margin-bottom: 0.5rem;
         }
 
-        .center-price {
-          font-size: 2.5rem;
+        .price-display {
+          display: flex;
+          align-items: baseline;
+          gap: 1rem;
+        }
+
+        .price-value {
+          font-size: 2rem;
           font-weight: 700;
           color: #e8e4dc;
-          line-height: 1;
         }
 
-        .center-change {
+        .dashboard-page.light-mode .price-value {
+          color: #0a0a0a;
+        }
+
+        .price-change {
           font-size: 14px;
-          margin-top: 0.5rem;
+          font-weight: 600;
         }
 
-        .center-change.positive { color: #22c55e; }
-        .center-change.negative { color: #ef4444; }
+        .price-change.positive { color: #22c55e; }
+        .price-change.negative { color: #ef4444; }
 
         .corner-stat {
           position: absolute;
@@ -601,17 +1005,39 @@ export default function DashboardPage() {
           color: #e8e4dc;
         }
 
+        .dashboard-page.light-mode .stat-label {
+          color: #8a8a8a;
+        }
+
+        .dashboard-page.light-mode .stat-value {
+          color: #0a0a0a;
+        }
+
         .sidebar {
           background: #0d0d0d;
-          border-left: 1px solid #1a1a1a;
-          display: flex;
-          flex-direction: column;
+          border-top: 1px solid #1a1a1a;
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 0;
           overflow: hidden;
+        }
+
+        .dashboard-page.light-mode .sidebar {
+          background: #f5f3f0;
+          border-top-color: #c8c4bc;
         }
 
         .sidebar-section {
           padding: 1.5rem;
-          border-bottom: 1px solid #1a1a1a;
+          border-right: 1px solid #1a1a1a;
+        }
+
+        .dashboard-page.light-mode .sidebar-section {
+          border-right-color: #c8c4bc;
+        }
+
+        .sidebar-section:last-child {
+          border-right: none;
         }
 
         .sidebar-title {
@@ -634,6 +1060,11 @@ export default function DashboardPage() {
           border: 1px solid #1a1a1a;
         }
 
+        .dashboard-page.light-mode .metric-card {
+          background: #ffffff;
+          border-color: #c8c4bc;
+        }
+
         .metric-label {
           font-size: 9px;
           letter-spacing: 0.1em;
@@ -647,10 +1078,18 @@ export default function DashboardPage() {
           color: #e8e4dc;
         }
 
+        .dashboard-page.light-mode .metric-label {
+          color: #8a8a8a;
+        }
+
+        .dashboard-page.light-mode .metric-value {
+          color: #0a0a0a;
+        }
+
         .feed-container {
-          flex: 1;
+          max-height: 300px;
           overflow-y: auto;
-          padding: 1rem 1.5rem;
+          padding: 0 1.5rem 1.5rem;
         }
 
         .feed-container::-webkit-scrollbar {
@@ -667,9 +1106,26 @@ export default function DashboardPage() {
         }
 
         .tx-item {
+          display: block;
           padding: 0.75rem 0;
           border-bottom: 1px solid #1a1a1a;
           animation: fadeIn 0.3s ease;
+          text-decoration: none;
+          color: inherit;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .dashboard-page.light-mode .tx-item {
+          border-bottom-color: #c8c4bc;
+        }
+
+        .tx-item:hover {
+          background: rgba(181, 103, 58, 0.1);
+        }
+
+        .tx-item:hover .tx-hash {
+          color: #b5673a;
         }
 
         @keyframes fadeIn {
@@ -704,9 +1160,9 @@ export default function DashboardPage() {
         .tx-amount.large { color: #f59e0b; }
         .tx-amount.whale { color: #a855f7; }
 
-        .blocks-section {
-          padding: 1.5rem;
-          border-top: 1px solid #1a1a1a;
+        .blocks-container {
+          max-height: 280px;
+          overflow-y: auto;
         }
 
         .block-item {
@@ -715,6 +1171,22 @@ export default function DashboardPage() {
           align-items: center;
           padding: 0.5rem 0;
           border-bottom: 1px solid #1a1a1a;
+          text-decoration: none;
+          color: inherit;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .dashboard-page.light-mode .block-item {
+          border-bottom-color: #c8c4bc;
+        }
+
+        .block-item:hover {
+          background: rgba(181, 103, 58, 0.1);
+        }
+
+        .block-item:hover .block-height {
+          color: #F7931A;
         }
 
         .block-item:last-child {
@@ -737,44 +1209,153 @@ export default function DashboardPage() {
         }
 
         @media (max-width: 1024px) {
+          .dashboard-nav {
+            padding: 1.5rem 2rem;
+          }
+
           .dashboard-container {
-            grid-template-columns: 1fr;
+            flex-direction: column;
+          }
+
+          .map-section {
+            padding: 1rem;
+          }
+
+          .map-container {
+            aspect-ratio: 16/10;
           }
 
           .sidebar {
-            display: none;
+            grid-template-columns: 1fr;
+          }
+
+          .sidebar-section {
+            border-right: none;
+            border-bottom: 1px solid #1a1a1a;
+          }
+
+          .sidebar-section:last-child {
+            border-bottom: none;
+          }
+
+          .feed-container {
+            max-height: 250px;
+          }
+
+          .blocks-container {
+            max-height: 200px;
           }
 
           .dashboard-nav-links {
             display: none;
           }
+
+          .live-indicator {
+            display: none;
+          }
+
+          .dashboard-mobile-menu-btn {
+            display: flex;
+          }
         }
       `}</style>
 
-      <div className="dashboard-page">
+      <div className={`dashboard-page ${isLightMode ? 'light-mode' : ''}`}>
+        {/* Theme Toggle Button */}
+        <button
+          className="dashboard-theme-toggle"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+        >
+          {isLightMode ? (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="5"/>
+              <line x1="12" y1="1" x2="12" y2="3"/>
+              <line x1="12" y1="21" x2="12" y2="23"/>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+              <line x1="1" y1="12" x2="3" y2="12"/>
+              <line x1="21" y1="12" x2="23" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+          )}
+        </button>
+
         <nav className="dashboard-nav">
           <Link href="/" className="dashboard-logo">
             <Image
               src="/contraband-logo-v3.png"
               alt="Contraband logo"
-              width={36}
-              height={36}
+              width={40}
+              height={40}
             />
             <span className="dashboard-logo-text">Contra₿and</span>
           </Link>
           <div className="dashboard-nav-links">
+            <Link href="/dashboard" className="active">Dashboard</Link>
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
-            <Link href="/dashboard" className="active">Dashboard</Link>
+            <a href="#podcasts" className="coming-soon">Podcasts</a>
+            <a href="#videos" className="coming-soon">Videos</a>
+            <a href="#merch" className="coming-soon">Merch</a>
             <Link href="/about">About</Link>
           </div>
-          <div className="live-indicator">
-            <span className="live-dot"></span>
-            <span>Live</span>
+          <div className="dashboard-nav-right">
+            <div className="live-indicator">
+              <span className="live-dot" style={{ background: wsConnected ? '#22c55e' : '#f59e0b' }}></span>
+              <span>{wsConnected ? 'Live' : 'Connecting...'}</span>
+            </div>
+            <button
+              className={`dashboard-mobile-menu-btn ${menuOpen ? 'open' : ''}`}
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
           </div>
         </nav>
 
+        <div
+          className={`dashboard-mobile-menu-overlay ${menuOpen ? 'open' : ''}`}
+          onClick={() => setMenuOpen(false)}
+        >
+          <button
+            className="dashboard-mobile-close-btn"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            <span></span>
+            <span></span>
+          </button>
+          <nav className="dashboard-mobile-menu-nav" onClick={(e) => e.stopPropagation()}>
+            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+            <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
+            <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
+            <a href="#podcasts" className="coming-soon">Podcasts</a>
+            <a href="#videos" className="coming-soon">Videos</a>
+            <a href="#merch" className="coming-soon">Merch</a>
+            <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
+          </nav>
+        </div>
+
         <div className="dashboard-container">
+          <div className="price-header">
+            <div className="price-label">Bitcoin Network</div>
+            <div className="price-display">
+              <span className="price-value">{formatPrice(networkData.price)}</span>
+              <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
+                {networkData.change24h >= 0 ? '+' : ''}{networkData.change24h.toFixed(2)}%
+              </span>
+            </div>
+          </div>
+
           <div className="map-section">
             <div className="map-container">
               <ComposableMap
@@ -789,19 +1370,18 @@ export default function DashboardPage() {
                   height: '100%',
                 }}
               >
-                <Geographies geography={GEO_URL}>
+                <Geographies geography={worldAtlas}>
                   {({ geographies }) =>
                     geographies.map((geo) => (
                       <Geography
                         key={geo.rsmKey}
                         geography={geo}
-                        fill="transparent"
+                        fill={isLightMode ? '#d8d4cc' : '#1a1a1a'}
                         stroke="#b5673a"
-                        strokeWidth={0.3}
-                        strokeOpacity={0.5}
+                        strokeWidth={0.5}
                         style={{
                           default: { outline: 'none' },
-                          hover: { outline: 'none', fill: 'rgba(181, 103, 58, 0.1)' },
+                          hover: { outline: 'none', fill: isLightMode ? '#c8c4bc' : '#2a2a2a' },
                           pressed: { outline: 'none' },
                         }}
                       />
@@ -840,6 +1420,36 @@ export default function DashboardPage() {
                     )}
                   </Marker>
                 ))}
+                {/* Transaction arcs */}
+                {arcs.map((arc) => (
+                  <Line
+                    key={arc.id}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    from={arc.from as any}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    to={arc.to as any}
+                    stroke={arc.type === 'whale' ? '#a855f7' : arc.type === 'large' ? '#f59e0b' : '#22c55e'}
+                    strokeWidth={arc.type === 'whale' ? 2 : arc.type === 'large' ? 1.5 : 1}
+                    strokeLinecap="round"
+                    className={`tx-arc ${arc.type}`}
+                    style={{
+                      strokeDasharray: 1000,
+                    }}
+                  />
+                ))}
+                {/* Arc endpoints (destination pulses) */}
+                {arcs.map((arc) => (
+                  <Marker
+                    key={`${arc.id}-end`}
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    coordinates={arc.to as any}
+                  >
+                    <circle
+                      className={`arc-endpoint ${arc.type}`}
+                      r={4}
+                    />
+                  </Marker>
+                ))}
               </ComposableMap>
 
               <div className="sonar-overlay">
@@ -849,14 +1459,6 @@ export default function DashboardPage() {
                   <div className="sonar-ring"></div>
                   <div className="sonar-ring"></div>
                   <div className="sonar-ring"></div>
-                </div>
-              </div>
-
-              <div className="center-display">
-                <div className="center-label">Bitcoin Network</div>
-                <div className="center-price">{formatPrice(networkData.price)}</div>
-                <div className={`center-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
-                  {networkData.change24h >= 0 ? '+' : ''}{networkData.change24h.toFixed(2)}%
                 </div>
               </div>
 
@@ -883,6 +1485,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="sidebar">
+            {/* Column 1: Network Metrics */}
             <div className="sidebar-section">
               <div className="sidebar-title">Network Metrics</div>
               <div className="metrics-grid">
@@ -905,38 +1508,50 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Column 2: Live Transactions */}
             <div className="sidebar-section">
               <div className="sidebar-title">Live Transactions</div>
-            </div>
-
-            <div className="feed-container">
-              {transactions.map(tx => {
-                const node = BITCOIN_NODES.find(n => n.id === tx.nodeId);
-                return (
-                  <div key={tx.id} className="tx-item">
+              <div className="feed-container">
+                {transactions.map(tx => (
+                  <a
+                    key={tx.id}
+                    href={`https://mempool.space/tx/${tx.hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="tx-item"
+                  >
                     <div className="tx-hash">{tx.hash.slice(0, 16)}...</div>
                     <div className="tx-details">
-                      <span className="tx-location">{node?.city}</span>
+                      <span className="tx-location">{tx.fromNode.city} → {tx.toNode.city}</span>
                       <span className={`tx-amount ${tx.type}`}>
                         {tx.amount < 1 ? tx.amount.toFixed(4) : tx.amount.toFixed(2)} BTC
                       </span>
                     </div>
-                  </div>
-                );
-              })}
+                  </a>
+                ))}
+              </div>
             </div>
 
-            <div className="blocks-section">
+            {/* Column 3: Recent Blocks */}
+            <div className="sidebar-section">
               <div className="sidebar-title">Recent Blocks</div>
-              {recentBlocks.map(block => (
-                <div key={block.height} className="block-item">
-                  <div>
-                    <div className="block-height">#{block.height}</div>
-                    <div className="block-txs">{block.txCount} txs</div>
-                  </div>
-                  <div className="block-time">{formatTimeAgo(block.timestamp)}</div>
-                </div>
-              ))}
+              <div className="blocks-container">
+                {recentBlocks.map(block => (
+                  <a
+                    key={block.height}
+                    href={`https://mempool.space/block/${block.hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block-item"
+                  >
+                    <div>
+                      <div className="block-height">#{block.height}</div>
+                      <div className="block-txs">{block.txCount} txs</div>
+                    </div>
+                    <div className="block-time">{formatTimeAgo(block.timestamp)}</div>
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
         </div>
