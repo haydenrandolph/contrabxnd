@@ -109,6 +109,7 @@ export default function DashboardPage() {
   const [wsConnected, setWsConnected] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const { isLightMode, toggleTheme } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
@@ -1756,19 +1757,17 @@ export default function DashboardPage() {
               <div className="sidebar-title">Recent Blocks</div>
               <div className="blocks-container">
                 {recentBlocks.map(block => (
-                  <a
+                  <div
                     key={block.height}
-                    href={`https://mempool.space/block/${block.hash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="block-item"
+                    onClick={() => setSelectedBlock(block)}
                   >
                     <div>
                       <div className="block-height">#{block.height}</div>
                       <div className="block-txs">{block.txCount} txs</div>
                     </div>
                     <div className="block-time">{formatTimeAgo(block.timestamp)}</div>
-                  </a>
+                  </div>
                 ))}
               </div>
             </div>
@@ -1825,6 +1824,68 @@ export default function DashboardPage() {
               <div className="tx-modal-footer">
                 <a
                   href={`https://mempool.space/tx/${selectedTx.hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tx-modal-link"
+                >
+                  View on Mempool.space
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Block Detail Modal */}
+        {selectedBlock && (
+          <div className="tx-modal-overlay" onClick={() => setSelectedBlock(null)}>
+            <div className="tx-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="tx-modal-header">
+                <span className="tx-modal-title">Block Details</span>
+                <button className="tx-modal-close" onClick={() => setSelectedBlock(null)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                  </svg>
+                </button>
+              </div>
+              <div className="tx-modal-body">
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Block Height</span>
+                  <span className="tx-modal-value" style={{ color: '#F7931A', fontWeight: 700, fontSize: '18px' }}>
+                    #{selectedBlock.height.toLocaleString()}
+                  </span>
+                </div>
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Transactions</span>
+                  <span className="tx-modal-value">
+                    {selectedBlock.txCount.toLocaleString()} txs
+                  </span>
+                </div>
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Mined</span>
+                  <span className="tx-modal-value">
+                    {formatTimeAgo(selectedBlock.timestamp)}
+                  </span>
+                </div>
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Timestamp</span>
+                  <span className="tx-modal-value">
+                    {new Date(selectedBlock.timestamp * 1000).toLocaleString()}
+                  </span>
+                </div>
+                <div className="tx-modal-row">
+                  <span className="tx-modal-label">Block Hash</span>
+                  <span className="tx-modal-value hash">{selectedBlock.hash}</span>
+                </div>
+              </div>
+              <div className="tx-modal-footer">
+                <a
+                  href={`https://mempool.space/block/${selectedBlock.hash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="tx-modal-link"
