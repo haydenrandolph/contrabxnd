@@ -1,6 +1,6 @@
 import type { NewsItem, CryptoPanicResponse, CryptoPanicPost } from './types';
 
-const CRYPTOPANIC_API = 'https://cryptopanic.com/api/free/v1/posts/';
+const CRYPTOPANIC_API = 'https://cryptopanic.com/api/developer/v2/posts/';
 
 function getSentiment(votes: CryptoPanicPost['votes']): NewsItem['sentiment'] {
   const positive = votes.positive + votes.liked;
