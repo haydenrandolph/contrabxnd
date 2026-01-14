@@ -123,7 +123,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         .news-ticker-track {
           display: flex;
           width: max-content;
-          animation: ticker-scroll 60s linear infinite;
+          animation: ticker-scroll 120s linear infinite;
         }
 
         .news-ticker-track.paused {
