@@ -8,12 +8,25 @@ let cachedXNews: NewsItem[] = [];
 let lastXFetch = 0;
 const X_CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
-// Curated Bitcoin accounts and their handles
+// Curated Bitcoin accounts and their display names
 const CURATED_HANDLES: Record<string, string> = {
+  // Key voices
   'saylor': 'Michael Saylor',
+  'jack': 'Jack Dorsey',
+  // Media & News
   'bitcoinmagazine': 'Bitcoin Magazine',
   'DocumentingBTC': 'Documenting Bitcoin',
   'BitcoinNewsCom': 'Bitcoin News',
+  'CoinDesk': 'CoinDesk',
+  'Cointelegraph': 'Cointelegraph',
+  'TABORDEAUXSJ': 'The Block',
+  'TFTC21': 'TFTC',
+  // Analysts
+  'WClementeIII': 'Will Clemente',
+  'woonomic': 'Willy Woo',
+  'DylanLeClair_': 'Dylan LeClair',
+  // Companies
+  'Strike': 'Strike',
 };
 
 function mapTweetToNewsItem(tweet: XTweet, users?: XUser[]): NewsItem {
