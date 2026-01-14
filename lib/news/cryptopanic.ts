@@ -2,7 +2,9 @@ import type { NewsItem, CryptoPanicResponse, CryptoPanicPost } from './types';
 
 const CRYPTOPANIC_API = 'https://cryptopanic.com/api/developer/v2/posts/';
 
-function getSentiment(votes: CryptoPanicPost['votes']): NewsItem['sentiment'] {
+function getSentiment(votes?: CryptoPanicPost['votes']): NewsItem['sentiment'] {
+  if (!votes) return 'neutral';
+
   const positive = votes.positive + votes.liked;
   const negative = votes.negative + votes.disliked + votes.toxic;
 
@@ -61,19 +63,19 @@ export async function fetchCryptoPanicNews(): Promise<NewsItem[]> {
     return data.results.map((post): NewsItem => ({
       id: `cp-${post.id}`,
       title: post.title,
-      summary: post.metadata?.description || undefined,
-      url: post.url,
+      summary: post.description || post.metadata?.description || undefined,
+      url: post.url || `https://cryptopanic.com/news/${post.slug}`,
       source: {
-        name: post.source.title,
+        name: post.source?.title || 'CryptoPanic',
         type: 'news',
-        icon: getSourceIcon(post.source.domain),
+        icon: post.source?.domain ? getSourceIcon(post.source.domain) : '📰',
       },
       timestamp: new Date(post.published_at).getTime(),
       sentiment: getSentiment(post.votes),
-      engagement: {
+      engagement: post.votes ? {
         likes: post.votes.positive + post.votes.liked,
         comments: post.votes.comments,
-      },
+      } : undefined,
       image: post.metadata?.image,
     }));
   } catch (error) {
