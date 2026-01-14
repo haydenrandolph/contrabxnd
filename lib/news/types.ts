@@ -25,7 +25,7 @@ export interface NewsSource {
   fetch: () => Promise<NewsItem[]>;
 }
 
-// CryptoPanic API v2 response types
+// CryptoPanic API v2 response types (per official docs)
 export interface CryptoPanicPost {
   id: number;
   slug: string;
@@ -33,12 +33,15 @@ export interface CryptoPanicPost {
   description: string | null;
   published_at: string;
   created_at: string;
-  kind: string;
-  // Optional fields (may vary by API tier/params)
+  kind: 'news' | 'media' | 'blog' | 'twitter' | 'reddit';
+  original_url?: string;
   url?: string;
+  image?: string;
   source?: {
     title: string;
+    region: string;
     domain: string;
+    type: 'feed' | 'blog' | 'twitter' | 'media' | 'reddit';
   };
   votes?: {
     positive: number;
@@ -51,9 +54,9 @@ export interface CryptoPanicPost {
     saved: number;
     comments: number;
   };
-  metadata?: {
-    description?: string;
-    image?: string;
+  content?: {
+    original: string | null;
+    clean: string | null;
   };
 }
 

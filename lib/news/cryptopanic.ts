@@ -46,8 +46,8 @@ export async function fetchCryptoPanicNews(): Promise<NewsItem[]> {
     const params = new URLSearchParams({
       auth_token: apiKey,
       currencies: 'BTC',
-      kind: 'news',
       public: 'true',
+      // Don't filter by kind - get all content types (news, media, twitter, reddit)
     });
 
     const response = await fetch(`${CRYPTOPANIC_API}?${params}`, {
@@ -64,24 +64,40 @@ export async function fetchCryptoPanicNews(): Promise<NewsItem[]> {
 
     const data: CryptoPanicResponse = await response.json();
 
-    return data.results.map((post): NewsItem => ({
-      id: `cp-${post.id}`,
-      title: post.title,
-      summary: post.description || post.metadata?.description || undefined,
-      url: post.url || `https://cryptopanic.com/news/${post.slug}`,
-      source: {
-        name: post.source?.title || 'CryptoPanic',
-        type: 'news',
-        icon: post.source?.domain ? getSourceIcon(post.source.domain) : '📰',
-      },
-      timestamp: new Date(post.published_at).getTime(),
-      sentiment: getSentiment(post.votes),
-      engagement: post.votes ? {
-        likes: post.votes.positive + post.votes.liked,
-        comments: post.votes.comments,
-      } : undefined,
-      image: post.metadata?.image,
-    }));
+    return data.results.map((post): NewsItem => {
+      // Determine source type based on post kind
+      const getSourceType = (): 'news' | 'social' | 'nostr' => {
+        if (post.kind === 'twitter' || post.kind === 'reddit') return 'social';
+        return 'news';
+      };
+
+      // Get appropriate icon based on source
+      const getIcon = (): string => {
+        if (post.kind === 'twitter') return '𝕏';
+        if (post.kind === 'reddit') return '🔴';
+        if (post.source?.domain) return getSourceIcon(post.source.domain);
+        return '📰';
+      };
+
+      return {
+        id: `cp-${post.id}`,
+        title: post.title,
+        summary: post.description || post.content?.clean || undefined,
+        url: post.original_url || post.url || `https://cryptopanic.com/news/${post.slug}`,
+        source: {
+          name: post.source?.title || 'CryptoPanic',
+          type: getSourceType(),
+          icon: getIcon(),
+        },
+        timestamp: new Date(post.published_at).getTime(),
+        sentiment: getSentiment(post.votes),
+        engagement: post.votes ? {
+          likes: post.votes.positive + post.votes.liked,
+          comments: post.votes.comments,
+        } : undefined,
+        image: post.image,
+      };
+    });
   } catch (error) {
     console.error('Failed to fetch CryptoPanic news:', error);
     return [];
