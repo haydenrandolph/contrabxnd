@@ -194,10 +194,12 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         >
           {tickerItems.map((item, index) => (
             <div key={`${item.id}-${index}`} className="ticker-item" onClick={() => onItemClick(item)}>
-              <span
-                className="ticker-sentiment"
-                style={{ background: getSentimentColor(item.sentiment) }}
-              />
+              {item.sentiment && item.sentiment !== 'neutral' && (
+                <span
+                  className="ticker-sentiment"
+                  style={{ background: getSentimentColor(item.sentiment) }}
+                />
+              )}
               <span className="ticker-source">{item.source.icon}</span>
               <span className="ticker-title">
                 {item.title.length > 80 ? item.title.substring(0, 80) + '...' : item.title}

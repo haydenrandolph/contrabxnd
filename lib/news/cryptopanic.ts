@@ -3,14 +3,18 @@ import type { NewsItem, CryptoPanicResponse, CryptoPanicPost } from './types';
 const CRYPTOPANIC_API = 'https://cryptopanic.com/api/developer/v2/posts/';
 
 function getSentiment(votes?: CryptoPanicPost['votes']): NewsItem['sentiment'] {
-  if (!votes) return 'neutral';
+  // Return undefined if no votes data (v2 API doesn't include this)
+  if (!votes) return undefined;
 
   const positive = votes.positive + votes.liked;
   const negative = votes.negative + votes.disliked + votes.toxic;
 
+  // Only return sentiment if there's meaningful engagement
+  if (positive + negative < 3) return undefined;
+
   if (positive > negative * 1.5) return 'bullish';
   if (negative > positive * 1.5) return 'bearish';
-  return 'neutral';
+  return undefined; // Return undefined for unclear sentiment
 }
 
 function getSourceIcon(domain: string): string {

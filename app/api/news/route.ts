@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { fetchCryptoPanicNews } from '@/lib/news/cryptopanic';
+import { fetchTwitterNews } from '@/lib/news/twitter';
 import type { NewsItem } from '@/lib/news/types';
 
 // Demo news for when API key isn't configured
@@ -71,15 +72,13 @@ export async function GET() {
 
   try {
     // Fetch from all sources
-    const [cryptoPanicNews] = await Promise.all([
+    const [cryptoPanicNews, twitterNews] = await Promise.all([
       fetchCryptoPanicNews(),
-      // Add more sources here:
-      // fetchNostrNews(),
-      // fetchTwitterNews(),
+      fetchTwitterNews(),
     ]);
 
     // Combine and sort by timestamp (newest first)
-    let allNews = [...cryptoPanicNews].sort(
+    let allNews = [...cryptoPanicNews, ...twitterNews].sort(
       (a, b) => b.timestamp - a.timestamp
     );
 

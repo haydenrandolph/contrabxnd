@@ -204,37 +204,6 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
           height: 14px;
         }
 
-        .news-modal-footer {
-          padding: 1.5rem 2rem;
-          border-top: 1px solid ${isLightMode ? '#d8d4cc' : '#1a1a1a'};
-        }
-
-        .read-full-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0.875rem 1.5rem;
-          background: #F7931A;
-          border: none;
-          color: #fff;
-          font-family: 'Space Mono', monospace;
-          font-size: 11px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          text-decoration: none;
-          cursor: pointer;
-          transition: background 0.2s ease;
-        }
-
-        .read-full-btn:hover {
-          background: #e8850f;
-        }
-
-        .read-full-btn svg {
-          width: 14px;
-          height: 14px;
-        }
-
         @media (max-width: 600px) {
           .news-modal {
             max-height: 90vh;
@@ -266,10 +235,12 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
 
           <div className="news-modal-header">
             <div className="news-modal-meta">
-              <div className="news-modal-sentiment" style={{ color: sentiment.color }}>
-                <span className="sentiment-dot" style={{ background: sentiment.color }} />
-                {sentiment.text}
-              </div>
+              {item.sentiment && item.sentiment !== 'neutral' && (
+                <div className="news-modal-sentiment" style={{ color: sentiment.color }}>
+                  <span className="sentiment-dot" style={{ background: sentiment.color }} />
+                  {sentiment.text}
+                </div>
+              )}
               <span className="news-modal-time">{getRelativeTime(item.timestamp)}</span>
             </div>
             <h2 className="news-modal-title">{item.title}</h2>
@@ -280,11 +251,6 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
               <p className="news-modal-summary">{item.summary}</p>
             )}
 
-            {!item.summary && (
-              <p className="news-modal-summary">
-                Click &quot;Read Full Article&quot; below to read the complete story from {item.source.name}.
-              </p>
-            )}
 
             <div className="news-modal-source">
               <span className="source-icon">{item.source.icon || '📰'}</span>
@@ -316,21 +282,6 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
             )}
           </div>
 
-          <div className="news-modal-footer">
-            <a
-              href={item.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="read-full-btn"
-            >
-              Read Full Article
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                <polyline points="15 3 21 3 21 9" />
-                <line x1="10" y1="14" x2="21" y2="3" />
-              </svg>
-            </a>
-          </div>
         </div>
       </div>
     </>
