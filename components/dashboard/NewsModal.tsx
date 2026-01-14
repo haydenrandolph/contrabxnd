@@ -247,10 +247,15 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
           </div>
 
           <div className="news-modal-body">
-            {item.summary && (
+            {item.summary ? (
               <p className="news-modal-summary">{item.summary}</p>
+            ) : (
+              <p className="news-modal-summary" style={{ fontStyle: 'italic', opacity: 0.7 }}>
+                {item.source.type === 'social'
+                  ? 'View the full post for more details.'
+                  : 'No additional details available for this headline.'}
+              </p>
             )}
-
 
             <div className="news-modal-source">
               <span className="source-icon">{item.source.icon || '📰'}</span>

@@ -83,7 +83,15 @@ export async function fetchTwitterNews(): Promise<NewsItem[]> {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`X API error: ${response.status}`, errorText);
+
+      // Handle rate limiting (429) and access errors
+      if (response.status === 429) {
+        console.warn('X API rate limited (429). Free tier has very limited access - search requires Basic tier ($100/month).');
+      } else if (response.status === 403) {
+        console.warn('X API access denied (403). The free tier does not include search/timeline endpoints.');
+      } else {
+        console.error(`X API error: ${response.status}`, errorText);
+      }
 
       // Return stale cache if available
       if (cachedXNews.length > 0) {

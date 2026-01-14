@@ -137,8 +137,9 @@ export default function DashboardPage() {
           volume24h: data.bitcoin.usd_24h_vol,
         }));
       }
-    } catch {
-      // Silently fail - will retry on next interval
+    } catch (error) {
+      console.warn('CoinGecko price fetch failed:', error);
+      // Will retry on next interval
     }
   }, []);
 
