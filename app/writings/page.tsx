@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { UserMenu } from '@/components/auth';
 
 const articles = [
   {
@@ -220,6 +221,12 @@ export default function WritingsPage() {
 
         .writings-nav-links a.coming-soon:hover::after {
           width: 0;
+        }
+
+        .writings-nav-right {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
         }
 
         .mobile-menu-btn {
@@ -769,15 +776,18 @@ export default function WritingsPage() {
             <a href="#merch" className="coming-soon">Merch</a>
             <Link href="/about">About</Link>
           </div>
-          <button
-            className={`mobile-menu-btn ${menuOpen ? 'open' : ''}`}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+          <div className="writings-nav-right">
+            <UserMenu />
+            <button
+              className={`mobile-menu-btn ${menuOpen ? 'open' : ''}`}
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </div>
         </nav>
 
         <div className={`mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>

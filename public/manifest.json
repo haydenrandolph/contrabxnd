@@ -1,0 +1,23 @@
+{
+  "name": "Contraband",
+  "short_name": "Contraband",
+  "description": "Bitcoin education, writings, and ideas worth trading.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#F7931A",
+  "icons": [
+    {
+      "src": "/contraband-logo-v3.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/contraband-logo-v3.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

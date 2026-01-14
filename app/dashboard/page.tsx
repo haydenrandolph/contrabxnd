@@ -12,6 +12,9 @@ import {
 } from '@vnedyalk0v/react19-simple-maps';
 import worldAtlas from 'world-atlas/countries-110m.json';
 import { useTheme } from '@/contexts/ThemeContext';
+import { UserMenu } from '@/components/auth';
+import { PriceAlertModal, NewsTicker, NewsModal } from '@/components/dashboard';
+import type { NewsItem } from '@/lib/news/types';
 
 // Bitcoin hub cities with geographic coordinates [longitude, latitude]
 const BITCOIN_NODES = [
@@ -110,6 +113,8 @@ export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
   const { isLightMode, toggleTheme } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
@@ -983,6 +988,33 @@ export default function DashboardPage() {
         .price-change.positive { color: #22c55e; }
         .price-change.negative { color: #ef4444; }
 
+        .set-alert-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: transparent;
+          border: 1px solid #F7931A;
+          color: #F7931A;
+          font-family: 'Space Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          cursor: pointer;
+          margin-left: 1.5rem;
+          transition: all 0.2s ease;
+        }
+
+        .set-alert-btn:hover {
+          background: #F7931A;
+          color: #fff;
+        }
+
+        .set-alert-btn svg {
+          width: 14px;
+          height: 14px;
+        }
+
         .corner-stat {
           position: absolute;
           padding: 1rem;
@@ -1532,6 +1564,7 @@ export default function DashboardPage() {
               <span className="live-dot" style={{ background: wsConnected ? '#22c55e' : '#f59e0b' }}></span>
               <span>{wsConnected ? 'Live' : 'Connecting...'}</span>
             </div>
+            <UserMenu />
             <button
               className={`dashboard-mobile-menu-btn ${menuOpen ? 'open' : ''}`}
               onClick={() => setMenuOpen(!menuOpen)}
@@ -1575,8 +1608,20 @@ export default function DashboardPage() {
               <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
                 {networkData.change24h >= 0 ? '+' : ''}{networkData.change24h.toFixed(2)}%
               </span>
+              <button className="set-alert-btn" onClick={() => setShowAlertModal(true)}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                Set Alert
+              </button>
             </div>
           </div>
+
+          <NewsTicker
+            onItemClick={(item) => setSelectedNews(item)}
+            isLightMode={isLightMode}
+          />
 
           <div className="map-section">
             <div className="map-container">
@@ -1901,6 +1946,18 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        <PriceAlertModal
+          isOpen={showAlertModal}
+          onClose={() => setShowAlertModal(false)}
+          currentPrice={networkData.price}
+        />
+
+        <NewsModal
+          item={selectedNews}
+          onClose={() => setSelectedNews(null)}
+          isLightMode={isLightMode}
+        />
       </div>
     </>
   );

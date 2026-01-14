@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { UserMenu } from '@/components/auth';
 
 export default function AboutPage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -124,6 +125,12 @@ export default function AboutPage() {
 
         .about-nav-links a.coming-soon:hover::after {
           width: 0;
+        }
+
+        .about-nav-right {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
         }
 
         .about-mobile-menu-btn {
@@ -488,15 +495,18 @@ export default function AboutPage() {
             <a href="#merch" className="coming-soon">Merch</a>
             <Link href="/about" className="active">About</Link>
           </div>
-          <button
-            className={`about-mobile-menu-btn ${menuOpen ? 'open' : ''}`}
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+          <div className="about-nav-right">
+            <UserMenu />
+            <button
+              className={`about-mobile-menu-btn ${menuOpen ? 'open' : ''}`}
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </div>
         </nav>
 
         <div className={`about-mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>
