@@ -119,26 +119,23 @@ export default function DashboardPage() {
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
 
-  // Fetch price data from CoinGecko
+  // Fetch price data via our API proxy (avoids CORS issues with CoinGecko)
   const fetchPriceData = useCallback(async () => {
     try {
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true',
-        { mode: 'cors' }
-      );
+      const response = await fetch('/api/price');
       if (!response.ok) throw new Error('Price fetch failed');
       const data = await response.json();
-      if (data.bitcoin) {
+      if (data.price) {
         setNetworkData(prev => ({
           ...prev,
-          price: data.bitcoin.usd,
-          change24h: data.bitcoin.usd_24h_change,
-          marketCap: data.bitcoin.usd_market_cap,
-          volume24h: data.bitcoin.usd_24h_vol,
+          price: data.price,
+          change24h: data.change24h,
+          marketCap: data.marketCap,
+          volume24h: data.volume24h,
         }));
       }
     } catch (error) {
-      console.warn('CoinGecko price fetch failed:', error);
+      console.warn('Price fetch failed:', error);
       // Will retry on next interval
     }
   }, []);
