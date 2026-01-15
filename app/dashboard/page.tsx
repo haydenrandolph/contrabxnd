@@ -1463,6 +1463,7 @@ export default function DashboardPage() {
         @media (max-width: 1024px) {
           .dashboard-nav {
             padding: 1.5rem 2rem;
+            z-index: 1000;
           }
 
           .dashboard-container {
@@ -1509,6 +1510,28 @@ export default function DashboardPage() {
           .dashboard-mobile-menu-btn {
             display: flex;
           }
+
+          .price-header {
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1rem 1.5rem;
+            text-align: center;
+          }
+
+          .price-display {
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+          }
+
+          .price-value {
+            font-size: 1.75rem;
+          }
+
+          .set-alert-btn {
+            margin-left: 0;
+            margin-top: 0.5rem;
+          }
         }
       `}</style>
 
@@ -1552,6 +1575,7 @@ export default function DashboardPage() {
             <Link href="/dashboard" className="active">Dashboard</Link>
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
+            <Link href="/network">Network</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
             <a href="#videos" className="coming-soon">Videos</a>
             <a href="#merch" className="coming-soon">Merch</a>
@@ -1591,6 +1615,7 @@ export default function DashboardPage() {
             <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
+            <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
             <a href="#videos" className="coming-soon">Videos</a>
             <a href="#merch" className="coming-soon">Merch</a>

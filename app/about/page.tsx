@@ -490,6 +490,7 @@ export default function AboutPage() {
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
+            <Link href="/network">Network</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
             <a href="#videos" className="coming-soon">Videos</a>
             <a href="#merch" className="coming-soon">Merch</a>
@@ -514,6 +515,7 @@ export default function AboutPage() {
             <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
+            <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
             <a href="#videos" className="coming-soon">Videos</a>
             <a href="#merch" className="coming-soon">Merch</a>

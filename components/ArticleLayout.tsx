@@ -522,7 +522,7 @@ export default function ArticleLayout({
           <div className="article-nav-links">
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings" className="active">Writings</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
+            <Link href="/network">Network</Link>
             <a href="#videos" className="coming-soon">Videos</a>
             <a href="#merch" className="coming-soon">Merch</a>
             <Link href="/about">About</Link>

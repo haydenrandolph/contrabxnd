@@ -703,6 +703,7 @@ export default function LearnPage() {
         @media (max-width: 768px) {
           .learn-nav {
             padding: 1.5rem 2rem;
+            z-index: 1000;
           }
 
           .learn-nav-links {
@@ -714,23 +715,55 @@ export default function LearnPage() {
           }
 
           .learn-hero {
-            padding: 10rem 2rem 4rem;
+            padding: 10rem 1.5rem 4rem;
           }
 
           .courses-section {
-            padding: 2rem 2rem 4rem;
+            padding: 2rem 1rem 4rem;
+          }
+
+          .courses-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
           }
 
           .course-card {
-            padding: 2rem;
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+          }
+
+          .course-meta {
+            flex-wrap: wrap;
+            gap: 1rem;
+          }
+
+          .meta-item {
+            min-width: 70px;
+          }
+
+          .course-btn {
+            width: 100%;
+            justify-content: center;
           }
 
           .path-section {
-            padding: 4rem 2rem;
+            padding: 4rem 1.5rem;
           }
 
           .philosophy-section {
-            padding: 4rem 2rem;
+            padding: 4rem 1.5rem;
+          }
+
+          .philosophy-quote {
+            font-size: 1.4rem;
+          }
+
+          .learn-footer {
+            padding: 3rem 1.5rem;
           }
 
           .learn-footer-content {
@@ -784,6 +817,7 @@ export default function LearnPage() {
             <Link href="/dashboard">Dashboard</Link>
             <Link href="/learn" className="active">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
+            <Link href="/network">Network</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
             <a href="#videos" className="coming-soon">Videos</a>
             <a href="#merch" className="coming-soon">Merch</a>
@@ -808,6 +842,7 @@ export default function LearnPage() {
             <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
+            <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
             <a href="#podcasts" className="coming-soon">Podcasts</a>
             <a href="#videos" className="coming-soon">Videos</a>
             <a href="#merch" className="coming-soon">Merch</a>
