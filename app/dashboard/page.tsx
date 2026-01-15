@@ -1664,7 +1664,7 @@ export default function DashboardPage() {
                   {({ geographies }) =>
                     geographies.map((geo, index) => (
                       <Geography
-                        key={geo.rsmKey || `geo-${index}`}
+                        key={`geo-${index}`}
                         geography={geo}
                         fill={isLightMode ? '#d8d4cc' : '#1a1a1a'}
                         stroke="#b5673a"

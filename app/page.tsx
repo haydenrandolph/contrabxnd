@@ -1152,7 +1152,7 @@ export default function HomePage() {
                 {({ geographies }) =>
                   geographies.map((geo, index) => (
                     <Geography
-                      key={geo.rsmKey || `geo-${index}`}
+                      key={`geo-${index}`}
                       geography={geo}
                       fill="#1a1a1a"
                       stroke="#b5673a"
