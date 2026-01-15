@@ -1662,9 +1662,9 @@ export default function DashboardPage() {
               >
                 <Geographies geography={worldAtlas}>
                   {({ geographies }) =>
-                    geographies.map((geo) => (
+                    geographies.map((geo, index) => (
                       <Geography
-                        key={geo.rsmKey}
+                        key={geo.rsmKey || `geo-${index}`}
                         geography={geo}
                         fill={isLightMode ? '#d8d4cc' : '#1a1a1a'}
                         stroke="#b5673a"
