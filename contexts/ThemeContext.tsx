@@ -1,6 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useCallback, useSyncExternalStore, ReactNode } from 'react';
+
+const STORAGE_KEY = 'contraband-theme';
+const THEME_EVENT = 'contraband-theme-change';
 
 interface ThemeContextType {
   isLightMode: boolean;
@@ -9,21 +12,36 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [isLightMode, setIsLightMode] = useState(false);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('contraband-theme');
-    if (savedTheme === 'light') {
-      setIsLightMode(true);
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = !isLightMode;
-    setIsLightMode(newTheme);
-    localStorage.setItem('contraband-theme', newTheme ? 'light' : 'dark');
+function subscribe(callback: () => void) {
+  window.addEventListener('storage', callback);
+  window.addEventListener(THEME_EVENT, callback);
+  return () => {
+    window.removeEventListener('storage', callback);
+    window.removeEventListener(THEME_EVENT, callback);
   };
+}
+
+function getSnapshot() {
+  return localStorage.getItem(STORAGE_KEY) === 'light';
+}
+
+// Server (and first hydration paint) always render the dark theme. The
+// pre-hydration inline script in the root layout applies the `light-mode`
+// class to <html> before paint, so there is no flash even though React
+// state catches up immediately after hydration.
+function getServerSnapshot() {
+  return false;
+}
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const isLightMode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const toggleTheme = useCallback(() => {
+    const next = localStorage.getItem(STORAGE_KEY) !== 'light';
+    localStorage.setItem(STORAGE_KEY, next ? 'light' : 'dark');
+    document.documentElement.classList.toggle('light-mode', next);
+    window.dispatchEvent(new Event(THEME_EVENT));
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ isLightMode, toggleTheme }}>

@@ -51,22 +51,32 @@ export async function GET(request: NextRequest) {
 
     const supabase = createAdminClient();
     if (supabase) {
+      // This is a public endpoint, so select only the columns we expose —
+      // never pull contact_email / user_id into memory here.
       const { data: applications } = await supabase
         .from('network_applications')
-        .select('*')
+        .select('id, business_name, website, category, description, payment_method')
         .eq('status', 'approved');
 
+      const validPaymentMethods = ['lightning', 'onchain', 'both', 'processor'] as const;
+      type PaymentMethod = (typeof validPaymentMethods)[number];
+
       if (applications) {
-        approvedApplications = applications.map((app) => ({
-          id: `app-${app.id}`,
-          name: app.business_name,
-          website: app.website,
-          category: app.category,
-          description: app.description || undefined,
-          paymentMethods: [app.payment_method as 'lightning' | 'onchain' | 'both' | 'processor'],
-          source: 'application' as const,
-          verified: true,
-        }));
+        approvedApplications = applications.map((app) => {
+          const method: PaymentMethod = validPaymentMethods.includes(app.payment_method)
+            ? app.payment_method
+            : 'onchain';
+          return {
+            id: `app-${app.id}`,
+            name: app.business_name,
+            website: app.website,
+            category: app.category,
+            description: app.description || undefined,
+            paymentMethods: [method],
+            source: 'application' as const,
+            verified: true,
+          };
+        });
       }
     }
 

@@ -339,6 +339,60 @@ export default function JoinNetworkModal({
           color: #F7931A;
           background: rgba(247, 147, 26, 0.1);
         }
+
+        /* Light-mode overrides (theme class lives on <html>) */
+        :global(.light-mode) .modal-content {
+          background: #ffffff;
+          border-color: #c8c4bc;
+        }
+        :global(.light-mode) .modal-header {
+          border-bottom-color: #e0dcd4;
+        }
+        :global(.light-mode) .modal-title {
+          color: #0a0a0a;
+        }
+        :global(.light-mode) .modal-close {
+          border-color: #c8c4bc;
+        }
+        :global(.light-mode) .modal-close svg {
+          stroke: #5a5a5a;
+        }
+        :global(.light-mode) .form-label {
+          color: #6a6a6a;
+        }
+        :global(.light-mode) .form-input,
+        :global(.light-mode) .form-select,
+        :global(.light-mode) .form-textarea {
+          background: #f5f3f0;
+          border-color: #d8d4cc;
+          color: #0a0a0a;
+        }
+        :global(.light-mode) .form-input::placeholder,
+        :global(.light-mode) .form-textarea::placeholder {
+          color: #a0a0a0;
+        }
+        :global(.light-mode) .form-hint {
+          color: #8a8a8a;
+        }
+        :global(.light-mode) .success-title {
+          color: #0a0a0a;
+        }
+        :global(.light-mode) .success-text {
+          color: #6a6a6a;
+        }
+        :global(.light-mode) .signin-prompt {
+          color: #6a6a6a;
+        }
+        :global(.light-mode) .payment-option {
+          background: #f5f3f0;
+          border-color: #d8d4cc;
+          color: #6a6a6a;
+        }
+        :global(.light-mode) .payment-option.active {
+          border-color: #F7931A;
+          color: #b5673a;
+          background: rgba(247, 147, 26, 0.1);
+        }
       `}</style>
 
       <div className="modal-overlay" onClick={handleClose}>

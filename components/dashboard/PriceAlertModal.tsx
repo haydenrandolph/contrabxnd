@@ -324,6 +324,63 @@ export default function PriceAlertModal({
           cursor: pointer;
           text-decoration: underline;
         }
+
+        /* Light-mode overrides (theme class lives on <html>) */
+        :global(.light-mode) .modal-content {
+          background: #ffffff;
+          border-color: #c8c4bc;
+        }
+        :global(.light-mode) .modal-header {
+          border-bottom-color: #e0dcd4;
+        }
+        :global(.light-mode) .modal-title {
+          color: #b5673a;
+        }
+        :global(.light-mode) .modal-close {
+          color: #8a8a8a;
+        }
+        :global(.light-mode) .modal-close:hover {
+          color: #0a0a0a;
+        }
+        :global(.light-mode) .current-price {
+          background: #f5f3f0;
+        }
+        :global(.light-mode) .current-price-label {
+          color: #6a6a6a;
+        }
+        :global(.light-mode) .current-price-value {
+          color: #0a0a0a;
+        }
+        :global(.light-mode) .form-label {
+          color: #6a6a6a;
+        }
+        :global(.light-mode) .form-input {
+          background: #f5f3f0;
+          border-color: #d8d4cc;
+          color: #0a0a0a;
+        }
+        :global(.light-mode) .form-input::placeholder {
+          color: #a0a0a0;
+        }
+        :global(.light-mode) .direction-btn {
+          background: #f5f3f0;
+          border-color: #d8d4cc;
+          color: #6a6a6a;
+        }
+        :global(.light-mode) .direction-btn.active {
+          border-color: #F7931A;
+          color: #b5673a;
+          background: rgba(247, 147, 26, 0.1);
+        }
+        :global(.light-mode) .notification-label {
+          color: #0a0a0a;
+        }
+        :global(.light-mode) .form-success p {
+          color: #0a0a0a;
+        }
+        :global(.light-mode) .signin-prompt {
+          color: #6a6a6a;
+        }
       `}</style>
 
       <div className="modal-overlay" onClick={onClose}>

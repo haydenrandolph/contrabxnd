@@ -1,19 +1,11 @@
-import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { requireUser, readJson } from '@/lib/supabase/auth';
 
 // GET - Fetch all alerts for current user
 export async function GET() {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from('price_alerts')
@@ -22,7 +14,8 @@ export async function GET() {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Failed to load alerts:', error.message);
+    return NextResponse.json({ error: 'Failed to load alerts' }, { status: 500 });
   }
 
   return NextResponse.json({ alerts: data });
@@ -30,25 +23,24 @@ export async function GET() {
 
 // POST - Create a new price alert
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
+  const parsed = await readJson<{
+    targetPrice?: unknown;
+    direction?: unknown;
+    notifyEmail?: boolean;
+    notifyPush?: boolean;
+  }>(request);
+  if (parsed.error) return parsed.error;
+  const { targetPrice, direction, notifyEmail, notifyPush } = parsed.body;
+
+  if (typeof targetPrice !== 'number' || !Number.isFinite(targetPrice) || targetPrice <= 0) {
+    return NextResponse.json({ error: 'Target price must be a positive number' }, { status: 400 });
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { targetPrice, direction, notifyEmail, notifyPush } = await request.json();
-
-  if (!targetPrice || !direction) {
-    return NextResponse.json({ error: 'Missing target price or direction' }, { status: 400 });
-  }
-
-  if (!['above', 'below'].includes(direction)) {
+  if (direction !== 'above' && direction !== 'below') {
     return NextResponse.json({ error: 'Direction must be "above" or "below"' }, { status: 400 });
   }
 
@@ -66,7 +58,8 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Failed to create alert:', error.message);
+    return NextResponse.json({ error: 'Failed to create alert' }, { status: 500 });
   }
 
   return NextResponse.json({ alert: data });
@@ -74,19 +67,13 @@ export async function POST(request: Request) {
 
 // DELETE - Delete an alert
 export async function DELETE(request: Request) {
-  const supabase = await createClient();
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { alertId } = await request.json();
+  const parsed = await readJson<{ alertId?: string }>(request);
+  if (parsed.error) return parsed.error;
+  const { alertId } = parsed.body;
 
   if (!alertId) {
     return NextResponse.json({ error: 'Missing alert ID' }, { status: 400 });
@@ -99,7 +86,8 @@ export async function DELETE(request: Request) {
     .eq('user_id', user.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Failed to delete alert:', error.message);
+    return NextResponse.json({ error: 'Failed to delete alert' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

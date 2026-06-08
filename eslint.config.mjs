@@ -13,6 +13,13 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Lesson and writing content is prose-heavy; raw apostrophes/quotes in
+      // JSX text are intentional and render fine. This rule is pure noise here.
+      "react/no-unescaped-entities": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

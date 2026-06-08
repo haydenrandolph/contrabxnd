@@ -523,8 +523,8 @@ export default function ArticleLayout({
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings" className="active">Writings</Link>
             <Link href="/network">Network</Link>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about">About</Link>
           </div>
         </nav>

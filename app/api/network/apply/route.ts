@@ -1,23 +1,23 @@
-import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 import { BUSINESS_CATEGORIES } from '@/lib/network/types';
+import { requireUser, readJson } from '@/lib/supabase/auth';
 
 // POST - Submit a new business application
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Please sign in to submit an application' }, { status: 401 });
-  }
-
-  const body = await request.json();
-  const { businessName, website, category, description, contactEmail, paymentMethod } = body;
+  const parsed = await readJson<{
+    businessName?: string;
+    website?: string;
+    category?: string;
+    description?: string;
+    contactEmail?: string;
+    paymentMethod?: string;
+  }>(request);
+  if (parsed.error) return parsed.error;
+  const { businessName, website, category, description, contactEmail, paymentMethod } = parsed.body;
 
   // Validate required fields
   if (!businessName || !website || !category || !contactEmail || !paymentMethod) {
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   // Validate category
-  if (!BUSINESS_CATEGORIES.includes(category)) {
+  if (!(BUSINESS_CATEGORIES as readonly string[]).includes(category)) {
     return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
   }
 
@@ -48,12 +48,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid email address' }, { status: 400 });
   }
 
-  // Check for existing application with same website
+  // Check for existing application with same website. maybeSingle() returns
+  // null (not an error) when there's no match — the common case.
   const { data: existing } = await supabase
     .from('network_applications')
     .select('id')
     .eq('website', website)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     return NextResponse.json(
