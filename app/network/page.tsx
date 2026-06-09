@@ -1,11 +1,11 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from '@/contexts/ThemeContext';
-import { UserMenu } from '@/components/auth';
+import SiteNav from '@/components/SiteNav';
+import SiteFooter from '@/components/SiteFooter';
+import ThemeToggle from '@/components/ThemeToggle';
 import JoinNetworkModal from '@/components/network/JoinNetworkModal';
 import type { NetworkBusiness } from '@/lib/network/types';
 import { BUSINESS_CATEGORIES } from '@/lib/network/types';
@@ -64,7 +64,6 @@ interface UserLocation {
 }
 
 export default function NetworkPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [businesses, setBusinesses] = useState<NetworkBusiness[]>([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState<NetworkBusiness[]>([]);
@@ -81,7 +80,7 @@ export default function NetworkPage() {
   const [visibleBusinessIds, setVisibleBusinessIds] = useState<string[] | null>(null);
   const [viewportSyncEnabled, setViewportSyncEnabled] = useState(true);
   const listRef = useRef<HTMLDivElement>(null);
-  const { isLightMode, toggleTheme } = useTheme();
+  const { isLightMode } = useTheme();
 
   // Handle map bounds change - filter list to show only visible businesses
   const handleBoundsChange = useCallback((bounds: MapBounds, visibleIds: string[]) => {
@@ -261,229 +260,6 @@ export default function NetworkPage() {
           opacity: 0.03;
           pointer-events: none;
           z-index: 1000;
-        }
-
-        .network-nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          padding: 2rem 3rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          z-index: 1000;
-          background: linear-gradient(to bottom, #0a0a0a 0%, transparent 100%);
-        }
-
-        .network-page.light-mode .network-nav {
-          background: linear-gradient(to bottom, #e8e4dc 0%, transparent 100%);
-        }
-
-        .network-logo-link {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          text-decoration: none;
-          color: #f5f3f0;
-        }
-
-        .network-page.light-mode .network-logo-link {
-          color: #0a0a0a;
-        }
-
-        .network-logo-text {
-          font-family: 'Space Mono', monospace;
-          font-size: 11px;
-          letter-spacing: 0.3em;
-          text-transform: uppercase;
-        }
-
-        .network-nav-links {
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 2.5rem;
-        }
-
-        .network-nav-links a {
-          color: #f5f3f0;
-          text-decoration: none;
-          font-size: 11px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          position: relative;
-          padding: 0.25rem 0;
-        }
-
-        .network-page.light-mode .network-nav-links a {
-          color: #0a0a0a;
-        }
-
-        .network-nav-links a::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 0;
-          height: 1px;
-          background: #F7931A;
-          transition: width 0.3s ease;
-        }
-
-        .network-nav-links a:hover::after,
-        .network-nav-links a.active::after {
-          width: 100%;
-        }
-
-        .network-nav-links a.coming-soon {
-          text-decoration: line-through;
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .network-nav-links a.coming-soon:hover::after {
-          width: 0;
-        }
-
-        .network-nav-right {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-        }
-
-        .mobile-menu-btn {
-          display: none;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          width: 44px;
-          height: 44px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          z-index: 1001;
-        }
-
-        .mobile-menu-btn span {
-          display: block;
-          width: 24px;
-          height: 2px;
-          background: #f5f3f0;
-          transition: all 0.3s ease;
-          margin: 3px 0;
-        }
-
-        .network-page.light-mode .mobile-menu-btn span {
-          background: #0a0a0a;
-        }
-
-        .mobile-menu-btn.open span:nth-child(1) {
-          transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .mobile-menu-btn.open span:nth-child(2) {
-          opacity: 0;
-        }
-
-        .mobile-menu-btn.open span:nth-child(3) {
-          transform: rotate(-45deg) translate(6px, -6px);
-        }
-
-        .mobile-menu-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: #0a0a0a;
-          z-index: 999;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .network-page.light-mode .mobile-menu-overlay {
-          background: #e8e4dc;
-        }
-
-        .mobile-menu-overlay.open {
-          opacity: 1;
-          visibility: visible;
-        }
-
-        .mobile-menu-nav {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 2rem;
-        }
-
-        .mobile-menu-nav a {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 2rem;
-          color: #e8e4dc;
-          text-decoration: none;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          transition: color 0.3s ease;
-        }
-
-        .network-page.light-mode .mobile-menu-nav a {
-          color: #0a0a0a;
-        }
-
-        .mobile-menu-nav a:active {
-          color: #F7931A;
-        }
-
-        .mobile-menu-nav a.coming-soon {
-          text-decoration: line-through;
-          opacity: 0.5;
-        }
-
-        .network-theme-toggle {
-          position: fixed;
-          bottom: 2rem;
-          right: 2rem;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: #1a1a1a;
-          border: 1px solid #3a3a3a;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          z-index: 1001;
-          transition: all 0.3s ease;
-        }
-
-        .network-theme-toggle:hover {
-          background: #F7931A;
-          border-color: #F7931A;
-          transform: scale(1.1);
-        }
-
-        .network-theme-toggle svg {
-          width: 24px;
-          height: 24px;
-          stroke: #e8e4dc;
-        }
-
-        .network-page.light-mode .network-theme-toggle {
-          background: #f5f3f0;
-          border-color: #c8c4bc;
-        }
-
-        .network-page.light-mode .network-theme-toggle svg {
-          stroke: #070713;
         }
 
         .network-hero {
@@ -947,65 +723,7 @@ export default function NetworkPage() {
           font-size: 13px;
         }
 
-        .network-footer {
-          padding: 4rem 3rem;
-          border-top: 1px solid #1a1a1a;
-          max-width: 1400px;
-          margin: 0 auto;
-        }
-
-        .network-page.light-mode .network-footer {
-          border-top-color: #d8d4cc;
-        }
-
-        .network-footer-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .network-footer-left {
-          display: flex;
-          align-items: center;
-          gap: 2rem;
-        }
-
-        .network-footer-copy {
-          font-size: 12px;
-          color: #8a8a8a;
-        }
-
-        .network-footer-links {
-          display: flex;
-          gap: 2rem;
-        }
-
-        .network-footer-links a {
-          font-size: 11px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: #8a8a8a;
-          text-decoration: none;
-          transition: color 0.3s ease;
-        }
-
-        .network-footer-links a:hover {
-          color: #F7931A;
-        }
-
         @media (max-width: 768px) {
-          .network-nav {
-            padding: 1.5rem 2rem;
-          }
-
-          .network-nav-links {
-            display: none;
-          }
-
-          .mobile-menu-btn {
-            display: flex;
-          }
-
           .network-hero {
             padding: 10rem 2rem 3rem;
           }
@@ -1047,90 +765,13 @@ export default function NetworkPage() {
           .business-cards {
             max-height: 400px;
           }
-
-          .network-footer-content {
-            flex-direction: column;
-            gap: 2rem;
-            text-align: center;
-          }
-
-          .network-footer-left {
-            flex-direction: column;
-          }
         }
       `}</style>
 
       <div className={`network-page ${isLightMode ? 'light-mode' : ''}`}>
-        <button
-          className="network-theme-toggle"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-        >
-          {isLightMode ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="5"/>
-              <line x1="12" y1="1" x2="12" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/>
-              <line x1="21" y1="12" x2="23" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-          )}
-        </button>
+        <ThemeToggle />
 
-        <nav className="network-nav">
-          <Link href="/" className="network-logo-link">
-            <Image
-              src="/contraband-logo-v3.png"
-              alt="Contraband logo"
-              width={40}
-              height={40}
-            />
-            <span className="network-logo-text">Contra₿and</span>
-          </Link>
-          <div className="network-nav-links">
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/learn">Stu₿y</Link>
-            <Link href="/writings">Writings</Link>
-            <Link href="/network" className="active">Network</Link>
-            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
-            <Link href="/about">About</Link>
-          </div>
-          <div className="network-nav-right">
-            <UserMenu />
-            <button
-              className={`mobile-menu-btn ${menuOpen ? 'open' : ''}`}
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
-          </div>
-        </nav>
-
-        <div className={`mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>
-          <nav className="mobile-menu-nav">
-            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-            <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
-            <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
-            <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
-            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
-            <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
-          </nav>
-        </div>
+        <SiteNav activePath="/network" />
 
         <section className="network-hero">
           <p className="hero-label">Contrabxnd Network</p>
@@ -1392,24 +1033,7 @@ export default function NetworkPage() {
           </div>
         </section>
 
-        <footer className="network-footer">
-          <div className="network-footer-content">
-            <div className="network-footer-left">
-              <Image
-                src="/contraband-logo-v3.png"
-                alt="Contraband logo"
-                width={32}
-                height={32}
-              />
-              <span className="network-footer-copy">© 2025–2026 Contraband. All rights reserved.</span>
-            </div>
-            <div className="network-footer-links">
-              <a href="https://x.com/contrabxnd" target="_blank" rel="noopener noreferrer">Twitter</a>
-              <a href="https://youtube.com/@contrabxnd" target="_blank" rel="noopener noreferrer">YouTube</a>
-              <a style={{ textDecoration: 'line-through', opacity: 0.5, cursor: 'not-allowed' }} aria-disabled="true" aria-label="RSS — coming soon">RSS</a>
-            </div>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
 
       <JoinNetworkModal
