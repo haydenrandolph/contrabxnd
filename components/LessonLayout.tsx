@@ -1156,7 +1156,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
                 width={32}
                 height={32}
               />
-              <span className="lesson-footer-copy">© 2025 Contraband. All rights reserved.</span>
+              <span className="lesson-footer-copy">© 2025–2026 Contraband. All rights reserved.</span>
             </div>
             <div className="lesson-footer-links">
               <a href="https://x.com/hankCmoody" target="_blank" rel="noopener noreferrer">Twitter</a>

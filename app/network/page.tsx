@@ -1401,7 +1401,7 @@ export default function NetworkPage() {
                 width={32}
                 height={32}
               />
-              <span className="network-footer-copy">© 2025 Contraband. All rights reserved.</span>
+              <span className="network-footer-copy">© 2025–2026 Contraband. All rights reserved.</span>
             </div>
             <div className="network-footer-links">
               <a href="https://x.com/contrabxnd" target="_blank" rel="noopener noreferrer">Twitter</a>

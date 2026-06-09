@@ -916,7 +916,7 @@ export default function LearnPage() {
                 width={32}
                 height={32}
               />
-              <span className="learn-footer-copy">© 2025 Contraband. All rights reserved.</span>
+              <span className="learn-footer-copy">© 2025–2026 Contraband. All rights reserved.</span>
             </div>
             <div className="learn-footer-links">
               <a href="https://x.com/contrabxnd" target="_blank" rel="noopener noreferrer">Twitter</a>

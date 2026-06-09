@@ -898,7 +898,7 @@ export default function WritingsPage() {
                 width={32}
                 height={32}
               />
-              <span className="writings-footer-copy">© 2025 Contraband. All rights reserved.</span>
+              <span className="writings-footer-copy">© 2025–2026 Contraband. All rights reserved.</span>
             </div>
             <div className="writings-footer-links">
               <a href="https://x.com/contrabxnd" target="_blank" rel="noopener noreferrer">Twitter</a>

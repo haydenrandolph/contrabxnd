@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignUpModal() {
@@ -11,6 +11,28 @@ export default function SignUpModal() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const contentRef = useRef<HTMLDivElement>(null);
+  const closeModal = useCallback(() => setShowAuthModal(null), [setShowAuthModal]);
+
+  useEffect(() => {
+    if (showAuthModal !== 'signup') return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { closeModal(); return; }
+      if (e.key === 'Tab' && contentRef.current) {
+        const focusable = contentRef.current.querySelectorAll<HTMLElement>(
+          'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    contentRef.current?.querySelector<HTMLElement>('input')?.focus();
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showAuthModal, closeModal]);
 
   if (showAuthModal !== 'signup') return null;
 
@@ -143,11 +165,11 @@ export default function SignUpModal() {
           }
         `}</style>
 
-        <div className="auth-modal-overlay" onClick={() => setShowAuthModal(null)}>
-          <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="auth-modal-overlay" onClick={closeModal}>
+          <div className="auth-modal" ref={contentRef} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <div className="auth-modal-header">
               <h2 className="auth-modal-title">Check Your Email</h2>
-              <button className="auth-modal-close" onClick={() => setShowAuthModal(null)}>
+              <button className="auth-modal-close" onClick={closeModal}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18"/>
                   <line x1="6" y1="6" x2="18" y2="18"/>
@@ -350,11 +372,11 @@ export default function SignUpModal() {
         }
       `}</style>
 
-      <div className="auth-modal-overlay" onClick={() => setShowAuthModal(null)}>
-        <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="auth-modal-overlay" onClick={closeModal}>
+        <div className="auth-modal" ref={contentRef} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
           <div className="auth-modal-header">
             <h2 className="auth-modal-title">Create Account</h2>
-            <button className="auth-modal-close" onClick={() => setShowAuthModal(null)}>
+            <button className="auth-modal-close" onClick={closeModal}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>

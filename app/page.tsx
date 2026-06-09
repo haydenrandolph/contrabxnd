@@ -1354,7 +1354,7 @@ export default function HomePage() {
                 height={32}
                 className="contraband-footer-logo"
               />
-              <span className="contraband-footer-copy">© 2025 Contraband. All rights reserved.</span>
+              <span className="contraband-footer-copy">© 2025–2026 Contraband. All rights reserved.</span>
             </div>
             <div className="contraband-footer-links">
               <a href="https://x.com/contrabxnd" target="_blank" rel="noopener noreferrer">Twitter</a>

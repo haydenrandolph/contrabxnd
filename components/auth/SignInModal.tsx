@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignInModal() {
@@ -9,6 +9,28 @@ export default function SignInModal() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const contentRef = useRef<HTMLDivElement>(null);
+  const closeModal = useCallback(() => setShowAuthModal(null), [setShowAuthModal]);
+
+  useEffect(() => {
+    if (showAuthModal !== 'signin') return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { closeModal(); return; }
+      if (e.key === 'Tab' && contentRef.current) {
+        const focusable = contentRef.current.querySelectorAll<HTMLElement>(
+          'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    contentRef.current?.querySelector<HTMLElement>('input')?.focus();
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showAuthModal, closeModal]);
 
   if (showAuthModal !== 'signin') return null;
 
@@ -195,8 +217,8 @@ export default function SignInModal() {
         }
       `}</style>
 
-      <div className="auth-modal-overlay" onClick={() => setShowAuthModal(null)}>
-        <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+      <div className="auth-modal-overlay" onClick={closeModal}>
+        <div className="auth-modal" ref={contentRef} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
           <div className="auth-modal-header">
             <h2 className="auth-modal-title">Sign In</h2>
             <button className="auth-modal-close" onClick={() => setShowAuthModal(null)}>

@@ -1221,7 +1221,7 @@ export default function BoardingPassCoursePage() {
                 width={32}
                 height={32}
               />
-              <span className="course-footer-copy">© 2025 Contraband. All rights reserved.</span>
+              <span className="course-footer-copy">© 2025–2026 Contraband. All rights reserved.</span>
             </div>
             <div className="course-footer-links">
               <a href="https://x.com/hankCmoody" target="_blank" rel="noopener noreferrer">Twitter</a>
