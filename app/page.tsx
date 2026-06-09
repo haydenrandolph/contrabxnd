@@ -800,6 +800,8 @@ export default function HomePage() {
           margin-bottom: 1rem;
           opacity: 0;
           animation: fadeUp 1s ease 0.1s forwards;
+          position: relative;
+          z-index: 10;
         }
 
         .hero-view-label {
@@ -819,11 +821,15 @@ export default function HomePage() {
           position: relative;
           width: 36px;
           height: 18px;
+          padding: 0;
+          appearance: none;
+          -webkit-appearance: none;
           background: var(--contraband-dark-gray);
           border: 1px solid var(--contraband-mid-gray);
           border-radius: 9px;
           cursor: pointer;
           transition: background 0.3s ease, border-color 0.3s ease;
+          outline: none;
         }
 
         .hero-view-switch::after {
