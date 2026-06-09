@@ -1,23 +1,24 @@
-import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { requireUser, readJson } from '@/lib/supabase/auth';
+
+interface PushSubscriptionBody {
+  subscription?: {
+    endpoint?: string;
+    keys?: { p256dh?: string; auth?: string };
+  };
+}
 
 // POST - Save push subscription
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
-  }
+  const parsed = await readJson<PushSubscriptionBody>(request);
+  if (parsed.error) return parsed.error;
+  const { subscription } = parsed.body;
 
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { subscription } = await request.json();
-
-  if (!subscription || !subscription.endpoint || !subscription.keys) {
+  if (!subscription?.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
     return NextResponse.json({ error: 'Invalid subscription data' }, { status: 400 });
   }
 
@@ -33,7 +34,8 @@ export async function POST(request: Request) {
     });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Failed to save push subscription:', error.message);
+    return NextResponse.json({ error: 'Failed to save subscription' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });
@@ -41,19 +43,13 @@ export async function POST(request: Request) {
 
 // DELETE - Remove push subscription
 export async function DELETE(request: Request) {
-  const supabase = await createClient();
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { endpoint } = await request.json();
+  const parsed = await readJson<{ endpoint?: string }>(request);
+  if (parsed.error) return parsed.error;
+  const { endpoint } = parsed.body;
 
   if (!endpoint) {
     return NextResponse.json({ error: 'Missing endpoint' }, { status: 400 });
@@ -66,7 +62,8 @@ export async function DELETE(request: Request) {
     .eq('endpoint', endpoint);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Failed to delete push subscription:', error.message);
+    return NextResponse.json({ error: 'Failed to delete subscription' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

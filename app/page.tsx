@@ -37,6 +37,8 @@ interface HeroArc {
 
 export default function HomePage() {
   const [email, setEmail] = useState('');
+  const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [subscribeMessage, setSubscribeMessage] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const [heroArcs, setHeroArcs] = useState<HeroArc[]>([]);
   const { isLightMode, toggleTheme } = useTheme();
@@ -82,10 +84,34 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [createHeroArc]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle subscription
-    console.log('Subscribe:', email);
+    if (subscribeStatus === 'loading') return;
+
+    setSubscribeStatus('loading');
+    setSubscribeMessage('');
+
+    try {
+      const res = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setSubscribeStatus('error');
+        setSubscribeMessage(data.error || 'Something went wrong. Please try again.');
+        return;
+      }
+
+      setSubscribeStatus('success');
+      setSubscribeMessage("You're on the list. Welcome aboard.");
+      setEmail('');
+    } catch {
+      setSubscribeStatus('error');
+      setSubscribeMessage('Network error. Please try again.');
+    }
   };
 
   return (
@@ -408,7 +434,7 @@ export default function HomePage() {
           justify-content: center;
           align-items: center;
           position: relative;
-          padding: 0 3rem;
+          padding: 7rem 3rem 3rem;
         }
 
         .contraband-hero-symbol {
@@ -1042,7 +1068,7 @@ export default function HomePage() {
           }
 
           .contraband-hero {
-            padding: 0 2rem;
+            padding: 5rem 2rem 2rem;
           }
 
           .hero-map-container {
@@ -1101,9 +1127,9 @@ export default function HomePage() {
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
             <Link href="/network">Network</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about">About</Link>
           </div>
           <div className="contraband-nav-right">
@@ -1127,9 +1153,9 @@ export default function HomePage() {
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
             <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
           </nav>
         </div>
@@ -1299,10 +1325,22 @@ export default function HomePage() {
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={subscribeStatus === 'loading' || subscribeStatus === 'success'}
                 required
               />
-              <button type="submit">Subscribe</button>
+              <button type="submit" disabled={subscribeStatus === 'loading' || subscribeStatus === 'success'}>
+                {subscribeStatus === 'loading' ? 'Joining...' : subscribeStatus === 'success' ? 'Joined' : 'Subscribe'}
+              </button>
             </form>
+            {subscribeMessage && (
+              <p
+                className="contraband-subscribe-message"
+                role="status"
+                style={{ color: subscribeStatus === 'error' ? '#ef4444' : '#22c55e' }}
+              >
+                {subscribeMessage}
+              </p>
+            )}
           </div>
         </section>
 

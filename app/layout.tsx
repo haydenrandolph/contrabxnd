@@ -28,7 +28,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Apply the saved theme before hydration to avoid a flash of the
+            wrong theme and to keep the <html>-level class in sync. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('contraband-theme')==='light'){document.documentElement.classList.add('light-mode')}}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
         <ThemeProvider>
           <AuthProvider>

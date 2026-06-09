@@ -1,19 +1,11 @@
-import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { requireUser, readJson } from '@/lib/supabase/auth';
 
 // GET - Fetch all progress for current user
 export async function GET() {
-  const supabase = await createClient();
-
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
-  }
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
   const { data, error } = await supabase
     .from('lesson_progress')
@@ -22,7 +14,8 @@ export async function GET() {
     .order('completed_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Failed to load progress:', error.message);
+    return NextResponse.json({ error: 'Failed to load progress' }, { status: 500 });
   }
 
   return NextResponse.json({ progress: data });
@@ -30,23 +23,23 @@ export async function GET() {
 
 // POST - Mark a lesson as complete
 export async function POST(request: Request) {
-  const supabase = await createClient();
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
-  }
+  const parsed = await readJson<{
+    courseSlug?: unknown;
+    lessonSlug?: unknown;
+    completed?: boolean;
+  }>(request);
+  if (parsed.error) return parsed.error;
+  const { courseSlug, lessonSlug, completed } = parsed.body;
 
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { courseSlug, lessonSlug, completed } = await request.json();
-
-  if (!courseSlug || !lessonSlug) {
+  if (typeof courseSlug !== 'string' || !courseSlug || typeof lessonSlug !== 'string' || !lessonSlug) {
     return NextResponse.json({ error: 'Missing course or lesson slug' }, { status: 400 });
   }
+
+  const isCompleted = completed ?? true;
 
   // Upsert progress record
   const { data, error } = await supabase
@@ -55,8 +48,8 @@ export async function POST(request: Request) {
       user_id: user.id,
       course_slug: courseSlug,
       lesson_slug: lessonSlug,
-      completed: completed ?? true,
-      completed_at: completed ? new Date().toISOString() : null,
+      completed: isCompleted,
+      completed_at: isCompleted ? new Date().toISOString() : null,
     }, {
       onConflict: 'user_id,course_slug,lesson_slug',
     })
@@ -64,7 +57,8 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Failed to save progress:', error.message);
+    return NextResponse.json({ error: 'Failed to save progress' }, { status: 500 });
   }
 
   return NextResponse.json({ progress: data });

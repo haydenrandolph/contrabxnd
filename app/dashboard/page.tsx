@@ -129,9 +129,9 @@ export default function DashboardPage() {
         setNetworkData(prev => ({
           ...prev,
           price: data.price,
-          change24h: data.change24h,
-          marketCap: data.marketCap,
-          volume24h: data.volume24h,
+          change24h: data.change24h ?? 0,
+          marketCap: data.marketCap ?? 0,
+          volume24h: data.volume24h ?? 0,
         }));
       }
     } catch (error) {
@@ -1576,9 +1576,9 @@ export default function DashboardPage() {
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
             <Link href="/network">Network</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about">About</Link>
           </div>
           <div className="dashboard-nav-right">
@@ -1616,9 +1616,9 @@ export default function DashboardPage() {
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
             <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
           </nav>
         </div>
@@ -1629,7 +1629,7 @@ export default function DashboardPage() {
             <div className="price-display">
               <span className="price-value">{formatPrice(networkData.price)}</span>
               <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
-                {networkData.change24h >= 0 ? '+' : ''}{networkData.change24h.toFixed(2)}%
+                {(networkData.change24h ?? 0) >= 0 ? '+' : ''}{(networkData.change24h ?? 0).toFixed(2)}%
               </span>
               <button className="set-alert-btn" onClick={() => setShowAlertModal(true)}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

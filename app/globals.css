@@ -29,6 +29,15 @@ body {
   line-height: 1.7;
 }
 
+/* Theme is driven by a `light-mode` class on <html> (set pre-hydration by an
+   inline script in the root layout and toggled at runtime by ThemeContext).
+   Keep the body in sync so light mode doesn't leak the dark background at
+   page edges / iOS overscroll. */
+html.light-mode body {
+  background: var(--contraband-white);
+  color: var(--contraband-black);
+}
+
 /* Hide scrollbar for horizontal scroll sections */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -43,4 +52,62 @@ body {
 .will-change-transform {
   will-change: transform;
   transform: translateZ(0);
+}
+
+/* ---------------------------------------------------------------------------
+   Light-mode overrides for the body-level auth modals (SignIn / SignUp).
+   These use global `.auth-*` classes and render outside any page's theme
+   root (mounted from the layout via <AuthModals/>), so the overrides key off
+   the <html>.light-mode class instead of a page-level wrapper.
+   --------------------------------------------------------------------------- */
+html.light-mode .auth-modal {
+  background: #ffffff;
+  border-color: #c8c4bc;
+}
+
+html.light-mode .auth-modal-header {
+  border-bottom-color: #e0dcd4;
+}
+
+html.light-mode .auth-modal-title {
+  color: #0a0a0a;
+}
+
+html.light-mode .auth-modal-close {
+  border-color: #c8c4bc;
+}
+
+html.light-mode .auth-modal-close svg {
+  stroke: #5a5a5a;
+}
+
+html.light-mode .auth-label {
+  color: #6a6a6a;
+}
+
+html.light-mode .auth-input {
+  background: #f5f3f0;
+  border-color: #d8d4cc;
+  color: #0a0a0a;
+}
+
+html.light-mode .auth-input::placeholder {
+  color: #a0a0a0;
+}
+
+html.light-mode .auth-switch {
+  border-top-color: #e0dcd4;
+  color: #6a6a6a;
+}
+
+html.light-mode .auth-hint {
+  color: #6a6a6a;
+}
+
+html.light-mode .auth-success-title {
+  color: #0a0a0a;
+}
+
+html.light-mode .auth-success-text {
+  color: #6a6a6a;
 }

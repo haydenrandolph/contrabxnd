@@ -4,61 +4,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { COURSE, WEEKS } from '@/lib/lessons';
 
 export default function BoardingPassCoursePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { isLightMode, toggleTheme } = useTheme();
 
-  const outcomes = [
-    "What Bitcoin actually is—the technology, the network, and why it matters",
-    "Why 21 million is the number that changes everything",
-    "How to buy Bitcoin safely without getting scammed",
-    "The difference between custodial and self-custody wallets",
-    "How to spot scams, shitcoins, and bad advice",
-    "The philosophical case for Bitcoin as freedom technology"
-  ];
-
-  const weeks = [
-    {
-      number: 'Week 1',
-      title: 'Understanding Bitcoin',
-      lessons: [
-        { number: '01', title: 'What Is Bitcoin, Actually?', description: 'Forget what you\'ve heard. Let\'s start from zero.', duration: '12 min', slug: 'what-is-bitcoin-actually' },
-        { number: '02', title: 'The Problem Bitcoin Solves', description: 'Digital scarcity and the double-spend problem.', duration: '15 min', slug: 'the-problem-bitcoin-solves' },
-        { number: '03', title: '21 Million: The Number That Changes Everything', description: 'Why Bitcoin\'s fixed supply is its superpower.', duration: '14 min', slug: '21-million-the-number-that-changes-everything' },
-        { number: '04', title: 'How the Network Works', description: 'Nodes, miners, and the blockchain—demystified.', duration: '18 min', slug: 'how-the-network-works' },
-        { number: '05', title: 'Bitcoin vs. "Crypto"', description: 'Why Bitcoin is different and why that matters.', duration: '12 min', slug: 'bitcoin-vs-crypto' },
-        { number: '06', title: 'A Brief History: 2008 to Now', description: 'From cypherpunks to institutional adoption.', duration: '16 min', slug: 'a-brief-history-2008-to-now' },
-        { number: '07', title: 'The Philosophy: Why This Exists', description: 'Freedom, sovereignty, and opting out.', duration: '14 min', slug: 'the-philosophy-why-this-exists' }
-      ]
-    },
-    {
-      number: 'Week 2',
-      title: 'Getting Started',
-      lessons: [
-        { number: '08', title: 'Ways to Acquire Bitcoin', description: 'Exchanges, P2P, earning, and more.', duration: '15 min', slug: 'ways-to-acquire-bitcoin' },
-        { number: '09', title: 'Choosing an Exchange', description: 'What to look for and what to avoid.', duration: '12 min', slug: 'choosing-an-exchange' },
-        { number: '10', title: 'Your First Purchase', description: 'Step-by-step: buying your first sats.', duration: '10 min', slug: 'your-first-purchase' },
-        { number: '11', title: 'Understanding Wallets', description: 'Hot, cold, custodial, non-custodial—explained.', duration: '16 min', slug: 'understanding-wallets' },
-        { number: '12', title: 'Your First Wallet', description: 'Setting up a mobile wallet for beginners.', duration: '12 min', slug: 'your-first-wallet' },
-        { number: '13', title: 'Sending and Receiving', description: 'Addresses, transactions, and fees.', duration: '14 min', slug: 'sending-and-receiving' },
-        { number: '14', title: 'The Seed Phrase: Your Master Key', description: 'What it is, why it matters, how to protect it.', duration: '15 min', slug: 'the-seed-phrase-your-master-key' }
-      ]
-    },
-    {
-      number: 'Week 3',
-      title: 'Thinking Long-Term',
-      lessons: [
-        { number: '15', title: 'DCA: The Boring Strategy That Works', description: 'Why time in the market beats timing the market.', duration: '12 min', slug: 'dca-the-boring-strategy-that-works' },
-        { number: '16', title: 'Volatility: Feature, Not Bug', description: 'How to think about price swings.', duration: '14 min', slug: 'volatility-feature-not-bug' },
-        { number: '17', title: 'Common Scams and How to Avoid Them', description: 'If it sounds too good to be true...', duration: '16 min', slug: 'common-scams-and-how-to-avoid-them' },
-        { number: '18', title: 'Shitcoins: Why Bitcoin Only', description: 'The case for focus over diversification.', duration: '15 min', slug: 'shitcoins-why-bitcoin-only' },
-        { number: '19', title: 'Bitcoin and Taxes', description: 'What you need to know (and track).', duration: '12 min', slug: 'bitcoin-and-taxes' },
-        { number: '20', title: 'The Road to Self-Custody', description: 'Why you should take your coins off the exchange.', duration: '14 min', slug: 'the-road-to-self-custody' },
-        { number: '21', title: 'What\'s Next: Your Sovereign Journey', description: 'Where to go from here.', duration: '10 min', slug: 'whats-next-your-sovereign-journey' }
-      ]
-    }
-  ];
+  const outcomes = COURSE.outcomes;
+  const weeks = WEEKS;
 
   return (
     <>
@@ -1140,9 +1093,9 @@ export default function BoardingPassCoursePage() {
           <div className="course-nav-links">
             <Link href="/learn" className="active">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about">About</Link>
             <Link href="/">Hank C. Moody</Link>
           </div>
@@ -1162,9 +1115,9 @@ export default function BoardingPassCoursePage() {
           <nav className="mobile-menu-nav">
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
             <Link href="/" onClick={() => setMenuOpen(false)}>Hank C. Moody</Link>
           </nav>
@@ -1227,30 +1180,19 @@ export default function BoardingPassCoursePage() {
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="week-block">
               <div className="week-header">
-                <span className="week-number">{week.number}</span>
+                <span className="week-number">{week.label}</span>
                 <span className="week-title">{week.title}</span>
               </div>
               <div className="lessons-list">
                 {week.lessons.map((lesson, lessonIndex) => (
-                  lesson.slug ? (
-                    <Link key={lessonIndex} href={`/learn/boarding-pass/${lesson.slug}`} className="lesson-item">
-                      <span className="lesson-number">{lesson.number}</span>
-                      <div className="lesson-content">
-                        <h4>{lesson.title}</h4>
-                        <p>{lesson.description}</p>
-                      </div>
-                      <span className="lesson-duration">{lesson.duration}</span>
-                    </Link>
-                  ) : (
-                    <a key={lessonIndex} href="#" className="lesson-item">
-                      <span className="lesson-number">{lesson.number}</span>
-                      <div className="lesson-content">
-                        <h4>{lesson.title}</h4>
-                        <p>{lesson.description}</p>
-                      </div>
-                      <span className="lesson-duration">{lesson.duration}</span>
-                    </a>
-                  )
+                  <Link key={lessonIndex} href={`/learn/boarding-pass/${lesson.slug}`} className="lesson-item">
+                    <span className="lesson-number">{lesson.number}</span>
+                    <div className="lesson-content">
+                      <h4>{lesson.title}</h4>
+                      <p>{lesson.description}</p>
+                    </div>
+                    <span className="lesson-duration">{lesson.duration}</span>
+                  </Link>
                 ))}
               </div>
             </div>

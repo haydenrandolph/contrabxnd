@@ -1100,9 +1100,9 @@ export default function NetworkPage() {
             <Link href="/learn">Stu₿y</Link>
             <Link href="/writings">Writings</Link>
             <Link href="/network" className="active">Network</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about">About</Link>
           </div>
           <div className="network-nav-right">
@@ -1125,9 +1125,9 @@ export default function NetworkPage() {
             <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
             <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
             <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
-            <a href="#podcasts" className="coming-soon">Podcasts</a>
-            <a href="#videos" className="coming-soon">Videos</a>
-            <a href="#merch" className="coming-soon">Merch</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
+            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
             <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
           </nav>
         </div>

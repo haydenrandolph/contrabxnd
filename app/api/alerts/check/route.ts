@@ -1,25 +1,21 @@
-import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
+import { requireUser } from '@/lib/supabase/auth';
+import { getBitcoinPrice } from '@/lib/price';
+import { sendPushNotification } from '@/lib/push/sendPush';
 
-// POST - Check and trigger alerts for current price
-export async function POST(request: Request) {
-  const supabase = await createClient();
+// POST - Check and trigger the current user's alerts against the live price.
+// The price is fetched server-side (never trusted from the client) so a user
+// can't force-trigger their own alerts by POSTing an arbitrary number.
+export async function POST() {
+  const auth = await requireUser();
+  if (auth.error) return auth.error;
+  const { supabase, user } = auth;
 
-  if (!supabase) {
-    return NextResponse.json({ error: 'Auth not configured' }, { status: 503 });
+  const priceResult = await getBitcoinPrice();
+  if (!priceResult) {
+    return NextResponse.json({ error: 'Could not determine current price' }, { status: 503 });
   }
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { currentPrice } = await request.json();
-
-  if (!currentPrice || typeof currentPrice !== 'number') {
-    return NextResponse.json({ error: 'Invalid current price' }, { status: 400 });
-  }
+  const currentPrice = priceResult.data.price;
 
   // Get user's untriggered alerts
   const { data: alerts, error: fetchError } = await supabase
@@ -29,7 +25,8 @@ export async function POST(request: Request) {
     .eq('triggered', false);
 
   if (fetchError) {
-    return NextResponse.json({ error: fetchError.message }, { status: 500 });
+    console.error('Failed to load alerts:', fetchError.message);
+    return NextResponse.json({ error: 'Failed to load alerts' }, { status: 500 });
   }
 
   const triggeredAlerts = [];
@@ -61,8 +58,14 @@ export async function POST(request: Request) {
           }
         }
 
-        // TODO: Send push notification if enabled
-        // if (alert.notify_push) { ... }
+        // Send push notification if enabled
+        if (alert.notify_push) {
+          try {
+            await sendAlertPush(supabase, user.id, alert, currentPrice);
+          } catch (e) {
+            console.error('Failed to send alert push:', e);
+          }
+        }
       }
     }
   }
@@ -70,8 +73,39 @@ export async function POST(request: Request) {
   return NextResponse.json({
     checked: alerts?.length || 0,
     triggered: triggeredAlerts.length,
+    price: currentPrice,
     alerts: triggeredAlerts,
   });
+}
+
+async function sendAlertPush(
+  supabase: Awaited<ReturnType<typeof requireUser>>['supabase'],
+  userId: string,
+  alert: { target_price: number; direction: string },
+  currentPrice: number,
+) {
+  if (!supabase) return;
+
+  const { data: subscriptions } = await supabase
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth')
+    .eq('user_id', userId);
+
+  if (!subscriptions?.length) return;
+
+  const direction = alert.direction === 'above' ? 'risen above' : 'fallen below';
+  const formattedTarget = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(alert.target_price);
+
+  await Promise.all(
+    subscriptions.map((sub) =>
+      sendPushNotification(sub, {
+        title: 'Bitcoin Price Alert',
+        body: `Bitcoin has ${direction} ${formattedTarget}.`,
+        url: '/dashboard',
+        tag: 'price-alert',
+      }),
+    ),
+  );
 }
 
 async function sendAlertEmail(email: string, alert: { target_price: number; direction: string }, currentPrice: number) {
