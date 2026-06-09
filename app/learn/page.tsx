@@ -689,7 +689,7 @@ export default function LearnPage() {
           color: #F7931A;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 768px) {
           .courses-grid {
             grid-template-columns: 1fr;
           }
@@ -698,9 +698,7 @@ export default function LearnPage() {
             grid-template-columns: 1fr;
             gap: 1rem;
           }
-        }
 
-        @media (max-width: 768px) {
           .learn-nav {
             padding: 1.5rem 2rem;
             z-index: 1000;
@@ -923,7 +921,7 @@ export default function LearnPage() {
             <div className="learn-footer-links">
               <a href="https://x.com/contrabxnd" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://youtube.com/@contrabxnd" target="_blank" rel="noopener noreferrer">YouTube</a>
-              <a href="#">RSS</a>
+              <a style={{ textDecoration: 'line-through', opacity: 0.5, cursor: 'not-allowed' }} aria-disabled="true" aria-label="RSS — coming soon">RSS</a>
             </div>
           </div>
         </footer>

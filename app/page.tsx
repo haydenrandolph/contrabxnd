@@ -1019,7 +1019,7 @@ export default function HomePage() {
           color: var(--contraband-rust);
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 768px) {
           .contraband-nav {
             padding: 1.5rem 2rem;
           }
@@ -1359,7 +1359,7 @@ export default function HomePage() {
             <div className="contraband-footer-links">
               <a href="https://x.com/contrabxnd" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://youtube.com/@contrabxnd" target="_blank" rel="noopener noreferrer">YouTube</a>
-              <a href="#">RSS</a>
+              <a style={{ textDecoration: 'line-through', opacity: 0.5, cursor: 'not-allowed' }} aria-disabled="true" aria-label="RSS — coming soon">RSS</a>
             </div>
           </div>
         </footer>

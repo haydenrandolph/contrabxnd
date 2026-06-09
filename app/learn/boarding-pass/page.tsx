@@ -1227,7 +1227,7 @@ export default function BoardingPassCoursePage() {
               <a href="https://x.com/hankCmoody" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://youtube.com/@hankcmoody" target="_blank" rel="noopener noreferrer">YouTube</a>
               <a href="https://hankcmoody.substack.com" target="_blank" rel="noopener noreferrer">Substack</a>
-              <a href="#">RSS</a>
+              <a style={{ textDecoration: 'line-through', opacity: 0.5, cursor: 'not-allowed' }} aria-disabled="true" aria-label="RSS — coming soon">RSS</a>
             </div>
           </div>
         </footer>
