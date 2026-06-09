@@ -809,73 +809,56 @@ export default function HomePage() {
         }
 
         .hero-view-toggle {
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
-          margin-bottom: 1rem;
+          gap: 0;
+          margin-bottom: 1.5rem;
           opacity: 0;
           animation: fadeUp 1s ease 0.1s forwards;
           position: relative;
           z-index: 1001;
           pointer-events: auto;
+          background: var(--contraband-off-black);
+          border: 1px solid var(--contraband-mid-gray);
+          border-radius: 6px;
+          overflow: hidden;
+        }
+
+        .contraband-page.light-mode .hero-view-toggle {
+          background: var(--contraband-white);
+          border-color: #c8c4bc;
         }
 
         .hero-view-label {
-          font-size: 10px;
+          font-size: 11px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
           color: var(--contraband-light-gray);
-          transition: color 0.3s ease;
+          transition: all 0.3s ease;
           cursor: pointer;
           pointer-events: auto;
           user-select: none;
+          padding: 0.5rem 1.25rem;
+          background: transparent;
+          border: none;
+          font-family: var(--contraband-font-mono);
         }
 
         .hero-view-label:hover {
-          color: var(--contraband-rust);
+          color: var(--contraband-cream);
+        }
+
+        .contraband-page.light-mode .hero-view-label:hover {
+          color: var(--contraband-black);
         }
 
         .hero-view-label.active {
-          color: var(--contraband-rust);
-        }
-
-        .hero-view-switch {
-          position: relative;
-          width: 36px;
-          height: 18px;
-          padding: 0;
-          margin: 0;
-          appearance: none;
-          -webkit-appearance: none;
-          background: var(--contraband-dark-gray);
-          border: 1px solid var(--contraband-mid-gray);
-          border-radius: 9px;
-          cursor: pointer;
-          transition: background 0.3s ease, border-color 0.3s ease;
-          outline: none;
-          pointer-events: auto;
-        }
-
-        .hero-view-switch::after {
-          content: '';
-          position: absolute;
-          top: 2px;
-          left: 2px;
-          width: 12px;
-          height: 12px;
+          color: var(--contraband-cream);
           background: var(--contraband-rust);
-          border-radius: 50%;
-          transition: transform 0.3s ease;
         }
 
-        .hero-view-switch.chart::after {
-          transform: translateX(18px);
-        }
-
-        .contraband-page.light-mode .hero-view-switch {
-          background: #d8d4cc;
-          border-color: #c8c4bc;
+        .contraband-page.light-mode .hero-view-label.active {
+          color: #fff;
         }
 
         .hero-chart-container {
@@ -956,23 +939,18 @@ export default function HomePage() {
 
         <section className="contraband-hero">
           <div className="hero-view-toggle">
-            <span
+            <button
               className={`hero-view-label ${heroView === 'map' ? 'active' : ''}`}
               onClick={() => setHeroView('map')}
             >
               Network
-            </span>
+            </button>
             <button
-              className={`hero-view-switch ${heroView === 'chart' ? 'chart' : ''}`}
-              onClick={() => setHeroView(prev => prev === 'map' ? 'chart' : 'map')}
-              aria-label="Toggle between network map and price chart"
-            />
-            <span
               className={`hero-view-label ${heroView === 'chart' ? 'active' : ''}`}
               onClick={() => setHeroView('chart')}
             >
               Price
-            </span>
+            </button>
           </div>
 
           <div className="hero-chart-container" style={{ display: heroView === 'chart' ? 'block' : 'none' }}>
