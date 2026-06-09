@@ -434,7 +434,7 @@ export default function HomePage() {
           justify-content: center;
           align-items: center;
           position: relative;
-          padding: 0 3rem;
+          padding: 7rem 3rem 3rem;
         }
 
         .contraband-hero-symbol {
@@ -1068,7 +1068,7 @@ export default function HomePage() {
           }
 
           .contraband-hero {
-            padding: 0 2rem;
+            padding: 5rem 2rem 2rem;
           }
 
           .hero-map-container {

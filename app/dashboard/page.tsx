@@ -129,9 +129,9 @@ export default function DashboardPage() {
         setNetworkData(prev => ({
           ...prev,
           price: data.price,
-          change24h: data.change24h,
-          marketCap: data.marketCap,
-          volume24h: data.volume24h,
+          change24h: data.change24h ?? 0,
+          marketCap: data.marketCap ?? 0,
+          volume24h: data.volume24h ?? 0,
         }));
       }
     } catch (error) {
@@ -1629,7 +1629,7 @@ export default function DashboardPage() {
             <div className="price-display">
               <span className="price-value">{formatPrice(networkData.price)}</span>
               <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
-                {networkData.change24h >= 0 ? '+' : ''}{networkData.change24h.toFixed(2)}%
+                {(networkData.change24h ?? 0) >= 0 ? '+' : ''}{(networkData.change24h ?? 0).toFixed(2)}%
               </span>
               <button className="set-alert-btn" onClick={() => setShowAlertModal(true)}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -47,9 +47,9 @@ export async function getBitcoinPrice(): Promise<BitcoinPriceResult | null> {
     if (data.bitcoin && typeof data.bitcoin.usd === 'number') {
       cachedPrice = {
         price: data.bitcoin.usd,
-        change24h: data.bitcoin.usd_24h_change,
-        marketCap: data.bitcoin.usd_market_cap,
-        volume24h: data.bitcoin.usd_24h_vol,
+        change24h: data.bitcoin.usd_24h_change ?? 0,
+        marketCap: data.bitcoin.usd_market_cap ?? 0,
+        volume24h: data.bitcoin.usd_24h_vol ?? 0,
       };
       lastFetch = now;
       return { data: cachedPrice, cached: false };
