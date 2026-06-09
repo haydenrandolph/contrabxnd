@@ -213,18 +213,60 @@ export default function HomePage() {
           border-color: #d0ccc4;
         }
 
+        .contraband-page.light-mode .contraband-subscribe-title {
+          color: var(--contraband-black);
+        }
+
+        .contraband-page.light-mode .contraband-subscribe-text {
+          color: #5a5a5a;
+        }
+
         .contraband-page.light-mode .contraband-subscribe-form input {
-          background: var(--contraband-cream);
+          background: #f5f3f0;
           border-color: #d0ccc4;
           color: var(--contraband-black);
         }
 
         .contraband-page.light-mode .contraband-subscribe-form input::placeholder {
-          color: var(--contraband-mid-gray);
+          color: #a0a0a0;
         }
 
         .contraband-page.light-mode .contraband-section-header {
           border-color: #d0ccc4;
+        }
+
+        .contraband-page.light-mode .contraband-featured {
+          border-color: #d0ccc4;
+        }
+
+        .contraband-page.light-mode .contraband-featured-content {
+          background: var(--contraband-white);
+        }
+
+        .contraband-page.light-mode .contraband-featured-image {
+          background: #d0ccc4;
+        }
+
+        .contraband-page.light-mode .contraband-featured-excerpt {
+          color: #5a5a5a;
+        }
+
+        .contraband-page.light-mode .contraband-btn {
+          border-color: var(--contraband-black);
+          color: var(--contraband-black);
+        }
+
+        .contraband-page.light-mode .contraband-btn:hover {
+          background: var(--contraband-black);
+          color: var(--contraband-cream);
+        }
+
+        .contraband-page.light-mode .contraband-card-excerpt {
+          color: #5a5a5a;
+        }
+
+        .contraband-page.light-mode .contraband-card-meta {
+          color: #6a6a6a;
         }
 
         .contraband-page::before {
@@ -473,6 +515,18 @@ export default function HomePage() {
           margin-top: 2rem;
           opacity: 0;
           animation: fadeUp 1s ease 0.7s forwards;
+        }
+
+        .contraband-page.light-mode .contraband-hero-tagline {
+          color: var(--contraband-mid-gray);
+        }
+
+        .contraband-page.light-mode .contraband-hero-title {
+          color: var(--contraband-black);
+        }
+
+        .contraband-page.light-mode .contraband-scroll-indicator span {
+          color: #6a6a6a;
         }
 
         .contraband-scroll-indicator {

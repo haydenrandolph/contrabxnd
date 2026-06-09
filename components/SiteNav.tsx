@@ -53,8 +53,11 @@ export default function SiteNav({
           align-items: center;
           z-index: 100;
         }
-        .site-nav.blend {
+        .site-nav.blend:not(.light) {
           mix-blend-mode: difference;
+        }
+        .site-nav.blend.light {
+          background: linear-gradient(to bottom, rgba(232, 228, 220, 0.9) 0%, transparent 100%);
         }
         .site-nav:not(.blend) {
           background: linear-gradient(to bottom, #0a0a0a 0%, transparent 100%);
@@ -74,7 +77,7 @@ export default function SiteNav({
         .site-nav.light .back-link {
           color: #0a0a0a;
         }
-        .site-nav.blend .logo-link {
+        .site-nav.blend:not(.light) .logo-link {
           color: #f5f3f0;
         }
         .logo-text {
@@ -120,8 +123,8 @@ export default function SiteNav({
         .site-nav.light .nav-links span {
           color: #0a0a0a;
         }
-        .site-nav.blend .nav-links a,
-        .site-nav.blend .nav-links span {
+        .site-nav.blend:not(.light) .nav-links a,
+        .site-nav.blend:not(.light) .nav-links span {
           color: #f5f3f0;
         }
         .nav-links a::after {
