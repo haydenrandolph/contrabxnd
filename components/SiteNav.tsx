@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import { UserMenu } from '@/components/auth';
+import StreakBadge from '@/components/StreakBadge';
 
 interface SiteNavProps {
   activePath?: string;
@@ -306,6 +307,7 @@ export default function SiteNav({
               <span>{liveIndicator.connected ? 'Live' : 'Connecting...'}</span>
             </div>
           )}
+          <StreakBadge />
           {showUserMenu && <UserMenu />}
           <button
             className={`mobile-menu-btn${menuOpen ? ' open' : ''}`}

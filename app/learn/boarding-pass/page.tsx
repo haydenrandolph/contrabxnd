@@ -8,6 +8,7 @@ import { COURSE, WEEKS } from '@/lib/lessons';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import ThemeToggle from '@/components/ThemeToggle';
+import ShareProgressButton from '@/components/ShareProgressButton';
 
 export default function BoardingPassCoursePage() {
   const { isLightMode } = useTheme();
@@ -798,6 +799,7 @@ export default function BoardingPassCoursePage() {
               <div className="progress-bar-outer">
                 <div className="progress-bar-inner" style={{ width: `${(completedCount / totalLessons) * 100}%` }} />
               </div>
+              <ShareProgressButton />
             </div>
           )}
         </header>

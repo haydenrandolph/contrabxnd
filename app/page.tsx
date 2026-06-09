@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
@@ -41,6 +41,8 @@ export default function HomePage() {
   const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [subscribeMessage, setSubscribeMessage] = useState('');
   const [heroArcs, setHeroArcs] = useState<HeroArc[]>([]);
+  const [heroView, setHeroView] = useState<'map' | 'chart'>('map');
+  const chartContainerRef = useRef<HTMLDivElement>(null);
   const { isLightMode } = useTheme();
 
   // Generate random transaction arcs for the hero map
@@ -83,6 +85,34 @@ export default function HomePage() {
 
     return () => clearInterval(interval);
   }, [createHeroArc]);
+
+  useEffect(() => {
+    if (heroView !== 'chart' || !chartContainerRef.current) return;
+    const container = chartContainerRef.current;
+    container.innerHTML = '';
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.type = 'text/javascript';
+    script.async = true;
+    script.innerHTML = JSON.stringify({
+      autosize: true,
+      symbol: 'BITSTAMP:BTCUSD',
+      interval: 'D',
+      timezone: 'Etc/UTC',
+      theme: isLightMode ? 'light' : 'dark',
+      style: '1',
+      locale: 'en',
+      backgroundColor: isLightMode ? '#f5f3f0' : '#0a0a0a',
+      gridColor: isLightMode ? '#e0dcd4' : '#1a1a1a',
+      hide_top_toolbar: true,
+      hide_legend: true,
+      allow_symbol_change: false,
+      save_image: false,
+      calendar: false,
+      support_host: 'https://www.tradingview.com',
+    });
+    container.appendChild(script);
+  }, [heroView, isLightMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -762,6 +792,83 @@ export default function HomePage() {
           border-color: var(--contraband-rust-light);
         }
 
+        .hero-view-toggle {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          margin-bottom: 1rem;
+          opacity: 0;
+          animation: fadeUp 1s ease 0.1s forwards;
+        }
+
+        .hero-view-label {
+          font-size: 10px;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: var(--contraband-light-gray);
+          transition: color 0.3s ease;
+          cursor: pointer;
+        }
+
+        .hero-view-label.active {
+          color: var(--contraband-rust);
+        }
+
+        .hero-view-switch {
+          position: relative;
+          width: 36px;
+          height: 18px;
+          background: var(--contraband-dark-gray);
+          border: 1px solid var(--contraband-mid-gray);
+          border-radius: 9px;
+          cursor: pointer;
+          transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .hero-view-switch::after {
+          content: '';
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          width: 12px;
+          height: 12px;
+          background: var(--contraband-rust);
+          border-radius: 50%;
+          transition: transform 0.3s ease;
+        }
+
+        .hero-view-switch.chart::after {
+          transform: translateX(18px);
+        }
+
+        .contraband-page.light-mode .hero-view-switch {
+          background: #d8d4cc;
+          border-color: #c8c4bc;
+        }
+
+        .hero-chart-container {
+          position: relative;
+          width: 100%;
+          max-width: 900px;
+          aspect-ratio: 16/8;
+          margin-bottom: 2rem;
+          border-radius: 8px;
+          overflow: hidden;
+          border: 1px solid var(--contraband-dark-gray);
+          opacity: 0;
+          animation: fadeUp 0.6s ease forwards;
+        }
+
+        .contraband-page.light-mode .hero-chart-container {
+          border-color: #d0ccc4;
+        }
+
+        .hero-chart-container .tradingview-widget-container {
+          width: 100%;
+          height: 100%;
+        }
+
         @media (max-width: 768px) {
           .contraband-section {
             padding: 5rem 2rem;
@@ -803,6 +910,12 @@ export default function HomePage() {
             bottom: 0.5rem;
             right: 0.5rem;
           }
+
+          .hero-chart-container {
+            max-width: 100%;
+            aspect-ratio: 16/10;
+            margin-bottom: 1.5rem;
+          }
         }
       `}</style>
 
@@ -811,6 +924,31 @@ export default function HomePage() {
         <SiteNav blendMode />
 
         <section className="contraband-hero">
+          <div className="hero-view-toggle">
+            <span
+              className={`hero-view-label ${heroView === 'map' ? 'active' : ''}`}
+              onClick={() => setHeroView('map')}
+            >
+              Network
+            </span>
+            <button
+              className={`hero-view-switch ${heroView === 'chart' ? 'chart' : ''}`}
+              onClick={() => setHeroView(prev => prev === 'map' ? 'chart' : 'map')}
+              aria-label="Toggle between network map and price chart"
+            />
+            <span
+              className={`hero-view-label ${heroView === 'chart' ? 'active' : ''}`}
+              onClick={() => setHeroView('chart')}
+            >
+              Price
+            </span>
+          </div>
+
+          {heroView === 'chart' ? (
+            <div className="hero-chart-container">
+              <div className="tradingview-widget-container" ref={chartContainerRef} />
+            </div>
+          ) : (
           <Link href="/dashboard" className="hero-map-container">
             <ComposableMap
               projection="geoMercator"
@@ -897,6 +1035,7 @@ export default function HomePage() {
             </div>
             <span className="hero-map-cta">View Live Dashboard →</span>
           </Link>
+          )}
           <h1 className="contraband-hero-title">Contra₿and</h1>
           <p className="contraband-hero-tagline">Ideas that refuse to stay buried</p>
           <p className="contraband-hero-subtitle">Stu₿y · Writings · Podcasts · Videos · Merch</p>

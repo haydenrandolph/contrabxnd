@@ -6,6 +6,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import ThemeToggle from '@/components/ThemeToggle';
+import BookmarkButton from '@/components/BookmarkButton';
+import HighlightPopover from '@/components/HighlightPopover';
 
 interface ArticleLayoutProps {
   article: {
@@ -143,13 +145,21 @@ export default function ArticleLayout({
           margin-bottom: 1.5rem;
         }
 
+        .article-title-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        }
+
         .article-title {
           font-family: 'Cormorant Garamond', serif;
           font-size: 3rem;
           font-weight: 400;
           line-height: 1.1;
-          margin-bottom: 1.5rem;
+          margin-bottom: 0;
           color: #e8e4dc;
+          flex: 1;
         }
 
         .article-page.light-mode .article-title {
@@ -375,7 +385,10 @@ export default function ArticleLayout({
 
           <header className="article-header">
             <div className="article-type">{article.type}</div>
-            <h1 className="article-title">{article.title}</h1>
+            <div className="article-title-row">
+              <h1 className="article-title">{article.title}</h1>
+              <BookmarkButton contentType="article" contentSlug={slug} />
+            </div>
             {article.subtitle && (
               <p className="article-subtitle">{article.subtitle}</p>
             )}
@@ -459,6 +472,8 @@ export default function ArticleLayout({
             </div>
           </section>
         )}
+
+        <HighlightPopover contentType="article" contentSlug={slug} />
 
         <SiteFooter />
       </div>

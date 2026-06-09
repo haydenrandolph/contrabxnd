@@ -8,6 +8,8 @@ import { getLessonNav } from '@/lib/lessons';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import ThemeToggle from '@/components/ThemeToggle';
+import BookmarkButton from '@/components/BookmarkButton';
+import HighlightPopover from '@/components/HighlightPopover';
 
 interface LessonLayoutProps {
   slug: string;
@@ -19,6 +21,17 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
   const { user } = useAuth();
   const [completed, setCompleted] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(docHeight > 0 ? scrollTop / docHeight : 0);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const nav = getLessonNav(slug);
 
@@ -58,6 +71,9 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
   if (!nav) return null;
   const { lesson, total, progress, weekLabel, prev, next } = nav;
+
+  const totalMinutes = parseInt(lesson.duration) || 5;
+  const remainingMinutes = Math.max(1, Math.ceil(totalMinutes * (1 - scrollProgress)));
 
   return (
     <>
@@ -191,12 +207,28 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           color: #8a8a8a;
         }
 
+        .lesson-remaining {
+          font-size: 11px;
+          color: #F7931A;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          transition: opacity 0.3s ease;
+        }
+
+        .lesson-title-row {
+          display: flex;
+          align-items: flex-start;
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+
         .lesson-title {
           font-family: 'Cormorant Garamond', serif;
           font-size: clamp(2rem, 5vw, 3rem);
           font-weight: 400;
           line-height: 1.2;
-          margin-bottom: 1rem;
+          margin-bottom: 0;
+          flex: 1;
         }
 
         .lesson-page.light-mode .lesson-title {
@@ -760,8 +792,14 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
             <span className="lesson-number">Lesson {lesson.number} of {total}</span>
             <span className="lesson-week">{weekLabel}</span>
             <span className="lesson-duration">{lesson.duration} read</span>
+            {scrollProgress > 0.05 && scrollProgress < 0.95 && (
+              <span className="lesson-remaining">{remainingMinutes} min left</span>
+            )}
           </div>
-          <h1 className="lesson-title">{lesson.title}</h1>
+          <div className="lesson-title-row">
+            <h1 className="lesson-title">{lesson.title}</h1>
+            <BookmarkButton contentType="lesson" contentSlug={slug} />
+          </div>
           <p className="lesson-subtitle">{lesson.subtitle}</p>
         </header>
 
@@ -806,6 +844,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
             </svg>
           </Link>
         </nav>
+
+        <HighlightPopover contentType="lesson" contentSlug={slug} />
 
         <SiteFooter variant="instructor" />
       </div>
