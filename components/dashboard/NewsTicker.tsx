@@ -69,14 +69,18 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
             overflow: hidden;
           }
           .ticker-loading {
-            text-align: center;
-            color: #5a5a5a;
-            font-size: 11px;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
           }
         `}</style>
-        <div className="ticker-loading">Loading news feed...</div>
+        <div className="ticker-loading">
+          <span className="skeleton" style={{ width: '120px', height: '12px', display: 'inline-block', marginRight: '2rem' }} />
+          <span className="skeleton" style={{ width: '200px', height: '12px', display: 'inline-block', marginRight: '2rem' }} />
+          <span className="skeleton" style={{ width: '160px', height: '12px', display: 'inline-block', marginRight: '2rem' }} />
+          <span className="skeleton" style={{ width: '180px', height: '12px', display: 'inline-block' }} />
+        </div>
       </div>
     );
   }

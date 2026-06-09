@@ -19,15 +19,11 @@ const NetworkMap = dynamic(() => import('@/components/network/NetworkMap'), {
     <div style={{
       width: '100%',
       height: '100%',
-      background: '#0a0a0a',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      color: '#5a5a5a',
-      fontFamily: 'Space Mono, monospace',
-      fontSize: '12px',
     }}>
-      Loading map...
+      <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: '8px' }} />
     </div>
   ),
 });

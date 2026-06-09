@@ -1,12 +1,29 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LearnPage() {
   const { isLightMode } = useTheme();
+  const { user } = useAuth();
+  const [completedCount, setCompletedCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/progress')
+      .then(r => r.json())
+      .then(data => {
+        const count = (data.progress ?? []).filter(
+          (p: { course_slug: string; completed: boolean }) => p.course_slug === 'boarding-pass' && p.completed
+        ).length;
+        setCompletedCount(count);
+      })
+      .catch(() => {});
+  }, [user]);
 
   const courses = [
     {
@@ -418,6 +435,36 @@ export default function LearnPage() {
           text-transform: uppercase;
         }
 
+        .course-progress {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          margin-top: 1rem;
+          font-size: 11px;
+          color: #8a8a8a;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .course-progress-bar {
+          flex: 1;
+          height: 4px;
+          background: #1a1a1a;
+          border-radius: 2px;
+          overflow: hidden;
+        }
+
+        .learn-page.light-mode .course-progress-bar {
+          background: #d8d4cc;
+        }
+
+        .course-progress-fill {
+          height: 100%;
+          background: #22c55e;
+          border-radius: 2px;
+          transition: width 0.5s ease;
+        }
+
         @media (max-width: 768px) {
           .courses-grid {
             grid-template-columns: 1fr;
@@ -506,6 +553,14 @@ export default function LearnPage() {
                     </div>
                   ))}
                 </div>
+                {user && completedCount > 0 && course.link === '/learn/boarding-pass' && (
+                  <div className="course-progress">
+                    <span>{completedCount}/21</span>
+                    <div className="course-progress-bar">
+                      <div className="course-progress-fill" style={{ width: `${(completedCount / 21) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
                 <a href={course.link} className="course-btn">
                   Start Course
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

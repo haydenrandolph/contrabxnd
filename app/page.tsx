@@ -233,6 +233,11 @@ export default function HomePage() {
           box-shadow: 0 0 40px rgba(247, 147, 26, 0.15);
         }
 
+        .contraband-page.light-mode .hero-map-container {
+          background: radial-gradient(ellipse at center, rgba(181, 103, 58, 0.08) 0%, transparent 70%);
+          box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+        }
+
         .hero-map-container svg {
           position: absolute;
           inset: 0;
@@ -277,6 +282,19 @@ export default function HomePage() {
           border: 1px solid rgba(181, 103, 58, 0.15);
           border-radius: 50%;
           animation: heroSonarPulse 4s ease-out infinite;
+        }
+
+        .contraband-page.light-mode .hero-sonar-ring {
+          border-color: rgba(181, 103, 58, 0.25);
+        }
+
+        .contraband-page.light-mode .hero-radar-sweep {
+          background: conic-gradient(
+            from 0deg,
+            transparent 0deg,
+            rgba(181, 103, 58, 0.18) 30deg,
+            transparent 60deg
+          );
         }
 
         .hero-sonar-ring:nth-child(2) { animation-delay: 1s; }
@@ -812,8 +830,8 @@ export default function HomePage() {
                     <Geography
                       key={`geo-${index}`}
                       geography={geo}
-                      fill="#1a1a1a"
-                      stroke="#b5673a"
+                      fill={isLightMode ? '#d8d4cc' : '#1a1a1a'}
+                      stroke={isLightMode ? '#b5946e' : '#b5673a'}
                       strokeWidth={0.3}
                       style={{
                         default: { outline: 'none' },

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
@@ -34,6 +34,18 @@ export default function ArticleLayout({
 }: ArticleLayoutProps) {
   const { isLightMode } = useTheme();
 
+  const [readProgress, setReadProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setReadProgress(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <>
       <style jsx global>{`
@@ -62,6 +74,26 @@ export default function ArticleLayout({
           opacity: 0.03;
           pointer-events: none;
           z-index: 1000;
+        }
+
+        .article-progress-container {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: #1a1a1a;
+          z-index: 200;
+        }
+
+        .article-page.light-mode .article-progress-container {
+          background: #d8d4cc;
+        }
+
+        .article-progress-bar {
+          height: 100%;
+          background: #F7931A;
+          transition: width 0.3s ease;
         }
 
         .article-container {
@@ -325,6 +357,10 @@ export default function ArticleLayout({
       `}</style>
 
       <div className={`article-page ${isLightMode ? 'light-mode' : ''}`}>
+        <div className="article-progress-container">
+          <div className="article-progress-bar" style={{ width: `${readProgress}%` }} />
+        </div>
+
         <SiteNav activePath="/writings" />
 
         <ThemeToggle />

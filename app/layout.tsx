@@ -37,6 +37,11 @@ export default function RootLayout({
             __html: `try{if(localStorage.getItem('contraband-theme')==='light'){document.documentElement.classList.add('light-mode')}}catch(e){}`,
           }}
         />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `body{opacity:0}`,
+          }}
+        />
       </head>
       <body>
         <ThemeProvider>

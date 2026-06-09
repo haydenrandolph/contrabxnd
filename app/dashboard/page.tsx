@@ -1243,10 +1243,19 @@ export default function DashboardPage() {
           <div className="price-header">
             <div className="price-label">Bitcoin Network</div>
             <div className="price-display">
-              <span className="price-value">{formatPrice(networkData.price)}</span>
-              <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
-                {(networkData.change24h ?? 0) >= 0 ? '+' : ''}{(networkData.change24h ?? 0).toFixed(2)}%
-              </span>
+              {networkData.price === 0 ? (
+                <>
+                  <span className="skeleton" style={{ width: '180px', height: '2rem', display: 'inline-block' }} />
+                  <span className="skeleton" style={{ width: '60px', height: '1rem', display: 'inline-block', marginLeft: '0.75rem' }} />
+                </>
+              ) : (
+                <>
+                  <span className="price-value">{formatPrice(networkData.price)}</span>
+                  <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
+                    {(networkData.change24h ?? 0) >= 0 ? '+' : ''}{(networkData.change24h ?? 0).toFixed(2)}%
+                  </span>
+                </>
+              )}
               <button className="set-alert-btn" onClick={() => setShowAlertModal(true)}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -1370,12 +1379,12 @@ export default function DashboardPage() {
 
               <div className="corner-stat top-left">
                 <div className="stat-label">Block Height</div>
-                <div className="stat-value">{networkData.blockHeight.toLocaleString()}</div>
+                <div className="stat-value">{networkData.blockHeight === 0 ? <span className="skeleton" style={{ width: '80px', height: '1em', display: 'inline-block' }} /> : networkData.blockHeight.toLocaleString()}</div>
               </div>
 
               <div className="corner-stat top-right">
                 <div className="stat-label">Hash Rate</div>
-                <div className="stat-value">{networkData.hashRate.toFixed(1)} EH/s</div>
+                <div className="stat-value">{networkData.hashRate === 0 ? <span className="skeleton" style={{ width: '70px', height: '1em', display: 'inline-block' }} /> : `${networkData.hashRate.toFixed(1)} EH/s`}</div>
               </div>
 
               <div className="corner-stat bottom-left">
@@ -1397,19 +1406,19 @@ export default function DashboardPage() {
               <div className="metrics-grid">
                 <div className="metric-card">
                   <div className="metric-label">Market Cap</div>
-                  <div className="metric-value">${formatNumber(networkData.marketCap)}</div>
+                  <div className="metric-value">{networkData.marketCap === 0 ? <span className="skeleton" style={{ width: '80px', height: '1em', display: 'inline-block' }} /> : `$${formatNumber(networkData.marketCap)}`}</div>
                 </div>
                 <div className="metric-card">
                   <div className="metric-label">24h Volume</div>
-                  <div className="metric-value">${formatNumber(networkData.volume24h)}</div>
+                  <div className="metric-value">{networkData.volume24h === 0 ? <span className="skeleton" style={{ width: '70px', height: '1em', display: 'inline-block' }} /> : `$${formatNumber(networkData.volume24h)}`}</div>
                 </div>
                 <div className="metric-card">
                   <div className="metric-label">Mempool</div>
-                  <div className="metric-value">{formatNumber(networkData.mempoolCount, 0)}</div>
+                  <div className="metric-value">{networkData.mempoolCount === 0 ? <span className="skeleton" style={{ width: '60px', height: '1em', display: 'inline-block' }} /> : formatNumber(networkData.mempoolCount, 0)}</div>
                 </div>
                 <div className="metric-card">
                   <div className="metric-label">Priority Fee</div>
-                  <div className="metric-value">{networkData.priorityFee} sat/vB</div>
+                  <div className="metric-value">{networkData.priorityFee === 0 ? <span className="skeleton" style={{ width: '50px', height: '1em', display: 'inline-block' }} /> : `${networkData.priorityFee} sat/vB`}</div>
                 </div>
               </div>
             </div>

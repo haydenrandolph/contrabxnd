@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useSyncExternalStore, ReactNode } from 'react';
+import React, { createContext, useContext, useCallback, useEffect, useSyncExternalStore, ReactNode } from 'react';
 
 const STORAGE_KEY = 'contraband-theme';
 const THEME_EVENT = 'contraband-theme-change';
@@ -41,6 +41,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, next ? 'light' : 'dark');
     document.documentElement.classList.toggle('light-mode', next);
     window.dispatchEvent(new Event(THEME_EVENT));
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.add('ready');
   }, []);
 
   return (
