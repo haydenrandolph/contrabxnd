@@ -121,6 +121,14 @@ export default function HomePage() {
       save_image: false,
       calendar: false,
       support_host: 'https://www.tradingview.com',
+      overrides: {
+        'mainSeriesProperties.candleStyle.upColor': '#F7931A',
+        'mainSeriesProperties.candleStyle.downColor': isLightMode ? '#c8c4bc' : '#3a3a3a',
+        'mainSeriesProperties.candleStyle.borderUpColor': '#F7931A',
+        'mainSeriesProperties.candleStyle.borderDownColor': isLightMode ? '#a09a90' : '#5a5a5a',
+        'mainSeriesProperties.candleStyle.wickUpColor': '#F7931A',
+        'mainSeriesProperties.candleStyle.wickDownColor': isLightMode ? '#a09a90' : '#5a5a5a',
+      },
     });
     script.onload = () => setChartLoaded(true);
     container.appendChild(script);
