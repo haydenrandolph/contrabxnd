@@ -27,6 +27,11 @@ body {
   font-family: 'Space Mono', monospace;
   font-size: 14px;
   line-height: 1.7;
+  transition: opacity 0.4s ease, background 0.3s ease, color 0.3s ease;
+}
+
+body.ready {
+  opacity: 1;
 }
 
 /* Theme is driven by a `light-mode` class on <html> (set pre-hydration by an
@@ -36,6 +41,18 @@ body {
 html.light-mode body {
   background: var(--contraband-white);
   color: var(--contraband-black);
+}
+
+.contraband-page,
+.lesson-page,
+.course-page,
+.learn-page,
+.writings-page,
+.network-page,
+.account-page,
+.article-page,
+.about-page {
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 /* Hide scrollbar for horizontal scroll sections */
@@ -110,4 +127,33 @@ html.light-mode .auth-success-title {
 
 html.light-mode .auth-success-text {
   color: #6a6a6a;
+}
+
+/* Skeleton loading shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+html.light-mode .skeleton {
+  background: linear-gradient(90deg, #e0dcd4 25%, #ece8e0 50%, #e0dcd4 75%);
+  background-size: 200% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

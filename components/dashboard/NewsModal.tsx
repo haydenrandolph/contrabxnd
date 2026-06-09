@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useCallback } from 'react';
 import type { NewsItem } from '@/lib/news/types';
 
 interface NewsModalProps {
@@ -9,6 +10,28 @@ interface NewsModalProps {
 }
 
 export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps) {
+  const contentRef = useRef<HTMLDivElement>(null);
+  const stableClose = useCallback(() => onClose(), [onClose]);
+
+  useEffect(() => {
+    if (!item) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { stableClose(); return; }
+      if (e.key === 'Tab' && contentRef.current) {
+        const focusable = contentRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    contentRef.current?.querySelector<HTMLElement>('button')?.focus();
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [item, stableClose]);
+
   if (!item) return null;
 
   const getSentimentLabel = (sentiment?: string) => {
@@ -225,7 +248,7 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
       `}</style>
 
       <div className="news-modal-overlay" onClick={onClose}>
-        <div className="news-modal" onClick={e => e.stopPropagation()}>
+        <div className="news-modal" ref={contentRef} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
           <button className="news-modal-close" onClick={onClose}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />

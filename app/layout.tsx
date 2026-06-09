@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import AuthModals from '@/components/auth/AuthModals';
+import SearchModal from '@/components/SearchModal';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
 export const metadata: Metadata = {
@@ -37,12 +38,18 @@ export default function RootLayout({
             __html: `try{if(localStorage.getItem('contraband-theme')==='light'){document.documentElement.classList.add('light-mode')}}catch(e){}`,
           }}
         />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `body{opacity:0}`,
+          }}
+        />
       </head>
       <body>
         <ThemeProvider>
           <AuthProvider>
             {children}
             <AuthModals />
+            <SearchModal />
             <ServiceWorkerRegistration />
           </AuthProvider>
         </ThemeProvider>

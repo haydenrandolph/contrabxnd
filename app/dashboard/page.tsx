@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ComposableMap,
@@ -12,7 +10,8 @@ import {
 } from '@vnedyalk0v/react19-simple-maps';
 import worldAtlas from 'world-atlas/countries-110m.json';
 import { useTheme } from '@/contexts/ThemeContext';
-import { UserMenu } from '@/components/auth';
+import SiteNav from '@/components/SiteNav';
+import ThemeToggle from '@/components/ThemeToggle';
 import { PriceAlertModal, NewsTicker, NewsModal } from '@/components/dashboard';
 import type { NewsItem } from '@/lib/news/types';
 
@@ -110,12 +109,11 @@ export default function DashboardPage() {
   const [arcs, setArcs] = useState<Arc[]>([]);
   const [hoveredNode, setHoveredNode] = useState<number | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-  const { isLightMode, toggleTheme } = useTheme();
+  const { isLightMode } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
 
@@ -428,287 +426,6 @@ export default function DashboardPage() {
         .dashboard-page.light-mode {
           background: #e8e4dc;
           color: #0a0a0a;
-        }
-
-        .dashboard-theme-toggle {
-          position: fixed;
-          bottom: 2rem;
-          right: 2rem;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: #1a1a1a;
-          border: 1px solid #3a3a3a;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          z-index: 1001;
-          transition: all 0.3s ease;
-        }
-
-        .dashboard-theme-toggle:hover {
-          background: #F7931A;
-          border-color: #F7931A;
-          transform: scale(1.1);
-        }
-
-        .dashboard-theme-toggle svg {
-          width: 24px;
-          height: 24px;
-          stroke: #e8e4dc;
-        }
-
-        .dashboard-page.light-mode .dashboard-theme-toggle {
-          background: #f5f3f0;
-          border-color: #c8c4bc;
-        }
-
-        .dashboard-page.light-mode .dashboard-theme-toggle svg {
-          stroke: #0a0a0a;
-        }
-
-        .dashboard-nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          padding: 2rem 3rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          z-index: 100;
-          background: linear-gradient(to bottom, #0a0a0a 0%, transparent 100%);
-        }
-
-        .dashboard-page.light-mode .dashboard-nav {
-          background: linear-gradient(to bottom, #e8e4dc 0%, transparent 100%);
-        }
-
-        .dashboard-logo {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          text-decoration: none;
-          color: #f5f3f0;
-        }
-
-        .dashboard-page.light-mode .dashboard-logo {
-          color: #0a0a0a;
-        }
-
-        .dashboard-logo-text {
-          font-size: 11px;
-          letter-spacing: 0.3em;
-          text-transform: uppercase;
-        }
-
-        .dashboard-nav-links {
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 2.5rem;
-        }
-
-        .dashboard-nav-right {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-        }
-
-        .dashboard-nav-links a {
-          color: #f5f3f0;
-          text-decoration: none;
-          font-size: 11px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          position: relative;
-          padding: 0.25rem 0;
-        }
-
-        .dashboard-page.light-mode .dashboard-nav-links a {
-          color: #0a0a0a;
-        }
-
-        .dashboard-nav-links a::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 0;
-          height: 1px;
-          background: #b5673a;
-          transition: width 0.3s ease;
-        }
-
-        .dashboard-nav-links a:hover::after,
-        .dashboard-nav-links a.active::after {
-          width: 100%;
-        }
-
-        .dashboard-nav-links a.coming-soon {
-          text-decoration: line-through;
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .dashboard-nav-links a.coming-soon:hover::after {
-          width: 0;
-        }
-
-
-        .dashboard-mobile-menu-btn {
-          display: none;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          width: 44px;
-          height: 44px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          z-index: 1001;
-        }
-
-        .dashboard-mobile-menu-btn span {
-          display: block;
-          width: 24px;
-          height: 2px;
-          background: #f5f3f0;
-          transition: all 0.3s ease;
-          margin: 3px 0;
-        }
-
-        .dashboard-page.light-mode .dashboard-mobile-menu-btn span {
-          background: #0a0a0a;
-        }
-
-        .dashboard-mobile-menu-btn.open span:nth-child(1) {
-          transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .dashboard-mobile-menu-btn.open span:nth-child(2) {
-          opacity: 0;
-        }
-
-        .dashboard-mobile-menu-btn.open span:nth-child(3) {
-          transform: rotate(-45deg) translate(6px, -6px);
-        }
-
-        .dashboard-mobile-menu-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: #0a0a0a;
-          z-index: 999;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .dashboard-page.light-mode .dashboard-mobile-menu-overlay {
-          background: #e8e4dc;
-        }
-
-        .dashboard-mobile-menu-overlay.open {
-          opacity: 1;
-          visibility: visible;
-        }
-
-        .dashboard-mobile-menu-nav {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 2rem;
-        }
-
-        .dashboard-mobile-menu-nav a {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 2rem;
-          color: #e8e4dc;
-          text-decoration: none;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          transition: color 0.3s ease;
-        }
-
-        .dashboard-page.light-mode .dashboard-mobile-menu-nav a {
-          color: #0a0a0a;
-        }
-
-        .dashboard-mobile-menu-nav a:active {
-          color: #F7931A;
-        }
-
-        .dashboard-mobile-menu-nav a.coming-soon {
-          text-decoration: line-through;
-          opacity: 0.5;
-        }
-
-        .dashboard-mobile-close-btn {
-          position: absolute;
-          top: 1.5rem;
-          right: 2rem;
-          width: 44px;
-          height: 44px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          z-index: 1002;
-        }
-
-        .dashboard-mobile-close-btn span {
-          display: block;
-          position: absolute;
-          width: 24px;
-          height: 2px;
-          background: #f5f3f0;
-          left: 50%;
-          top: 50%;
-        }
-
-        .dashboard-page.light-mode .dashboard-mobile-close-btn span {
-          background: #0a0a0a;
-        }
-
-        .dashboard-mobile-close-btn span:first-child {
-          transform: translate(-50%, -50%) rotate(45deg);
-        }
-
-        .dashboard-mobile-close-btn span:last-child {
-          transform: translate(-50%, -50%) rotate(-45deg);
-        }
-
-        .live-indicator {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 10px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: #8a8a8a;
-        }
-
-        .live-dot {
-          width: 8px;
-          height: 8px;
-          background: #22c55e;
-          border-radius: 50%;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { opacity: 1; transform: scale(1); }
-          50% { opacity: 0.5; transform: scale(1.2); }
         }
 
         .dashboard-container {
@@ -1461,11 +1178,6 @@ export default function DashboardPage() {
         }
 
         @media (max-width: 1024px) {
-          .dashboard-nav {
-            padding: 1.5rem 2rem;
-            z-index: 1000;
-          }
-
           .dashboard-container {
             flex-direction: column;
           }
@@ -1499,18 +1211,6 @@ export default function DashboardPage() {
             max-height: 200px;
           }
 
-          .dashboard-nav-links {
-            display: none;
-          }
-
-          .live-indicator {
-            display: none;
-          }
-
-          .dashboard-mobile-menu-btn {
-            display: flex;
-          }
-
           .price-header {
             flex-direction: column;
             gap: 0.75rem;
@@ -1536,101 +1236,26 @@ export default function DashboardPage() {
       `}</style>
 
       <div className={`dashboard-page ${isLightMode ? 'light-mode' : ''}`}>
-        {/* Theme Toggle Button */}
-        <button
-          className="dashboard-theme-toggle"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-        >
-          {isLightMode ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="5"/>
-              <line x1="12" y1="1" x2="12" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/>
-              <line x1="21" y1="12" x2="23" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-          )}
-        </button>
-
-        <nav className="dashboard-nav">
-          <Link href="/" className="dashboard-logo">
-            <Image
-              src="/contraband-logo-v3.png"
-              alt="Contraband logo"
-              width={40}
-              height={40}
-            />
-            <span className="dashboard-logo-text">Contra₿and</span>
-          </Link>
-          <div className="dashboard-nav-links">
-            <Link href="/dashboard" className="active">Dashboard</Link>
-            <Link href="/learn">Stu₿y</Link>
-            <Link href="/writings">Writings</Link>
-            <Link href="/network">Network</Link>
-            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
-            <Link href="/about">About</Link>
-          </div>
-          <div className="dashboard-nav-right">
-            <div className="live-indicator">
-              <span className="live-dot" style={{ background: wsConnected ? '#22c55e' : '#f59e0b' }}></span>
-              <span>{wsConnected ? 'Live' : 'Connecting...'}</span>
-            </div>
-            <UserMenu />
-            <button
-              className={`dashboard-mobile-menu-btn ${menuOpen ? 'open' : ''}`}
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
-          </div>
-        </nav>
-
-        <div
-          className={`dashboard-mobile-menu-overlay ${menuOpen ? 'open' : ''}`}
-          onClick={() => setMenuOpen(false)}
-        >
-          <button
-            className="dashboard-mobile-close-btn"
-            onClick={() => setMenuOpen(false)}
-            aria-label="Close menu"
-          >
-            <span></span>
-            <span></span>
-          </button>
-          <nav className="dashboard-mobile-menu-nav" onClick={(e) => e.stopPropagation()}>
-            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-            <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
-            <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
-            <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
-            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
-            <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
-          </nav>
-        </div>
+        <ThemeToggle />
+        <SiteNav activePath="/dashboard" liveIndicator={{ connected: wsConnected }} />
 
         <div className="dashboard-container">
           <div className="price-header">
             <div className="price-label">Bitcoin Network</div>
             <div className="price-display">
-              <span className="price-value">{formatPrice(networkData.price)}</span>
-              <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
-                {(networkData.change24h ?? 0) >= 0 ? '+' : ''}{(networkData.change24h ?? 0).toFixed(2)}%
-              </span>
+              {networkData.price === 0 ? (
+                <>
+                  <span className="skeleton" style={{ width: '180px', height: '2rem', display: 'inline-block' }} />
+                  <span className="skeleton" style={{ width: '60px', height: '1rem', display: 'inline-block', marginLeft: '0.75rem' }} />
+                </>
+              ) : (
+                <>
+                  <span className="price-value">{formatPrice(networkData.price)}</span>
+                  <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
+                    {(networkData.change24h ?? 0) >= 0 ? '+' : ''}{(networkData.change24h ?? 0).toFixed(2)}%
+                  </span>
+                </>
+              )}
               <button className="set-alert-btn" onClick={() => setShowAlertModal(true)}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -1754,12 +1379,12 @@ export default function DashboardPage() {
 
               <div className="corner-stat top-left">
                 <div className="stat-label">Block Height</div>
-                <div className="stat-value">{networkData.blockHeight.toLocaleString()}</div>
+                <div className="stat-value">{networkData.blockHeight === 0 ? <span className="skeleton" style={{ width: '80px', height: '1em', display: 'inline-block' }} /> : networkData.blockHeight.toLocaleString()}</div>
               </div>
 
               <div className="corner-stat top-right">
                 <div className="stat-label">Hash Rate</div>
-                <div className="stat-value">{networkData.hashRate.toFixed(1)} EH/s</div>
+                <div className="stat-value">{networkData.hashRate === 0 ? <span className="skeleton" style={{ width: '70px', height: '1em', display: 'inline-block' }} /> : `${networkData.hashRate.toFixed(1)} EH/s`}</div>
               </div>
 
               <div className="corner-stat bottom-left">
@@ -1781,19 +1406,19 @@ export default function DashboardPage() {
               <div className="metrics-grid">
                 <div className="metric-card">
                   <div className="metric-label">Market Cap</div>
-                  <div className="metric-value">${formatNumber(networkData.marketCap)}</div>
+                  <div className="metric-value">{networkData.marketCap === 0 ? <span className="skeleton" style={{ width: '80px', height: '1em', display: 'inline-block' }} /> : `$${formatNumber(networkData.marketCap)}`}</div>
                 </div>
                 <div className="metric-card">
                   <div className="metric-label">24h Volume</div>
-                  <div className="metric-value">${formatNumber(networkData.volume24h)}</div>
+                  <div className="metric-value">{networkData.volume24h === 0 ? <span className="skeleton" style={{ width: '70px', height: '1em', display: 'inline-block' }} /> : `$${formatNumber(networkData.volume24h)}`}</div>
                 </div>
                 <div className="metric-card">
                   <div className="metric-label">Mempool</div>
-                  <div className="metric-value">{formatNumber(networkData.mempoolCount, 0)}</div>
+                  <div className="metric-value">{networkData.mempoolCount === 0 ? <span className="skeleton" style={{ width: '60px', height: '1em', display: 'inline-block' }} /> : formatNumber(networkData.mempoolCount, 0)}</div>
                 </div>
                 <div className="metric-card">
                   <div className="metric-label">Priority Fee</div>
-                  <div className="metric-value">{networkData.priorityFee} sat/vB</div>
+                  <div className="metric-value">{networkData.priorityFee === 0 ? <span className="skeleton" style={{ width: '50px', height: '1em', display: 'inline-block' }} /> : `${networkData.priorityFee} sat/vB`}</div>
                 </div>
               </div>
             </div>

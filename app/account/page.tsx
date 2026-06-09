@@ -1,12 +1,14 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserMenu } from '@/components/auth';
 import { ProgressBar } from '@/components/courses';
+import SiteNav from '@/components/SiteNav';
+import SiteFooter from '@/components/SiteFooter';
+import ThemeToggle from '@/components/ThemeToggle';
+import ShareProgressButton from '@/components/ShareProgressButton';
 
 interface LessonProgress {
   id: string;
@@ -14,6 +16,21 @@ interface LessonProgress {
   lesson_slug: string;
   completed: boolean;
   completed_at: string | null;
+}
+
+interface Bookmark {
+  content_type: 'article' | 'lesson';
+  content_slug: string;
+  created_at: string;
+}
+
+interface Highlight {
+  id: string;
+  content_type: 'article' | 'lesson';
+  content_slug: string;
+  text: string;
+  note: string | null;
+  created_at: string;
 }
 
 // Course data for progress display
@@ -31,10 +48,13 @@ const COURSES = [
 ];
 
 export default function AccountPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [progress, setProgress] = useState<LessonProgress[]>([]);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [isLoadingProgress, setIsLoadingProgress] = useState(true);
-  const { isLightMode, toggleTheme } = useTheme();
+  const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(true);
+  const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
+  const { isLightMode } = useTheme();
   const { user, profile, isLoading, isConfigured } = useAuth();
 
   // Fetch user progress
@@ -63,10 +83,78 @@ export default function AccountPage() {
     }
   }, [user, isLoading]);
 
+  // Fetch user bookmarks
+  useEffect(() => {
+    const fetchBookmarks = async () => {
+      if (!user) {
+        setIsLoadingBookmarks(false);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/bookmarks');
+        if (res.ok) {
+          const data = await res.json();
+          setBookmarks(data.bookmarks || []);
+        }
+      } catch (error) {
+        console.error('Error fetching bookmarks:', error);
+      } finally {
+        setIsLoadingBookmarks(false);
+      }
+    };
+
+    if (!isLoading) {
+      fetchBookmarks();
+    }
+  }, [user, isLoading]);
+
+  // Fetch user highlights
+  useEffect(() => {
+    const fetchHighlights = async () => {
+      if (!user) {
+        setIsLoadingHighlights(false);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/highlights');
+        if (res.ok) {
+          const data = await res.json();
+          setHighlights(data.highlights || []);
+        }
+      } catch (error) {
+        console.error('Error fetching highlights:', error);
+      } finally {
+        setIsLoadingHighlights(false);
+      }
+    };
+
+    if (!isLoading) {
+      fetchHighlights();
+    }
+  }, [user, isLoading]);
+
   // Calculate progress per course
   const getCourseProgress = (courseSlug: string) => {
     return progress.filter(p => p.course_slug === courseSlug && p.completed).length;
   };
+
+  // Build link for a bookmark
+  const getBookmarkHref = (b: Bookmark) => {
+    if (b.content_type === 'lesson') return `/learn/boarding-pass/${b.content_slug}`;
+    return `/writings/${b.content_slug}`;
+  };
+
+  // Build link for a highlight
+  const getHighlightHref = (h: Highlight) => {
+    if (h.content_type === 'lesson') return `/learn/boarding-pass/${h.content_slug}`;
+    return `/writings/${h.content_slug}`;
+  };
+
+  // Format slug into a readable title
+  const formatSlug = (slug: string) =>
+    slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'User';
 
@@ -98,213 +186,6 @@ export default function AccountPage() {
           opacity: 0.03;
           pointer-events: none;
           z-index: 1000;
-        }
-
-        .account-nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          padding: 2rem 3rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          z-index: 100;
-          background: linear-gradient(to bottom, #0a0a0a 0%, transparent 100%);
-        }
-
-        .account-page.light-mode .account-nav {
-          background: linear-gradient(to bottom, #e8e4dc 0%, transparent 100%);
-        }
-
-        .account-logo {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          text-decoration: none;
-          color: #f5f3f0;
-        }
-
-        .account-page.light-mode .account-logo {
-          color: #0a0a0a;
-        }
-
-        .account-logo-text {
-          font-size: 11px;
-          letter-spacing: 0.3em;
-          text-transform: uppercase;
-        }
-
-        .account-nav-links {
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 2.5rem;
-        }
-
-        .account-nav-links a {
-          color: #f5f3f0;
-          text-decoration: none;
-          font-size: 11px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          position: relative;
-          padding: 0.25rem 0;
-        }
-
-        .account-page.light-mode .account-nav-links a {
-          color: #0a0a0a;
-        }
-
-        .account-nav-links a::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 0;
-          height: 1px;
-          background: #F7931A;
-          transition: width 0.3s ease;
-        }
-
-        .account-nav-links a:hover::after {
-          width: 100%;
-        }
-
-        .account-nav-links a.coming-soon {
-          text-decoration: line-through;
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .account-nav-right {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-        }
-
-        .mobile-menu-btn {
-          display: none;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          width: 44px;
-          height: 44px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          z-index: 1001;
-        }
-
-        .mobile-menu-btn span {
-          display: block;
-          width: 24px;
-          height: 2px;
-          background: #f5f3f0;
-          transition: all 0.3s ease;
-          margin: 3px 0;
-        }
-
-        .account-page.light-mode .mobile-menu-btn span {
-          background: #0a0a0a;
-        }
-
-        .mobile-menu-btn.open span:nth-child(1) {
-          transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .mobile-menu-btn.open span:nth-child(2) {
-          opacity: 0;
-        }
-
-        .mobile-menu-btn.open span:nth-child(3) {
-          transform: rotate(-45deg) translate(6px, -6px);
-        }
-
-        .mobile-menu-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: #0a0a0a;
-          z-index: 999;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .account-page.light-mode .mobile-menu-overlay {
-          background: #e8e4dc;
-        }
-
-        .mobile-menu-overlay.open {
-          opacity: 1;
-          visibility: visible;
-        }
-
-        .mobile-menu-nav {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 2rem;
-        }
-
-        .mobile-menu-nav a {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 2rem;
-          color: #e8e4dc;
-          text-decoration: none;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-        }
-
-        .account-page.light-mode .mobile-menu-nav a {
-          color: #0a0a0a;
-        }
-
-        .account-theme-toggle {
-          position: fixed;
-          bottom: 2rem;
-          right: 2rem;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: #1a1a1a;
-          border: 1px solid #3a3a3a;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          z-index: 1001;
-          transition: all 0.3s ease;
-        }
-
-        .account-theme-toggle:hover {
-          background: #F7931A;
-          border-color: #F7931A;
-          transform: scale(1.1);
-        }
-
-        .account-theme-toggle svg {
-          width: 24px;
-          height: 24px;
-          stroke: #e8e4dc;
-        }
-
-        .account-page.light-mode .account-theme-toggle {
-          background: #f5f3f0;
-          border-color: #c8c4bc;
-        }
-
-        .account-page.light-mode .account-theme-toggle svg {
-          stroke: #0a0a0a;
         }
 
         .account-container {
@@ -476,19 +357,137 @@ export default function AccountPage() {
           color: #fff;
         }
 
+        .bookmark-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .bookmark-item {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem 0;
+          border-bottom: 1px solid #1a1a1a;
+        }
+
+        .account-page.light-mode .bookmark-item {
+          border-bottom-color: #d8d4cc;
+        }
+
+        .bookmark-item:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        .bookmark-item:first-child {
+          padding-top: 0;
+        }
+
+        .bookmark-badge {
+          font-size: 9px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          padding: 0.25rem 0.5rem;
+          border: 1px solid #F7931A;
+          color: #F7931A;
+          flex-shrink: 0;
+        }
+
+        .bookmark-link {
+          color: #e8e4dc;
+          text-decoration: none;
+          font-size: 14px;
+          transition: color 0.2s ease;
+          flex: 1;
+        }
+
+        .account-page.light-mode .bookmark-link {
+          color: #0a0a0a;
+        }
+
+        .bookmark-link:hover {
+          color: #F7931A;
+        }
+
+        .bookmark-date {
+          font-size: 11px;
+          color: #8a8a8a;
+          flex-shrink: 0;
+        }
+
+        .highlight-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .highlight-item {
+          padding: 1.25rem 0;
+          border-bottom: 1px solid #1a1a1a;
+        }
+
+        .account-page.light-mode .highlight-item {
+          border-bottom-color: #d8d4cc;
+        }
+
+        .highlight-item:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+
+        .highlight-item:first-child {
+          padding-top: 0;
+        }
+
+        .highlight-text {
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.1rem;
+          font-style: italic;
+          line-height: 1.6;
+          color: #e8e4dc;
+          border-left: 3px solid #F7931A;
+          padding-left: 1rem;
+          margin: 0 0 0.75rem;
+        }
+
+        .account-page.light-mode .highlight-text {
+          color: #0a0a0a;
+        }
+
+        .highlight-source {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 11px;
+          color: #8a8a8a;
+        }
+
+        .highlight-source-link {
+          color: #F7931A;
+          text-decoration: none;
+          font-size: 11px;
+          transition: opacity 0.2s ease;
+        }
+
+        .highlight-source-link:hover {
+          opacity: 0.8;
+        }
+
+        .highlight-source-badge {
+          font-size: 9px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          padding: 0.15rem 0.4rem;
+          border: 1px solid #3a3a3a;
+          color: #8a8a8a;
+        }
+
+        .account-page.light-mode .highlight-source-badge {
+          border-color: #c8c4bc;
+        }
+
         @media (max-width: 768px) {
-          .account-nav {
-            padding: 1.5rem 2rem;
-          }
-
-          .account-nav-links {
-            display: none;
-          }
-
-          .mobile-menu-btn {
-            display: flex;
-          }
-
           .account-container {
             padding: 8rem 2rem 4rem;
           }
@@ -500,76 +499,9 @@ export default function AccountPage() {
       `}</style>
 
       <div className={`account-page ${isLightMode ? 'light-mode' : ''}`}>
-        <button
-          className="account-theme-toggle"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-        >
-          {isLightMode ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="5"/>
-              <line x1="12" y1="1" x2="12" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/>
-              <line x1="21" y1="12" x2="23" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-          )}
-        </button>
+        <ThemeToggle />
 
-        <nav className="account-nav">
-          <Link href="/" className="account-logo">
-            <Image
-              src="/contraband-logo-v3.png"
-              alt="Contraband logo"
-              width={40}
-              height={40}
-            />
-            <span className="account-logo-text">Contra₿and</span>
-          </Link>
-          <div className="account-nav-links">
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/learn">Stu₿y</Link>
-            <Link href="/writings">Writings</Link>
-            <Link href="/network">Network</Link>
-            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
-            <Link href="/about">About</Link>
-          </div>
-          <div className="account-nav-right">
-            <UserMenu />
-            <button
-              className={`mobile-menu-btn ${menuOpen ? 'open' : ''}`}
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
-          </div>
-        </nav>
-
-        <div className={`mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>
-          <nav className="mobile-menu-nav">
-            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-            <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
-            <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
-            <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
-            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
-            <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
-          </nav>
-        </div>
+        <SiteNav />
 
         <main className="account-container">
           {isLoading ? (
@@ -601,13 +533,16 @@ export default function AccountPage() {
               </div>
 
               <section id="progress" className="account-section">
-                <h2 className="section-title">
-                  <svg className="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                    <polyline points="22 4 12 14.01 9 11.01"/>
-                  </svg>
-                  Course Progress
-                </h2>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <h2 className="section-title" style={{ marginBottom: 0 }}>
+                    <svg className="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                      <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    Course Progress
+                  </h2>
+                  <ShareProgressButton />
+                </div>
 
                 {isLoadingProgress ? (
                   <div className="empty-state">
@@ -633,6 +568,64 @@ export default function AccountPage() {
                 })}
               </section>
 
+              {!isLoadingBookmarks && bookmarks.length > 0 && (
+                <section id="saved" className="account-section">
+                  <h2 className="section-title">
+                    <svg className="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    Saved Items
+                  </h2>
+                  <ul className="bookmark-list">
+                    {bookmarks.map(b => (
+                      <li key={`${b.content_type}-${b.content_slug}`} className="bookmark-item">
+                        <span className="bookmark-badge">{b.content_type}</span>
+                        <Link href={getBookmarkHref(b)} className="bookmark-link">
+                          {formatSlug(b.content_slug)}
+                        </Link>
+                        <span className="bookmark-date">
+                          {new Date(b.created_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {!isLoadingHighlights && highlights.length > 0 && (
+                <section id="highlights" className="account-section">
+                  <h2 className="section-title">
+                    <svg className="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    Your Highlights
+                  </h2>
+                  <ul className="highlight-list">
+                    {highlights.map(h => (
+                      <li key={h.id} className="highlight-item">
+                        <p className="highlight-text">{h.text}</p>
+                        <div className="highlight-source">
+                          <span className="highlight-source-badge">{h.content_type}</span>
+                          <Link href={getHighlightHref(h)} className="highlight-source-link">
+                            {formatSlug(h.content_slug)}
+                          </Link>
+                          <span>
+                            {new Date(h.created_at).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
               <section id="alerts" className="account-section">
                 <h2 className="section-title">
                   <svg className="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -651,6 +644,7 @@ export default function AccountPage() {
             </>
           )}
         </main>
+        <SiteFooter />
       </div>
     </>
   );

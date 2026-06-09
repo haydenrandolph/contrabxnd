@@ -1,14 +1,29 @@
 'use client';
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
-import { UserMenu } from '@/components/auth';
+import { useAuth } from '@/contexts/AuthContext';
+import SiteNav from '@/components/SiteNav';
+import SiteFooter from '@/components/SiteFooter';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LearnPage() {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { isLightMode, toggleTheme } = useTheme();
+  const { isLightMode } = useTheme();
+  const { user } = useAuth();
+  const [completedCount, setCompletedCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/progress')
+      .then(r => r.json())
+      .then(data => {
+        const count = (data.progress ?? []).filter(
+          (p: { course_slug: string; completed: boolean }) => p.course_slug === 'boarding-pass' && p.completed
+        ).length;
+        setCompletedCount(count);
+      })
+      .catch(() => {});
+  }, [user]);
 
   const courses = [
     {
@@ -104,229 +119,6 @@ export default function LearnPage() {
           opacity: 0.03;
           pointer-events: none;
           z-index: 1000;
-        }
-
-        .learn-nav {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          padding: 2rem 3rem;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          z-index: 100;
-          background: linear-gradient(to bottom, #0a0a0a 0%, transparent 100%);
-        }
-
-        .learn-page.light-mode .learn-nav {
-          background: linear-gradient(to bottom, #e8e4dc 0%, transparent 100%);
-        }
-
-        .learn-logo-link {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          text-decoration: none;
-          color: #f5f3f0;
-        }
-
-        .learn-page.light-mode .learn-logo-link {
-          color: #0a0a0a;
-        }
-
-        .learn-logo-text {
-          font-family: 'Space Mono', monospace;
-          font-size: 11px;
-          letter-spacing: 0.3em;
-          text-transform: uppercase;
-        }
-
-        .learn-nav-links {
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 2.5rem;
-        }
-
-        .learn-nav-links a {
-          color: #f5f3f0;
-          text-decoration: none;
-          font-size: 11px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          position: relative;
-          padding: 0.25rem 0;
-        }
-
-        .learn-page.light-mode .learn-nav-links a {
-          color: #0a0a0a;
-        }
-
-        .learn-nav-links a::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 0;
-          height: 1px;
-          background: #F7931A;
-          transition: width 0.3s ease;
-        }
-
-        .learn-nav-links a:hover::after,
-        .learn-nav-links a.active::after {
-          width: 100%;
-        }
-
-        .learn-nav-links a.coming-soon {
-          text-decoration: line-through;
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .learn-nav-links a.coming-soon:hover::after {
-          width: 0;
-        }
-
-        .learn-nav-right {
-          display: flex;
-          align-items: center;
-          gap: 1.5rem;
-        }
-
-        .mobile-menu-btn {
-          display: none;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          width: 44px;
-          height: 44px;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          padding: 0;
-          z-index: 1001;
-        }
-
-        .mobile-menu-btn span {
-          display: block;
-          width: 24px;
-          height: 2px;
-          background: #f5f3f0;
-          transition: all 0.3s ease;
-          margin: 3px 0;
-        }
-
-        .learn-page.light-mode .mobile-menu-btn span {
-          background: #0a0a0a;
-        }
-
-        .mobile-menu-btn.open span:nth-child(1) {
-          transform: rotate(45deg) translate(5px, 5px);
-        }
-
-        .mobile-menu-btn.open span:nth-child(2) {
-          opacity: 0;
-        }
-
-        .mobile-menu-btn.open span:nth-child(3) {
-          transform: rotate(-45deg) translate(6px, -6px);
-        }
-
-        .mobile-menu-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: #0a0a0a;
-          z-index: 999;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          opacity: 0;
-          visibility: hidden;
-          transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .learn-page.light-mode .mobile-menu-overlay {
-          background: #e8e4dc;
-        }
-
-        .mobile-menu-overlay.open {
-          opacity: 1;
-          visibility: visible;
-        }
-
-        .mobile-menu-nav {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 2rem;
-        }
-
-        .mobile-menu-nav a {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 2rem;
-          color: #e8e4dc;
-          text-decoration: none;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          transition: color 0.3s ease;
-        }
-
-        .learn-page.light-mode .mobile-menu-nav a {
-          color: #0a0a0a;
-        }
-
-        .mobile-menu-nav a:active {
-          color: #F7931A;
-        }
-
-        .mobile-menu-nav a.coming-soon {
-          text-decoration: line-through;
-          opacity: 0.5;
-        }
-
-        .learn-theme-toggle {
-          position: fixed;
-          bottom: 2rem;
-          right: 2rem;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: #1a1a1a;
-          border: 1px solid #3a3a3a;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          z-index: 1001;
-          transition: all 0.3s ease;
-        }
-
-        .learn-theme-toggle:hover {
-          background: #F7931A;
-          border-color: #F7931A;
-          transform: scale(1.1);
-        }
-
-        .learn-theme-toggle svg {
-          width: 24px;
-          height: 24px;
-          stroke: #e8e4dc;
-        }
-
-        .learn-page.light-mode .learn-theme-toggle {
-          background: #f5f3f0;
-          border-color: #c8c4bc;
-        }
-
-        .learn-page.light-mode .learn-theme-toggle svg {
-          stroke: #070713;
         }
 
         .learn-hero {
@@ -643,53 +435,37 @@ export default function LearnPage() {
           text-transform: uppercase;
         }
 
-        .learn-footer {
-          padding: 4rem 3rem;
-          border-top: 1px solid #1a1a1a;
-          max-width: 1400px;
-          margin: 0 auto;
-        }
-
-        .learn-page.light-mode .learn-footer {
-          border-top-color: #d8d4cc;
-        }
-
-        .learn-footer-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .learn-footer-left {
+        .course-progress {
           display: flex;
           align-items: center;
-          gap: 2rem;
-        }
-
-        .learn-footer-copy {
-          font-size: 12px;
-          color: #8a8a8a;
-        }
-
-        .learn-footer-links {
-          display: flex;
-          gap: 2rem;
-        }
-
-        .learn-footer-links a {
+          gap: 0.75rem;
+          margin-top: 1rem;
           font-size: 11px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
           color: #8a8a8a;
-          text-decoration: none;
-          transition: color 0.3s ease;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
         }
 
-        .learn-footer-links a:hover {
-          color: #F7931A;
+        .course-progress-bar {
+          flex: 1;
+          height: 4px;
+          background: #1a1a1a;
+          border-radius: 2px;
+          overflow: hidden;
         }
 
-        @media (max-width: 900px) {
+        .learn-page.light-mode .course-progress-bar {
+          background: #d8d4cc;
+        }
+
+        .course-progress-fill {
+          height: 100%;
+          background: #22c55e;
+          border-radius: 2px;
+          transition: width 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
           .courses-grid {
             grid-template-columns: 1fr;
           }
@@ -697,21 +473,6 @@ export default function LearnPage() {
           .path-step {
             grid-template-columns: 1fr;
             gap: 1rem;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .learn-nav {
-            padding: 1.5rem 2rem;
-            z-index: 1000;
-          }
-
-          .learn-nav-links {
-            display: none;
-          }
-
-          .mobile-menu-btn {
-            display: flex;
           }
 
           .learn-hero {
@@ -762,93 +523,12 @@ export default function LearnPage() {
             font-size: 1.4rem;
           }
 
-          .learn-footer {
-            padding: 3rem 1.5rem;
-          }
-
-          .learn-footer-content {
-            flex-direction: column;
-            gap: 2rem;
-            text-align: center;
-          }
-
-          .learn-footer-left {
-            flex-direction: column;
-          }
         }
       `}</style>
 
       <div className={`learn-page ${isLightMode ? 'light-mode' : ''}`}>
-        <button
-          className="learn-theme-toggle"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-        >
-          {isLightMode ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="5"/>
-              <line x1="12" y1="1" x2="12" y2="3"/>
-              <line x1="12" y1="21" x2="12" y2="23"/>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-              <line x1="1" y1="12" x2="3" y2="12"/>
-              <line x1="21" y1="12" x2="23" y2="12"/>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-            </svg>
-          )}
-        </button>
-
-        <nav className="learn-nav">
-          <Link href="/" className="learn-logo-link">
-            <Image
-              src="/contraband-logo-v3.png"
-              alt="Contraband logo"
-              width={40}
-              height={40}
-            />
-            <span className="learn-logo-text">Contra₿and</span>
-          </Link>
-          <div className="learn-nav-links">
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/learn" className="active">Stu₿y</Link>
-            <Link href="/writings">Writings</Link>
-            <Link href="/network">Network</Link>
-            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
-            <Link href="/about">About</Link>
-          </div>
-          <div className="learn-nav-right">
-            <UserMenu />
-            <button
-              className={`mobile-menu-btn ${menuOpen ? 'open' : ''}`}
-              onClick={() => setMenuOpen(!menuOpen)}
-              aria-label="Toggle menu"
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
-          </div>
-        </nav>
-
-        <div className={`mobile-menu-overlay ${menuOpen ? 'open' : ''}`}>
-          <nav className="mobile-menu-nav">
-            <Link href="/dashboard" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-            <Link href="/learn" onClick={() => setMenuOpen(false)}>Stu₿y</Link>
-            <Link href="/writings" onClick={() => setMenuOpen(false)}>Writings</Link>
-            <Link href="/network" onClick={() => setMenuOpen(false)}>Network</Link>
-            <a className="coming-soon" aria-disabled="true" aria-label="Podcasts — coming soon">Podcasts</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Videos — coming soon">Videos</a>
-            <a className="coming-soon" aria-disabled="true" aria-label="Merch — coming soon">Merch</a>
-            <Link href="/about" onClick={() => setMenuOpen(false)}>About</Link>
-          </nav>
-        </div>
+        <ThemeToggle />
+        <SiteNav activePath="/learn" />
 
         <section className="learn-hero">
           <p className="hero-label">Bitcoin Education</p>
@@ -873,6 +553,14 @@ export default function LearnPage() {
                     </div>
                   ))}
                 </div>
+                {user && completedCount > 0 && course.link === '/learn/boarding-pass' && (
+                  <div className="course-progress">
+                    <span>{completedCount}/21</span>
+                    <div className="course-progress-bar">
+                      <div className="course-progress-fill" style={{ width: `${(completedCount / 21) * 100}%` }} />
+                    </div>
+                  </div>
+                )}
                 <a href={course.link} className="course-btn">
                   Start Course
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -909,24 +597,7 @@ export default function LearnPage() {
           <p className="philosophy-source">— Contraband</p>
         </section>
 
-        <footer className="learn-footer">
-          <div className="learn-footer-content">
-            <div className="learn-footer-left">
-              <Image
-                src="/contraband-logo-v3.png"
-                alt="Contraband logo"
-                width={32}
-                height={32}
-              />
-              <span className="learn-footer-copy">© 2025 Contraband. All rights reserved.</span>
-            </div>
-            <div className="learn-footer-links">
-              <a href="https://x.com/contrabxnd" target="_blank" rel="noopener noreferrer">Twitter</a>
-              <a href="https://youtube.com/@contrabxnd" target="_blank" rel="noopener noreferrer">YouTube</a>
-              <a href="#">RSS</a>
-            </div>
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </>
   );

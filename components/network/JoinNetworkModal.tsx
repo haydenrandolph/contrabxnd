@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { BUSINESS_CATEGORIES } from '@/lib/network/types';
 
@@ -25,6 +25,28 @@ export default function JoinNetworkModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  const contentRef = useRef<HTMLDivElement>(null);
+  const stableClose = useCallback(() => handleClose(), []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { stableClose(); return; }
+      if (e.key === 'Tab' && contentRef.current) {
+        const focusable = contentRef.current.querySelectorAll<HTMLElement>(
+          'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    contentRef.current?.querySelector<HTMLElement>('button, input')?.focus();
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, stableClose]);
 
   if (!isOpen) return null;
 
@@ -396,7 +418,7 @@ export default function JoinNetworkModal({
       `}</style>
 
       <div className="modal-overlay" onClick={handleClose}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-content" ref={contentRef} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h2 className="modal-title">Join the Network</h2>
             <button className="modal-close" onClick={handleClose}>
