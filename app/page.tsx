@@ -102,33 +102,38 @@ export default function HomePage() {
     container.appendChild(wrapper);
 
     const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
     script.type = 'text/javascript';
     script.async = true;
     script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: 'BITSTAMP:BTCUSD',
-      interval: 'D',
-      timezone: 'Etc/UTC',
-      theme: isLightMode ? 'light' : 'dark',
-      style: '1',
+      symbols: [['Bitcoin', 'BITSTAMP:BTCUSD|12M']],
+      chartOnly: true,
+      width: '100%',
+      height: '100%',
       locale: 'en',
+      colorTheme: isLightMode ? 'light' : 'dark',
+      autosize: true,
+      showVolume: false,
+      showMA: false,
+      hideDateRanges: true,
+      hideMarketStatus: true,
+      hideSymbolLogo: true,
+      scalePosition: 'right',
+      scaleMode: 'Normal',
+      fontFamily: 'Space Mono, monospace',
+      fontSize: '10',
+      noTimeScale: false,
+      valuesTracking: '1',
+      changeMode: 'price-and-percent',
+      chartType: 'candlesticks',
+      upColor: '#F7931A',
+      downColor: isLightMode ? '#c8c4bc' : '#3a3a3a',
+      borderUpColor: '#F7931A',
+      borderDownColor: isLightMode ? '#a09a90' : '#5a5a5a',
+      wickUpColor: '#F7931A',
+      wickDownColor: isLightMode ? '#a09a90' : '#5a5a5a',
       backgroundColor: isLightMode ? '#f5f3f0' : '#0a0a0a',
-      gridColor: isLightMode ? '#e0dcd4' : '#1a1a1a',
-      hide_top_toolbar: true,
-      hide_legend: true,
-      allow_symbol_change: false,
-      save_image: false,
-      calendar: false,
-      support_host: 'https://www.tradingview.com',
-      overrides: {
-        'mainSeriesProperties.candleStyle.upColor': '#F7931A',
-        'mainSeriesProperties.candleStyle.downColor': isLightMode ? '#c8c4bc' : '#3a3a3a',
-        'mainSeriesProperties.candleStyle.borderUpColor': '#F7931A',
-        'mainSeriesProperties.candleStyle.borderDownColor': isLightMode ? '#a09a90' : '#5a5a5a',
-        'mainSeriesProperties.candleStyle.wickUpColor': '#F7931A',
-        'mainSeriesProperties.candleStyle.wickDownColor': isLightMode ? '#a09a90' : '#5a5a5a',
-      },
+      gridLineColor: isLightMode ? '#e0dcd4' : '#1a1a1a',
     });
     script.onload = () => setChartLoaded(true);
     container.appendChild(script);
