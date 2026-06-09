@@ -86,10 +86,21 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [createHeroArc]);
 
+  const [chartLoaded, setChartLoaded] = useState(false);
+
   useEffect(() => {
-    if (heroView !== 'chart' || !chartContainerRef.current) return;
+    if (heroView !== 'chart') return;
+    if (!chartContainerRef.current) return;
     const container = chartContainerRef.current;
     container.innerHTML = '';
+    setChartLoaded(false);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tradingview-widget-container__widget';
+    wrapper.style.width = '100%';
+    wrapper.style.height = '100%';
+    container.appendChild(wrapper);
+
     const script = document.createElement('script');
     script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.type = 'text/javascript';
@@ -111,7 +122,12 @@ export default function HomePage() {
       calendar: false,
       support_host: 'https://www.tradingview.com',
     });
+    script.onload = () => setChartLoaded(true);
     container.appendChild(script);
+
+    return () => {
+      container.innerHTML = '';
+    };
   }, [heroView, isLightMode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -950,12 +966,11 @@ export default function HomePage() {
             </span>
           </div>
 
-          {heroView === 'chart' ? (
-            <div className="hero-chart-container">
-              <div className="tradingview-widget-container" ref={chartContainerRef} />
-            </div>
-          ) : (
-          <Link href="/dashboard" className="hero-map-container">
+          <div className="hero-chart-container" style={{ display: heroView === 'chart' ? 'block' : 'none' }}>
+            <div className="tradingview-widget-container" ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
+          </div>
+
+          <Link href="/dashboard" className="hero-map-container" style={{ display: heroView === 'map' ? 'block' : 'none' }}>
             <ComposableMap
               projection="geoMercator"
               projectionConfig={{
@@ -1041,7 +1056,6 @@ export default function HomePage() {
             </div>
             <span className="hero-map-cta">View Live Dashboard →</span>
           </Link>
-          )}
           <h1 className="contraband-hero-title">Contra₿and</h1>
           <p className="contraband-hero-tagline">Ideas that refuse to stay buried</p>
           <p className="contraband-hero-subtitle">Stu₿y · Writings · Podcasts · Videos · Merch</p>
