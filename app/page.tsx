@@ -817,7 +817,8 @@ export default function HomePage() {
           opacity: 0;
           animation: fadeUp 1s ease 0.1s forwards;
           position: relative;
-          z-index: 10;
+          z-index: 1001;
+          pointer-events: auto;
         }
 
         .hero-view-label {
@@ -827,6 +828,12 @@ export default function HomePage() {
           color: var(--contraband-light-gray);
           transition: color 0.3s ease;
           cursor: pointer;
+          pointer-events: auto;
+          user-select: none;
+        }
+
+        .hero-view-label:hover {
+          color: var(--contraband-rust);
         }
 
         .hero-view-label.active {
@@ -838,6 +845,7 @@ export default function HomePage() {
           width: 36px;
           height: 18px;
           padding: 0;
+          margin: 0;
           appearance: none;
           -webkit-appearance: none;
           background: var(--contraband-dark-gray);
@@ -846,6 +854,7 @@ export default function HomePage() {
           cursor: pointer;
           transition: background 0.3s ease, border-color 0.3s ease;
           outline: none;
+          pointer-events: auto;
         }
 
         .hero-view-switch::after {
