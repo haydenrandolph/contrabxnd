@@ -53,15 +53,15 @@ export default function PurchasingPowerComparison({
   const [loading, setLoading] = useState(false);
 
   const handleCompare = async () => {
-    if (!selectedDate || amount <= 0) return;
+    if (!selectedDate || amount <= 0 || currentPrice <= 0) return;
 
     setLoading(true);
     setResults(null);
 
     try {
-      const dateUnix = Math.floor(new Date(selectedDate + 'T00:00:00').getTime() / 1000);
+      const dateUnix = Math.floor(new Date(selectedDate + 'T00:00:00Z').getTime() / 1000);
       const res = await fetch(
-        `/api/bitcoin-history?from=${dateUnix}&to=${dateUnix + 86400}`,
+        `/api/bitcoin-history?from=${dateUnix}&to=${dateUnix + 7 * 86400}`,
       );
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
