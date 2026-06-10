@@ -42,7 +42,7 @@ export default function SiteNav({
 
   return (
     <>
-      <style jsx>{`
+      <style jsx global>{`
         .site-nav {
           position: fixed;
           top: 0;
@@ -57,6 +57,9 @@ export default function SiteNav({
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           border-bottom: 1px solid rgba(58, 58, 58, 0.3);
+          font-family: 'Space Mono', monospace;
+          font-size: 11px;
+          line-height: 1.4;
         }
         .site-nav.light {
           background: rgba(245, 243, 240, 0.85);
