@@ -19,6 +19,7 @@ type NavLink = { href: string; label: string; comingSoon?: false } | { label: st
 
 const NAV_LINKS: NavLink[] = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/toolkit', label: 'Toolkit' },
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
   { href: '/network', label: 'Network' },
