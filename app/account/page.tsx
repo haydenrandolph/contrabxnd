@@ -501,7 +501,7 @@ export default function AccountPage() {
       <div className={`account-page ${isLightMode ? 'light-mode' : ''}`}>
         <ThemeToggle />
 
-        <SiteNav />
+        <SiteNav activePath="/account" />
 
         <main className="account-container">
           {isLoading ? (

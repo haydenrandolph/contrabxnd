@@ -48,23 +48,32 @@ export default function SiteNav({
           top: 0;
           left: 0;
           right: 0;
-          padding: 2rem 3rem;
+          padding: 1.25rem 3rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
           z-index: 100;
+          background: rgba(10, 10, 10, 0.85);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(58, 58, 58, 0.3);
+        }
+        .site-nav.light {
+          background: rgba(245, 243, 240, 0.85);
+          border-bottom-color: rgba(200, 196, 188, 0.5);
+        }
+        .site-nav.blend {
+          border-bottom-color: transparent;
         }
         .site-nav.blend:not(.light) {
-          mix-blend-mode: difference;
+          background: rgba(10, 10, 10, 0.6);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
         }
         .site-nav.blend.light {
-          background: linear-gradient(to bottom, rgba(232, 228, 220, 0.9) 0%, transparent 100%);
-        }
-        .site-nav:not(.blend) {
-          background: linear-gradient(to bottom, #0a0a0a 0%, transparent 100%);
-        }
-        .site-nav.light:not(.blend) {
-          background: linear-gradient(to bottom, #e8e4dc 0%, transparent 100%);
+          background: rgba(245, 243, 240, 0.8);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
         }
 
         .logo-link {
@@ -264,7 +273,7 @@ export default function SiteNav({
 
         @media (max-width: 768px) {
           .site-nav {
-            padding: 1.5rem 2rem;
+            padding: 1rem 1.5rem;
           }
           .nav-links {
             display: none;
