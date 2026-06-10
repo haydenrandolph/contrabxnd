@@ -123,7 +123,7 @@ export default function WritingsPage() {
 
         .writings-page.light-mode {
           background: #e8e4dc;
-          color: #070713;
+          color: #0a0a0a;
         }
 
         .writings-page::before {
@@ -214,7 +214,7 @@ export default function WritingsPage() {
 
         .writings-page.light-mode .filter-btn:hover,
         .writings-page.light-mode .filter-btn.active {
-          color: #070713;
+          color: #0a0a0a;
         }
 
         .filter-btn.active::after {

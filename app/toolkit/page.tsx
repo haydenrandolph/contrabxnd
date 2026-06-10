@@ -50,7 +50,7 @@ export default function ToolkitPage() {
         }
 
         .toolkit-page.light-mode {
-          background: #f5f3f0;
+          background: #e8e4dc;
           color: #0a0a0a;
         }
 

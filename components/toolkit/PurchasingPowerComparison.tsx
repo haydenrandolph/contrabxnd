@@ -92,7 +92,7 @@ export default function PurchasingPowerComparison({
   };
 
   const cardBg = isLightMode ? '#ffffff' : '#141414';
-  const textPrimary = isLightMode ? '#111111' : '#e5e5e5';
+  const textPrimary = isLightMode ? '#0a0a0a' : '#e5e5e5';
   const textSecondary = isLightMode ? '#555555' : '#8a8a8a';
   const inputBg = isLightMode ? '#f5f5f5' : '#1a1a1a';
   const inputBorder = isLightMode ? '#d0d0d0' : '#333333';
