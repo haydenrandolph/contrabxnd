@@ -102,25 +102,38 @@ export default function HomePage() {
     container.appendChild(wrapper);
 
     const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
     script.type = 'text/javascript';
     script.async = true;
     script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: 'BITSTAMP:BTCUSD',
-      interval: 'D',
-      timezone: 'Etc/UTC',
-      theme: isLightMode ? 'light' : 'dark',
-      style: '1',
+      symbols: [['Bitcoin', 'BITSTAMP:BTCUSD|12M']],
+      chartOnly: true,
+      width: '100%',
+      height: '100%',
       locale: 'en',
+      colorTheme: isLightMode ? 'light' : 'dark',
+      autosize: true,
+      showVolume: false,
+      showMA: false,
+      hideDateRanges: true,
+      hideMarketStatus: true,
+      hideSymbolLogo: true,
+      scalePosition: 'right',
+      scaleMode: 'Normal',
+      fontFamily: 'Space Mono, monospace',
+      fontSize: '10',
+      noTimeScale: false,
+      valuesTracking: '1',
+      changeMode: 'price-and-percent',
+      chartType: 'candlesticks',
+      upColor: '#F7931A',
+      downColor: isLightMode ? '#c8c4bc' : '#3a3a3a',
+      borderUpColor: '#F7931A',
+      borderDownColor: isLightMode ? '#a09a90' : '#5a5a5a',
+      wickUpColor: '#F7931A',
+      wickDownColor: isLightMode ? '#a09a90' : '#5a5a5a',
       backgroundColor: isLightMode ? '#f5f3f0' : '#0a0a0a',
-      gridColor: isLightMode ? '#e0dcd4' : '#1a1a1a',
-      hide_top_toolbar: true,
-      hide_legend: true,
-      allow_symbol_change: false,
-      save_image: false,
-      calendar: false,
-      support_host: 'https://www.tradingview.com',
+      gridLineColor: isLightMode ? '#e0dcd4' : '#1a1a1a',
     });
     script.onload = () => setChartLoaded(true);
     container.appendChild(script);
@@ -213,18 +226,60 @@ export default function HomePage() {
           border-color: #d0ccc4;
         }
 
+        .contraband-page.light-mode .contraband-subscribe-title {
+          color: var(--contraband-black);
+        }
+
+        .contraband-page.light-mode .contraband-subscribe-text {
+          color: #5a5a5a;
+        }
+
         .contraband-page.light-mode .contraband-subscribe-form input {
-          background: var(--contraband-cream);
+          background: #f5f3f0;
           border-color: #d0ccc4;
           color: var(--contraband-black);
         }
 
         .contraband-page.light-mode .contraband-subscribe-form input::placeholder {
-          color: var(--contraband-mid-gray);
+          color: #a0a0a0;
         }
 
         .contraband-page.light-mode .contraband-section-header {
           border-color: #d0ccc4;
+        }
+
+        .contraband-page.light-mode .contraband-featured {
+          border-color: #d0ccc4;
+        }
+
+        .contraband-page.light-mode .contraband-featured-content {
+          background: var(--contraband-white);
+        }
+
+        .contraband-page.light-mode .contraband-featured-image {
+          background: #d0ccc4;
+        }
+
+        .contraband-page.light-mode .contraband-featured-excerpt {
+          color: #5a5a5a;
+        }
+
+        .contraband-page.light-mode .contraband-btn {
+          border-color: var(--contraband-black);
+          color: var(--contraband-black);
+        }
+
+        .contraband-page.light-mode .contraband-btn:hover {
+          background: var(--contraband-black);
+          color: var(--contraband-cream);
+        }
+
+        .contraband-page.light-mode .contraband-card-excerpt {
+          color: #5a5a5a;
+        }
+
+        .contraband-page.light-mode .contraband-card-meta {
+          color: #6a6a6a;
         }
 
         .contraband-page::before {
@@ -473,6 +528,18 @@ export default function HomePage() {
           margin-top: 2rem;
           opacity: 0;
           animation: fadeUp 1s ease 0.7s forwards;
+        }
+
+        .contraband-page.light-mode .contraband-hero-tagline {
+          color: var(--contraband-mid-gray);
+        }
+
+        .contraband-page.light-mode .contraband-hero-title {
+          color: var(--contraband-black);
+        }
+
+        .contraband-page.light-mode .contraband-scroll-indicator span {
+          color: #6a6a6a;
         }
 
         .contraband-scroll-indicator {

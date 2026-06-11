@@ -19,6 +19,7 @@ type NavLink = { href: string; label: string; comingSoon?: false } | { label: st
 
 const NAV_LINKS: NavLink[] = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/toolkit', label: 'Toolkit' },
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
   { href: '/network', label: 'Network' },
@@ -41,26 +42,41 @@ export default function SiteNav({
 
   return (
     <>
-      <style jsx>{`
+      <style jsx global>{`
         .site-nav {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
-          padding: 2rem 3rem;
+          padding: 1.25rem 3rem;
           display: flex;
           justify-content: space-between;
           align-items: center;
           z-index: 100;
+          background: rgba(10, 10, 10, 0.85);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-bottom: 1px solid rgba(58, 58, 58, 0.3);
+          font-family: 'Space Mono', monospace;
+          font-size: 11px;
+          line-height: 1.4;
+        }
+        .site-nav.light {
+          background: rgba(245, 243, 240, 0.85);
+          border-bottom-color: rgba(200, 196, 188, 0.5);
         }
         .site-nav.blend {
-          mix-blend-mode: difference;
+          border-bottom-color: transparent;
         }
-        .site-nav:not(.blend) {
-          background: linear-gradient(to bottom, #0a0a0a 0%, transparent 100%);
+        .site-nav.blend:not(.light) {
+          background: rgba(10, 10, 10, 0.6);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
         }
-        .site-nav.light:not(.blend) {
-          background: linear-gradient(to bottom, #e8e4dc 0%, transparent 100%);
+        .site-nav.blend.light {
+          background: rgba(245, 243, 240, 0.8);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
         }
 
         .logo-link {
@@ -74,7 +90,7 @@ export default function SiteNav({
         .site-nav.light .back-link {
           color: #0a0a0a;
         }
-        .site-nav.blend .logo-link {
+        .site-nav.blend:not(.light) .logo-link {
           color: #f5f3f0;
         }
         .logo-text {
@@ -120,8 +136,8 @@ export default function SiteNav({
         .site-nav.light .nav-links span {
           color: #0a0a0a;
         }
-        .site-nav.blend .nav-links a,
-        .site-nav.blend .nav-links span {
+        .site-nav.blend:not(.light) .nav-links a,
+        .site-nav.blend:not(.light) .nav-links span {
           color: #f5f3f0;
         }
         .nav-links a::after {
@@ -260,7 +276,7 @@ export default function SiteNav({
 
         @media (max-width: 768px) {
           .site-nav {
-            padding: 1.5rem 2rem;
+            padding: 1rem 1.5rem;
           }
           .nav-links {
             display: none;

@@ -51,7 +51,8 @@ html.light-mode body {
 .network-page,
 .account-page,
 .article-page,
-.about-page {
+.about-page,
+.toolkit-page {
   transition: background 0.3s ease, color 0.3s ease;
 }
 
