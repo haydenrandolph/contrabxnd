@@ -193,106 +193,88 @@ export default function HomePage() {
         }
 
         .contraband-page {
-          background: var(--contraband-black);
-          color: var(--contraband-cream);
-          font-family: var(--contraband-font-mono);
-          font-size: 14px;
-          line-height: 1.7;
+          background: var(--cb-bg);
+          color: var(--cb-text);
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
+          line-height: 1.6;
           overflow-x: hidden;
           min-height: 100vh;
-          transition: background 0.3s ease, color 0.3s ease;
         }
 
         .contraband-page.light-mode {
-          background: var(--contraband-cream);
-          color: var(--contraband-black);
+          background: var(--cb-bg);
+          color: var(--cb-text);
         }
 
         .contraband-page.light-mode .contraband-content-card {
-          background: var(--contraband-white);
-          border-color: #d0ccc4;
+          background: var(--cb-surface);
+          border-color: var(--cb-border);
         }
 
         .contraband-page.light-mode .contraband-featured-content {
-          background: var(--contraband-white);
-        }
-
-        .contraband-page.light-mode .contraband-featured-image::after {
-          background: linear-gradient(45deg, var(--contraband-rust) 0%, var(--contraband-cream) 100%);
+          background: var(--cb-surface);
         }
 
         .contraband-page.light-mode .contraband-subscribe-section {
-          background: var(--contraband-white);
-          border-color: #d0ccc4;
+          background: var(--cb-surface);
+          border-color: var(--cb-border);
         }
 
         .contraband-page.light-mode .contraband-subscribe-title {
-          color: var(--contraband-black);
+          color: var(--cb-text);
         }
 
         .contraband-page.light-mode .contraband-subscribe-text {
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
         }
 
         .contraband-page.light-mode .contraband-subscribe-form input {
-          background: #f5f3f0;
-          border-color: #d0ccc4;
-          color: var(--contraband-black);
+          background: var(--cb-bg);
+          border-color: var(--cb-border);
+          color: var(--cb-text);
         }
 
         .contraband-page.light-mode .contraband-subscribe-form input::placeholder {
-          color: #a0a0a0;
+          color: var(--cb-text-muted);
         }
 
         .contraband-page.light-mode .contraband-section-header {
-          border-color: #d0ccc4;
+          border-color: var(--cb-border);
         }
 
         .contraband-page.light-mode .contraband-featured {
-          border-color: #d0ccc4;
+          border-color: var(--cb-border);
         }
 
         .contraband-page.light-mode .contraband-featured-content {
-          background: var(--contraband-white);
+          background: var(--cb-surface);
         }
 
         .contraband-page.light-mode .contraband-featured-image {
-          background: #d0ccc4;
+          background: rgba(0, 0, 0, 0.04);
         }
 
         .contraband-page.light-mode .contraband-featured-excerpt {
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
         }
 
         .contraband-page.light-mode .contraband-btn {
-          border-color: var(--contraband-black);
-          color: var(--contraband-black);
+          border-color: var(--cb-text);
+          color: var(--cb-text);
         }
 
         .contraband-page.light-mode .contraband-btn:hover {
-          background: var(--contraband-black);
-          color: var(--contraband-cream);
+          background: var(--cb-text);
+          color: var(--cb-bg);
         }
 
         .contraband-page.light-mode .contraband-card-excerpt {
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
         }
 
         .contraband-page.light-mode .contraband-card-meta {
-          color: #6a6a6a;
-        }
-
-        .contraband-page::before {
-          content: '';
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.03;
-          pointer-events: none;
-          z-index: 1000;
+          color: var(--cb-text-muted);
         }
 
         .contraband-hero {
@@ -302,16 +284,7 @@ export default function HomePage() {
           justify-content: center;
           align-items: center;
           position: relative;
-          padding: 7rem 3rem 3rem;
-        }
-
-        .contraband-hero-symbol {
-          width: 180px;
-          height: 180px;
-          margin-bottom: 3rem;
-          opacity: 0;
-          animation: fadeUp 1s ease 0.3s forwards;
-          object-fit: contain;
+          padding: 64px 48px 48px;
         }
 
         .hero-map-container {
@@ -319,24 +292,17 @@ export default function HomePage() {
           width: 100%;
           max-width: 900px;
           aspect-ratio: 16/8;
-          margin-bottom: 2rem;
+          margin-bottom: 32px;
           cursor: pointer;
           opacity: 0;
-          animation: fadeUp 1s ease 0.2s forwards;
-          border-radius: 8px;
+          animation: fadeIn 0.6s ease 0.2s forwards;
+          border-radius: 2px;
           overflow: hidden;
-          background: radial-gradient(ellipse at center, rgba(181, 103, 58, 0.05) 0%, transparent 70%);
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          border: 1px solid var(--cb-border);
         }
 
         .hero-map-container:hover {
-          transform: scale(1.02);
-          box-shadow: 0 0 40px rgba(247, 147, 26, 0.15);
-        }
-
-        .contraband-page.light-mode .hero-map-container {
-          background: radial-gradient(ellipse at center, rgba(181, 103, 58, 0.08) 0%, transparent 70%);
-          box-shadow: 0 2px 20px rgba(0, 0, 0, 0.06);
+          border-color: rgba(247, 147, 26, 0.3);
         }
 
         .hero-map-container svg {
@@ -346,248 +312,124 @@ export default function HomePage() {
         }
 
         .hero-map-node {
-          filter: drop-shadow(0 0 4px rgba(247, 147, 26, 0.5));
           animation: heroNodePulse 3s ease-in-out infinite;
         }
 
-        .hero-map-node.major {
-          filter: drop-shadow(0 0 8px rgba(247, 147, 26, 0.7));
-        }
-
         @keyframes heroNodePulse {
-          0%, 100% { opacity: 0.6; }
+          0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
         }
 
-        .hero-sonar-overlay {
-          position: absolute;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          pointer-events: none;
-          z-index: 2;
-          opacity: 0.6;
-        }
-
-        .hero-sonar-rings {
-          position: absolute;
-          width: 80%;
-          height: 80%;
-          border-radius: 50%;
-        }
-
-        .hero-sonar-ring {
-          position: absolute;
-          inset: 0;
-          border: 1px solid rgba(181, 103, 58, 0.15);
-          border-radius: 50%;
-          animation: heroSonarPulse 4s ease-out infinite;
-        }
-
-        .contraband-page.light-mode .hero-sonar-ring {
-          border-color: rgba(181, 103, 58, 0.25);
-        }
-
-        .contraband-page.light-mode .hero-radar-sweep {
-          background: conic-gradient(
-            from 0deg,
-            transparent 0deg,
-            rgba(181, 103, 58, 0.18) 30deg,
-            transparent 60deg
-          );
-        }
-
-        .hero-sonar-ring:nth-child(2) { animation-delay: 1s; }
-        .hero-sonar-ring:nth-child(3) { animation-delay: 2s; }
-        .hero-sonar-ring:nth-child(4) { animation-delay: 3s; }
-
-        @keyframes heroSonarPulse {
-          0% { transform: scale(0.3); opacity: 0.5; }
-          100% { transform: scale(1); opacity: 0; }
-        }
-
-        .hero-radar-sweep {
-          position: absolute;
-          width: 80%;
-          height: 80%;
-          background: conic-gradient(
-            from 0deg,
-            transparent 0deg,
-            rgba(181, 103, 58, 0.12) 30deg,
-            transparent 60deg
-          );
-          border-radius: 50%;
-          animation: heroRadarSweep 6s linear infinite;
-        }
-
-        @keyframes heroRadarSweep {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
+        .hero-sonar-overlay { display: none; }
 
         .hero-map-cta {
           position: absolute;
-          bottom: 1rem;
-          right: 1rem;
+          bottom: 16px;
+          right: 16px;
           font-size: 10px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--contraband-rust);
+          color: var(--cb-text-muted);
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.15s ease;
           z-index: 10;
         }
 
         .hero-map-container:hover .hero-map-cta {
           opacity: 1;
+          color: #F7931A;
         }
 
-        /* Transaction arc styles */
         .hero-tx-arc {
           fill: none;
           stroke-linecap: round;
           animation: heroArcPulse 2.5s ease-out forwards;
         }
 
-        .hero-tx-arc.normal {
-          stroke: #22c55e;
-          stroke-width: 1.5;
-          filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.6));
-        }
-
-        .hero-tx-arc.large {
-          stroke: #f59e0b;
-          stroke-width: 2;
-          filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
-        }
-
-        .hero-tx-arc.whale {
-          stroke: #a855f7;
-          stroke-width: 2.5;
-          filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.8));
-        }
+        .hero-tx-arc.normal { stroke: #F7931A; stroke-width: 1; opacity: 0.4; }
+        .hero-tx-arc.large { stroke: #F7931A; stroke-width: 1.5; opacity: 0.6; }
+        .hero-tx-arc.whale { stroke: #F7931A; stroke-width: 2; opacity: 0.8; }
 
         @keyframes heroArcPulse {
-          0% {
-            stroke-dashoffset: 1000;
-            opacity: 0.8;
-          }
-          60% {
-            stroke-dashoffset: 0;
-            opacity: 1;
-          }
-          100% {
-            stroke-dashoffset: 0;
-            opacity: 0;
-          }
+          0% { stroke-dashoffset: 1000; opacity: 0.6; }
+          60% { stroke-dashoffset: 0; opacity: 0.8; }
+          100% { stroke-dashoffset: 0; opacity: 0; }
         }
 
-        .hero-arc-endpoint {
-          animation: heroEndpointPulse 2.5s ease-out forwards;
-        }
-
-        .hero-arc-endpoint.normal { fill: #22c55e; }
-        .hero-arc-endpoint.large { fill: #f59e0b; }
-        .hero-arc-endpoint.whale { fill: #a855f7; }
+        .hero-arc-endpoint { fill: #F7931A; animation: heroEndpointPulse 2.5s ease-out forwards; }
 
         @keyframes heroEndpointPulse {
           0% { r: 0; opacity: 0; }
-          20% { r: 5; opacity: 1; }
-          60% { r: 5; opacity: 1; }
-          100% { r: 7; opacity: 0; }
+          20% { r: 3; opacity: 0.8; }
+          60% { r: 3; opacity: 0.8; }
+          100% { r: 4; opacity: 0; }
         }
 
         .contraband-hero-title {
-          font-family: var(--contraband-font-display);
-          font-size: clamp(3rem, 10vw, 8rem);
+          font-family: var(--cb-font-display);
+          font-size: clamp(3.5rem, 10vw, 7rem);
           font-weight: 400;
-          letter-spacing: 0.15em;
+          letter-spacing: -0.02em;
           text-transform: uppercase;
           text-align: center;
           opacity: 0;
-          animation: fadeUp 1s ease 0.5s forwards;
+          animation: fadeIn 0.6s ease 0.4s forwards;
         }
 
         .contraband-hero-subtitle {
-          font-size: 12px;
-          letter-spacing: 0.4em;
+          font-size: 10px;
+          letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: var(--contraband-rust);
-          margin-top: 1.5rem;
+          color: var(--cb-text-muted);
+          margin-top: 16px;
           text-align: center;
           opacity: 0;
-          animation: fadeUp 1s ease 0.9s forwards;
+          animation: fadeIn 0.6s ease 0.7s forwards;
         }
 
         .contraband-hero-tagline {
-          font-family: var(--contraband-font-display);
+          font-family: var(--cb-font-display);
           font-size: clamp(1.1rem, 2vw, 1.4rem);
           font-style: italic;
-          color: var(--contraband-cream);
-          margin-top: 2rem;
+          color: var(--cb-text-muted);
+          margin-top: 24px;
           opacity: 0;
-          animation: fadeUp 1s ease 0.7s forwards;
-        }
-
-        .contraband-page.light-mode .contraband-hero-tagline {
-          color: var(--contraband-mid-gray);
-        }
-
-        .contraband-page.light-mode .contraband-hero-title {
-          color: var(--contraband-black);
-        }
-
-        .contraband-page.light-mode .contraband-scroll-indicator span {
-          color: #6a6a6a;
+          animation: fadeIn 0.6s ease 0.6s forwards;
         }
 
         .contraband-scroll-indicator {
           position: absolute;
-          bottom: 3rem;
+          bottom: 48px;
           left: 0;
           right: 0;
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
-          gap: 0.75rem;
+          gap: 8px;
           opacity: 0;
-          animation: fadeUp 1s ease 1.2s forwards;
+          animation: fadeIn 0.6s ease 1s forwards;
         }
 
         .contraband-scroll-indicator span {
           font-size: 10px;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--contraband-light-gray);
+          color: var(--cb-text-muted);
         }
 
         .contraband-scroll-line {
           width: 1px;
-          height: 40px;
-          background: linear-gradient(to bottom, var(--contraband-rust), transparent);
-          animation: scrollPulse 2s ease infinite;
+          height: 32px;
+          background: var(--cb-border);
         }
 
-        @keyframes scrollPulse {
-          0%, 100% { transform: scaleY(1); opacity: 1; }
-          50% { transform: scaleY(0.6); opacity: 0.5; }
-        }
-
-        @keyframes fadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         .contraband-section {
-          padding: 8rem 3rem;
+          padding: 96px 48px;
           max-width: 1400px;
           margin: 0 auto;
         }
@@ -595,337 +437,276 @@ export default function HomePage() {
         .contraband-section-header {
           display: flex;
           align-items: baseline;
-          gap: 2rem;
-          margin-bottom: 4rem;
-          border-bottom: 1px solid var(--contraband-mid-gray);
-          padding-bottom: 1.5rem;
+          gap: 24px;
+          margin-bottom: 48px;
+          border-bottom: 1px solid var(--cb-border);
+          padding-bottom: 16px;
         }
 
         .contraband-section-number {
-          font-family: var(--contraband-font-display);
-          font-size: 3rem;
-          color: var(--contraband-rust);
+          font-family: var(--cb-font-display);
+          font-size: 2.5rem;
+          color: #F7931A;
           line-height: 1;
         }
 
         .contraband-section-title {
-          font-family: var(--contraband-font-display);
+          font-family: var(--cb-font-display);
           font-size: 2.5rem;
           font-weight: 400;
-          letter-spacing: 0.1em;
+          letter-spacing: -0.02em;
           text-transform: uppercase;
         }
 
         .contraband-content-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-          gap: 2rem;
+          gap: 1px;
+          background: var(--cb-border);
         }
 
         .contraband-content-card {
-          background: var(--contraband-off-black);
-          border: 1px solid var(--contraband-dark-gray);
-          padding: 2.5rem;
+          background: var(--cb-surface);
+          padding: 32px;
           position: relative;
-          transition: all 0.4s ease;
           cursor: pointer;
-        }
-
-        .contraband-content-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(135deg, var(--contraband-rust) 0%, transparent 50%);
-          opacity: 0;
-          transition: opacity 0.4s ease;
+          text-decoration: none;
+          color: inherit;
+          transition: background 0.15s ease;
         }
 
         .contraband-content-card:hover {
-          border-color: var(--contraband-rust);
-          transform: translateY(-4px);
-        }
-
-        .contraband-content-card:hover::before {
-          opacity: 0.05;
+          background: rgba(247, 147, 26, 0.03);
         }
 
         .contraband-card-type {
           font-size: 10px;
-          letter-spacing: 0.3em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--contraband-rust);
-          margin-bottom: 1rem;
-          position: relative;
-          z-index: 1;
+          color: var(--cb-text-muted);
+          margin-bottom: 16px;
         }
 
         .contraband-card-title {
-          font-family: var(--contraband-font-display);
-          font-size: 1.6rem;
+          font-family: var(--cb-font-display);
+          font-size: 1.5rem;
           font-weight: 400;
           line-height: 1.3;
-          margin-bottom: 1rem;
-          position: relative;
-          z-index: 1;
+          letter-spacing: -0.01em;
+          margin-bottom: 12px;
         }
 
         .contraband-card-excerpt {
-          color: var(--contraband-light-gray);
+          color: var(--cb-text-muted);
           font-size: 13px;
-          line-height: 1.8;
-          margin-bottom: 1.5rem;
-          position: relative;
-          z-index: 1;
+          line-height: 1.6;
+          margin-bottom: 24px;
         }
 
         .contraband-card-meta {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          font-size: 11px;
-          color: var(--contraband-light-gray);
-          position: relative;
-          z-index: 1;
+          font-size: 10px;
+          color: var(--cb-text-muted);
         }
 
         .contraband-card-arrow {
-          width: 24px;
-          height: 24px;
-          stroke: var(--contraband-rust);
-          transition: transform 0.3s ease;
+          font-size: 16px;
+          color: var(--cb-text-muted);
+          transition: color 0.15s ease;
         }
 
         .contraband-content-card:hover .contraband-card-arrow {
-          transform: translateX(4px);
+          color: #F7931A;
         }
 
         .contraband-featured {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 0;
-          margin-bottom: 4rem;
-          border: 1px solid var(--contraband-mid-gray);
+          margin-bottom: 48px;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
         }
 
         .contraband-featured-image {
-          background: var(--contraband-dark-gray);
+          background: var(--cb-surface);
           min-height: 400px;
           position: relative;
           overflow: hidden;
         }
 
-        .contraband-featured-image::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(45deg, var(--contraband-rust) 0%, var(--contraband-black) 100%);
-          opacity: 0.3;
-        }
-
         .contraband-featured-content {
-          padding: 4rem;
+          padding: 48px;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          background: var(--contraband-off-black);
+          background: var(--cb-surface);
+          border-left: 1px solid var(--cb-border);
         }
 
         .contraband-featured-label {
           font-size: 10px;
-          letter-spacing: 0.4em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--contraband-rust);
-          margin-bottom: 1.5rem;
+          color: var(--cb-text-muted);
+          margin-bottom: 24px;
         }
 
         .contraband-featured-title {
-          font-family: var(--contraband-font-display);
-          font-size: 2.2rem;
+          font-family: var(--cb-font-display);
+          font-size: 2rem;
           font-weight: 400;
           line-height: 1.3;
-          margin-bottom: 1.5rem;
+          letter-spacing: -0.01em;
+          margin-bottom: 16px;
         }
 
         .contraband-featured-excerpt {
-          color: var(--contraband-light-gray);
-          font-size: 14px;
-          line-height: 1.9;
-          margin-bottom: 2rem;
+          color: var(--cb-text-muted);
+          font-size: 13px;
+          line-height: 1.6;
+          margin-bottom: 32px;
         }
 
         .contraband-btn {
           display: inline-flex;
           align-items: center;
-          gap: 1rem;
-          padding: 1rem 2rem;
+          gap: 8px;
+          padding: 12px 24px;
           background: transparent;
-          border: 1px solid var(--contraband-cream);
-          color: var(--contraband-cream);
-          font-family: var(--contraband-font-mono);
-          font-size: 11px;
-          letter-spacing: 0.2em;
+          border: 1px solid var(--cb-border);
+          color: var(--cb-text);
+          font-family: var(--cb-font-mono);
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           text-decoration: none;
           cursor: pointer;
-          transition: all 0.3s ease;
+          border-radius: 2px;
+          transition: border-color 0.15s ease, color 0.15s ease;
         }
 
         .contraband-btn:hover {
-          background: var(--contraband-cream);
-          color: var(--contraband-black);
+          border-color: #F7931A;
+          color: #F7931A;
         }
 
         .contraband-btn svg {
-          width: 16px;
-          height: 16px;
-          transition: transform 0.3s ease;
-        }
-
-        .contraband-btn:hover svg {
-          transform: translateX(4px);
+          width: 14px;
+          height: 14px;
         }
 
         .contraband-subscribe-section {
-          background: var(--contraband-off-black);
-          border: 1px solid var(--contraband-mid-gray);
-          padding: 5rem;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 64px;
           text-align: center;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .contraband-subscribe-section::before {
-          content: '';
-          position: absolute;
-          top: -50%;
-          left: -50%;
-          width: 200%;
-          height: 200%;
-          background: radial-gradient(circle at center, var(--contraband-rust) 0%, transparent 70%);
-          opacity: 0.03;
         }
 
         .contraband-subscribe-title {
-          font-family: var(--contraband-font-display);
+          font-family: var(--cb-font-display);
           font-size: 2.5rem;
           font-weight: 400;
-          margin-bottom: 1rem;
-          position: relative;
+          letter-spacing: -0.02em;
+          margin-bottom: 16px;
         }
 
         .contraband-subscribe-text {
-          color: var(--contraband-light-gray);
-          margin-bottom: 2.5rem;
-          max-width: 500px;
+          color: var(--cb-text-muted);
+          margin-bottom: 32px;
+          max-width: 480px;
           margin-left: auto;
           margin-right: auto;
-          position: relative;
         }
 
         .contraband-subscribe-form {
           display: flex;
           justify-content: center;
           gap: 0;
-          max-width: 500px;
+          max-width: 480px;
           margin: 0 auto;
-          position: relative;
         }
 
         .contraband-subscribe-form input {
           flex: 1;
-          padding: 1rem 1.5rem;
-          background: var(--contraband-black);
-          border: 1px solid var(--contraband-mid-gray);
+          padding: 12px 16px;
+          background: var(--cb-bg);
+          border: 1px solid var(--cb-border);
           border-right: none;
-          color: var(--contraband-cream);
-          font-family: var(--contraband-font-mono);
+          border-radius: 2px 0 0 2px;
+          color: var(--cb-text);
+          font-family: var(--cb-font-mono);
           font-size: 13px;
         }
 
         .contraband-subscribe-form input::placeholder {
-          color: var(--contraband-light-gray);
+          color: var(--cb-text-muted);
         }
 
         .contraband-subscribe-form input:focus {
           outline: none;
-          border-color: var(--contraband-rust);
+          border-color: #F7931A;
         }
 
         .contraband-subscribe-form button {
-          padding: 1rem 2rem;
-          background: var(--contraband-rust);
-          border: 1px solid var(--contraband-rust);
-          color: var(--contraband-white);
-          font-family: var(--contraband-font-mono);
-          font-size: 11px;
-          letter-spacing: 0.15em;
+          padding: 12px 24px;
+          background: #F7931A;
+          border: 1px solid #F7931A;
+          border-radius: 0 2px 2px 0;
+          color: #ffffff;
+          font-family: var(--cb-font-mono);
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: opacity 0.15s ease;
         }
 
         .contraband-subscribe-form button:hover {
-          background: var(--contraband-rust-light);
-          border-color: var(--contraband-rust-light);
+          opacity: 0.85;
         }
 
         .hero-view-toggle {
           display: inline-flex;
           align-items: center;
           gap: 0;
-          margin-bottom: 1.5rem;
+          margin-bottom: 24px;
           opacity: 0;
-          animation: fadeUp 1s ease 0.1s forwards;
+          animation: fadeIn 0.6s ease 0.1s forwards;
           position: relative;
           z-index: 1001;
           pointer-events: auto;
-          background: var(--contraband-off-black);
-          border: 1px solid var(--contraband-mid-gray);
-          border-radius: 6px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           overflow: hidden;
         }
 
-        .contraband-page.light-mode .hero-view-toggle {
-          background: var(--contraband-white);
-          border-color: #c8c4bc;
-        }
-
         .hero-view-label {
-          font-size: 11px;
-          letter-spacing: 0.15em;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--contraband-light-gray);
-          transition: all 0.3s ease;
+          color: var(--cb-text-muted);
+          transition: color 0.15s ease, background 0.15s ease;
           cursor: pointer;
           pointer-events: auto;
           user-select: none;
-          padding: 0.5rem 1.25rem;
+          padding: 8px 20px;
           background: transparent;
           border: none;
-          font-family: var(--contraband-font-mono);
+          font-family: var(--cb-font-mono);
         }
 
         .hero-view-label:hover {
-          color: var(--contraband-cream);
-        }
-
-        .contraband-page.light-mode .hero-view-label:hover {
-          color: var(--contraband-black);
+          color: var(--cb-text);
         }
 
         .hero-view-label.active {
-          color: var(--contraband-cream);
-          background: var(--contraband-rust);
-        }
-
-        .contraband-page.light-mode .hero-view-label.active {
-          color: #fff;
+          color: #ffffff;
+          background: #F7931A;
         }
 
         .hero-chart-container {
@@ -933,16 +714,12 @@ export default function HomePage() {
           width: 100%;
           max-width: 900px;
           aspect-ratio: 16/8;
-          margin-bottom: 2rem;
-          border-radius: 8px;
+          margin-bottom: 32px;
+          border-radius: 2px;
           overflow: hidden;
-          border: 1px solid var(--contraband-dark-gray);
+          border: 1px solid var(--cb-border);
           opacity: 0;
-          animation: fadeUp 0.6s ease forwards;
-        }
-
-        .contraband-page.light-mode .hero-chart-container {
-          border-color: #d0ccc4;
+          animation: fadeIn 0.6s ease forwards;
         }
 
         .hero-chart-container .tradingview-widget-container {
@@ -952,7 +729,11 @@ export default function HomePage() {
 
         @media (max-width: 768px) {
           .contraband-section {
-            padding: 5rem 2rem;
+            padding: 64px 24px;
+          }
+
+          .contraband-content-grid {
+            grid-template-columns: 1fr;
           }
 
           .contraband-featured {
@@ -960,11 +741,16 @@ export default function HomePage() {
           }
 
           .contraband-featured-image {
-            min-height: 250px;
+            min-height: 200px;
+          }
+
+          .contraband-featured-content {
+            border-left: none;
+            border-top: 1px solid var(--cb-border);
           }
 
           .contraband-subscribe-section {
-            padding: 3rem 2rem;
+            padding: 48px 24px;
           }
 
           .contraband-subscribe-form {
@@ -972,30 +758,23 @@ export default function HomePage() {
           }
 
           .contraband-subscribe-form input {
-            border-right: 1px solid var(--contraband-mid-gray);
+            border-right: 1px solid var(--cb-border);
             border-bottom: none;
+            border-radius: 2px 2px 0 0;
+          }
+
+          .contraband-subscribe-form button {
+            border-radius: 0 0 2px 2px;
           }
 
           .contraband-hero {
-            padding: 5rem 2rem 2rem;
+            padding: 64px 24px 32px;
           }
 
-          .hero-map-container {
-            max-width: 100%;
-            aspect-ratio: 16/10;
-            margin-bottom: 1.5rem;
-          }
-
-          .hero-map-cta {
-            font-size: 9px;
-            bottom: 0.5rem;
-            right: 0.5rem;
-          }
-
+          .hero-map-container,
           .hero-chart-container {
             max-width: 100%;
             aspect-ratio: 16/10;
-            margin-bottom: 1.5rem;
           }
         }
       `}</style>
@@ -1099,16 +878,7 @@ export default function HomePage() {
                 </Marker>
               ))}
             </ComposableMap>
-            <div className="hero-sonar-overlay">
-              <div className="hero-radar-sweep"></div>
-              <div className="hero-sonar-rings">
-                <div className="hero-sonar-ring"></div>
-                <div className="hero-sonar-ring"></div>
-                <div className="hero-sonar-ring"></div>
-                <div className="hero-sonar-ring"></div>
-              </div>
-            </div>
-            <span className="hero-map-cta">View Live Dashboard →</span>
+            <span className="hero-map-cta">View Dashboard ↗</span>
           </Link>
           <h1 className="contraband-hero-title">Contra₿and</h1>
           <p className="contraband-hero-tagline">Ideas that refuse to stay buried</p>
@@ -1132,12 +902,7 @@ export default function HomePage() {
               <span className="contraband-featured-label">Featured Essay</span>
               <h3 className="contraband-featured-title">Letters of Marque for the Digital Age</h3>
               <p className="contraband-featured-excerpt">When states embrace what they once called piracy.</p>
-              <span className="contraband-btn">
-                Read Now
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </span>
+              <span className="contraband-btn">Read Now ↗</span>
             </div>
           </Link>
 
@@ -1148,9 +913,7 @@ export default function HomePage() {
               <p className="contraband-card-excerpt">Why leaving the harbor means carrying more treasure.</p>
               <div className="contraband-card-meta">
                 <span>15 min read</span>
-                <svg className="contraband-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
+                <span className="contraband-card-arrow">↗</span>
               </div>
             </Link>
             <Link href="/writings/nation-or-network" className="contraband-content-card">
@@ -1159,9 +922,7 @@ export default function HomePage() {
               <p className="contraband-card-excerpt">Borders are lines on maps. Networks are lines of code.</p>
               <div className="contraband-card-meta">
                 <span>10 min read</span>
-                <svg className="contraband-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
+                <span className="contraband-card-arrow">↗</span>
               </div>
             </Link>
             <Link href="/writings/when-did-i-sign" className="contraband-content-card">
@@ -1170,9 +931,7 @@ export default function HomePage() {
               <p className="contraband-card-excerpt">You can't breach an agreement you never made.</p>
               <div className="contraband-card-meta">
                 <span>7 min read</span>
-                <svg className="contraband-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
+                <span className="contraband-card-arrow">↗</span>
               </div>
             </Link>
           </div>
