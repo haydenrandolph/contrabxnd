@@ -15,31 +15,13 @@ export default function AboutPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
 
         .contraband-about-page {
-          background: #0a0a0a;
-          color: #e8e4dc;
+          background: var(--cb-bg);
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
-          font-size: 14px;
+          font-size: 13px;
           line-height: 1.7;
           overflow-x: hidden;
           min-height: 100vh;
-        }
-
-        .contraband-about-page.light-mode {
-          background: #e8e4dc;
-          color: #0a0a0a;
-        }
-
-        .contraband-about-page::before {
-          content: '';
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.03;
-          pointer-events: none;
-          z-index: 1000;
         }
 
         .about-container {
@@ -47,7 +29,7 @@ export default function AboutPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 8rem 3rem;
+          padding: 8rem 48px;
         }
 
         .about-content {
@@ -57,30 +39,26 @@ export default function AboutPage() {
         .about-content-logo {
           width: 100px;
           height: 100px;
-          margin-bottom: 3rem;
+          margin-bottom: 48px;
           opacity: 0;
           animation: fadeUp 1s ease 0.2s forwards;
         }
 
         .section-label {
           font-size: 10px;
-          letter-spacing: 0.4em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
-          margin-bottom: 2rem;
+          margin-bottom: 32px;
           opacity: 0;
           animation: fadeUp 1s ease 0.3s forwards;
         }
 
         .about-text {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.4rem;
           line-height: 1.9;
-          color: #e8e4dc;
-        }
-
-        .contraband-about-page.light-mode .about-text {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .about-text p {
@@ -99,34 +77,22 @@ export default function AboutPage() {
         }
 
         .highlight-text {
-          color: #d4854c;
+          color: #F7931A;
         }
 
         .definition {
           font-family: 'Space Mono', monospace;
           font-size: 1rem;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           margin-bottom: 1.75rem;
         }
 
-        .contraband-about-page.light-mode .definition {
-          color: #5a5a5a;
-        }
-
         .definition strong {
-          color: #e8e4dc;
-        }
-
-        .contraband-about-page.light-mode .definition strong {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .definition em {
-          color: #3a3a3a;
-        }
-
-        .contraband-about-page.light-mode .definition em {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         @keyframes fadeUp {
@@ -150,7 +116,7 @@ export default function AboutPage() {
 
         @media (max-width: 768px) {
           .about-container {
-            padding: 6rem 2rem;
+            padding: 6rem 32px;
             align-items: flex-start;
             padding-top: 10rem;
           }
@@ -161,7 +127,7 @@ export default function AboutPage() {
 
           :global(.about-custom-footer) {
             position: relative;
-            padding: 3rem 2rem;
+            padding: 48px 32px;
           }
         }
       `}</style>

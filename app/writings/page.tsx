@@ -115,32 +115,15 @@ export default function WritingsPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
 
         .writings-page {
-          background: #0a0a0a;
-          color: #e8e4dc;
+          background: var(--cb-bg);
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
+          font-size: 13px;
           min-height: 100vh;
         }
 
-        .writings-page.light-mode {
-          background: #e8e4dc;
-          color: #0a0a0a;
-        }
-
-        .writings-page::before {
-          content: '';
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.03;
-          pointer-events: none;
-          z-index: 1000;
-        }
-
         .page-header {
-          padding: 12rem 3rem 6rem;
+          padding: 12rem 48px 64px;
           max-width: 1400px;
           margin: 0 auto;
         }
@@ -148,73 +131,60 @@ export default function WritingsPage() {
         .page-header-inner {
           display: flex;
           align-items: baseline;
-          gap: 2rem;
-          border-bottom: 1px solid #3a3a3a;
-          padding-bottom: 2rem;
-        }
-
-        .writings-page.light-mode .page-header-inner {
-          border-bottom-color: #c8c4bc;
+          gap: 32px;
+          border-bottom: 1px solid var(--cb-border);
+          padding-bottom: 32px;
         }
 
         .page-number {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 4rem;
           color: #F7931A;
           line-height: 1;
         }
 
         .page-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 4rem;
           font-weight: 400;
-          letter-spacing: 0.1em;
+          letter-spacing: -0.02em;
           text-transform: uppercase;
         }
 
         .page-description {
           max-width: 600px;
-          margin-top: 2rem;
-          color: #8a8a8a;
+          margin-top: 32px;
+          color: var(--cb-text-muted);
           line-height: 1.8;
-          font-size: 14px;
+          font-size: 13px;
         }
 
         .filter-bar {
-          padding: 2rem 3rem;
+          padding: 32px 48px;
           max-width: 1400px;
           margin: 0 auto;
           display: flex;
-          gap: 2rem;
-          border-bottom: 1px solid #1a1a1a;
-        }
-
-        .writings-page.light-mode .filter-bar {
-          border-bottom-color: #d8d4cc;
+          gap: 32px;
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .filter-btn {
           background: none;
           border: none;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           font-family: 'Space Mono', monospace;
           font-size: 11px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          padding: 0.5rem 0;
+          padding: 8px 0;
           position: relative;
-          transition: color 0.3s ease;
+          transition: color 0.15s ease;
         }
 
         .filter-btn:hover,
         .filter-btn.active {
-          color: #e8e4dc;
-        }
-
-        .writings-page.light-mode .filter-btn:hover,
-        .writings-page.light-mode .filter-btn.active {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .filter-btn.active::after {
@@ -228,7 +198,7 @@ export default function WritingsPage() {
         }
 
         .articles-section {
-          padding: 4rem 3rem;
+          padding: 64px 48px;
           max-width: 1400px;
           margin: 0 auto;
         }
@@ -237,164 +207,121 @@ export default function WritingsPage() {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 0;
-          margin-bottom: 4rem;
-          border: 1px solid #3a3a3a;
+          margin-bottom: 64px;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           text-decoration: none;
           color: inherit;
-          transition: border-color 0.3s ease;
+          transition: border-color 0.15s ease;
         }
 
         .featured-article:hover {
           border-color: #F7931A;
         }
 
-        .writings-page.light-mode .featured-article {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
-        }
-
         .featured-image {
-          background: #1a1a1a;
+          background: var(--cb-surface);
           min-height: 450px;
           position: relative;
           overflow: hidden;
         }
 
-        .featured-image::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(135deg, #F7931A 0%, #0a0a0a 100%);
-          opacity: 0.4;
-        }
-
         .featured-content {
-          padding: 4rem;
+          padding: 64px;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          background: #141414;
-        }
-
-        .writings-page.light-mode .featured-content {
-          background: #f5f3f0;
+          background: var(--cb-surface);
         }
 
         .featured-label {
           font-size: 10px;
-          letter-spacing: 0.4em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
-          margin-bottom: 1.5rem;
+          margin-bottom: 24px;
         }
 
         .featured-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2.5rem;
           font-weight: 400;
           line-height: 1.2;
-          margin-bottom: 1.5rem;
+          letter-spacing: -0.02em;
+          margin-bottom: 24px;
         }
 
         .featured-excerpt {
-          color: #8a8a8a;
-          font-size: 14px;
+          color: var(--cb-text-muted);
+          font-size: 13px;
           line-height: 1.9;
-          margin-bottom: 2rem;
+          margin-bottom: 32px;
         }
 
         .featured-meta {
           display: flex;
-          gap: 2rem;
+          gap: 32px;
           font-size: 11px;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .articles-grid {
           display: grid;
           grid-template-columns: repeat(2, 1fr);
-          gap: 2rem;
+          gap: 32px;
         }
 
         .article-card {
-          background: #141414;
-          border: 1px solid #1a1a1a;
-          padding: 2.5rem;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 40px;
           text-decoration: none;
           color: inherit;
           position: relative;
-          transition: all 0.4s ease;
+          transition: border-color 0.15s ease;
           display: flex;
           flex-direction: column;
         }
 
-        .writings-page.light-mode .article-card {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
-        }
-
-        .article-card::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(135deg, #F7931A 0%, transparent 50%);
-          opacity: 0;
-          transition: opacity 0.4s ease;
-        }
-
         .article-card:hover {
           border-color: #F7931A;
-          transform: translateY(-4px);
-        }
-
-        .article-card:hover::before {
-          opacity: 0.05;
         }
 
         .article-number {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2rem;
-          color: #3a3a3a;
-          margin-bottom: 1.5rem;
+          color: var(--cb-border);
+          margin-bottom: 24px;
           position: relative;
           z-index: 1;
         }
 
-        .writings-page.light-mode .article-number {
-          color: #c8c4bc;
-        }
-
         .article-type {
           font-size: 10px;
-          letter-spacing: 0.3em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
-          margin-bottom: 1rem;
+          margin-bottom: 16px;
           position: relative;
           z-index: 1;
         }
 
         .article-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.8rem;
           font-weight: 400;
           line-height: 1.3;
-          margin-bottom: 1rem;
+          margin-bottom: 16px;
           position: relative;
           z-index: 1;
         }
 
         .article-excerpt {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           font-size: 13px;
           line-height: 1.8;
-          margin-bottom: 2rem;
+          margin-bottom: 32px;
           position: relative;
           z-index: 1;
           flex-grow: 1;
@@ -405,7 +332,7 @@ export default function WritingsPage() {
           justify-content: space-between;
           align-items: center;
           font-size: 11px;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           position: relative;
           z-index: 1;
         }
@@ -414,11 +341,6 @@ export default function WritingsPage() {
           width: 24px;
           height: 24px;
           stroke: #F7931A;
-          transition: transform 0.3s ease;
-        }
-
-        .article-card:hover .article-arrow {
-          transform: translateX(4px);
         }
 
         @media (max-width: 1000px) {
@@ -437,12 +359,12 @@ export default function WritingsPage() {
 
         @media (max-width: 768px) {
           .page-header {
-            padding: 10rem 2rem 4rem;
+            padding: 10rem 32px 64px;
           }
 
           .page-header-inner {
             flex-direction: column;
-            gap: 1rem;
+            gap: 16px;
           }
 
           .page-number,
@@ -451,16 +373,16 @@ export default function WritingsPage() {
           }
 
           .filter-bar {
-            padding: 1.5rem 2rem;
+            padding: 24px 32px;
             overflow-x: auto;
           }
 
           .articles-section {
-            padding: 3rem 2rem;
+            padding: 48px 32px;
           }
 
           .featured-content {
-            padding: 2.5rem;
+            padding: 40px;
           }
 
         }

@@ -416,16 +416,16 @@ export default function DashboardPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
 
         .dashboard-page {
-          background: #0a0a0a;
-          color: #e8e4dc;
+          background: var(--cb-bg);
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
           min-height: 100vh;
           overflow-x: hidden;
         }
 
         .dashboard-page.light-mode {
-          background: #e8e4dc;
-          color: #0a0a0a;
+          background: var(--cb-bg);
+          color: var(--cb-text);
         }
 
         .dashboard-container {
@@ -441,7 +441,7 @@ export default function DashboardPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 2rem;
+          padding: 32px;
         }
 
         .map-container {
@@ -449,19 +449,15 @@ export default function DashboardPage() {
           width: 100%;
           max-width: 1000px;
           aspect-ratio: 16/9;
-          background:
-            radial-gradient(ellipse at center, rgba(181, 103, 58, 0.03) 0%, transparent 70%),
-            linear-gradient(180deg, #0d0d0d 0%, #0a0a0a 100%);
-          border: 1px solid #1a1a1a;
-          border-radius: 4px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           overflow: hidden;
         }
 
         .dashboard-page.light-mode .map-container {
-          background:
-            radial-gradient(ellipse at center, rgba(181, 103, 58, 0.05) 0%, transparent 70%),
-            linear-gradient(180deg, #f5f3f0 0%, #e8e4dc 100%);
-          border-color: #c8c4bc;
+          background: var(--cb-surface);
+          border-color: var(--cb-border);
         }
 
         .map-container svg {
@@ -471,7 +467,6 @@ export default function DashboardPage() {
         }
 
         .major-node {
-          filter: drop-shadow(0 0 6px rgba(247, 147, 26, 0.6));
           animation: nodePulse 2s ease-in-out infinite;
         }
 
@@ -542,19 +537,17 @@ export default function DashboardPage() {
           border-radius: 50%;
           transform: translate(-50%, -50%);
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
           z-index: 10;
         }
 
         .node-dot.major {
           width: 10px;
           height: 10px;
-          box-shadow: 0 0 10px rgba(181, 103, 58, 0.5);
         }
 
         .node-dot:hover {
           transform: translate(-50%, -50%) scale(1.5);
-          box-shadow: 0 0 15px rgba(181, 103, 58, 0.8);
         }
 
         .node-label {
@@ -563,7 +556,7 @@ export default function DashboardPage() {
           background: rgba(0, 0, 0, 0.9);
           padding: 4px 8px;
           font-size: 9px;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           white-space: nowrap;
           border: 1px solid #b5673a;
           pointer-events: none;
@@ -612,19 +605,16 @@ export default function DashboardPage() {
         .tx-arc.normal {
           stroke: #22c55e;
           stroke-width: 1.5;
-          filter: drop-shadow(0 0 4px rgba(34, 197, 94, 0.6));
         }
 
         .tx-arc.large {
           stroke: #f59e0b;
           stroke-width: 2;
-          filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
         }
 
         .tx-arc.whale {
           stroke: #a855f7;
           stroke-width: 3;
-          filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.8));
         }
 
         @keyframes arcPulse {
@@ -661,42 +651,42 @@ export default function DashboardPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 2rem;
-          padding: 1rem 2rem;
-          background: #0d0d0d;
-          border-bottom: 1px solid #1a1a1a;
+          gap: 32px;
+          padding: 16px 32px;
+          background: var(--cb-surface);
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .dashboard-page.light-mode .price-header {
-          background: #f5f3f0;
-          border-bottom-color: #c8c4bc;
+          background: var(--cb-surface);
+          border-bottom-color: var(--cb-border);
         }
 
         .price-label {
           font-size: 10px;
-          letter-spacing: 0.3em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #b5673a;
+          color: var(--cb-text-muted);
         }
 
         .price-display {
           display: flex;
           align-items: baseline;
-          gap: 1rem;
+          gap: 16px;
         }
 
         .price-value {
           font-size: 2rem;
           font-weight: 700;
-          color: #e8e4dc;
+          color: var(--cb-text);
         }
 
         .dashboard-page.light-mode .price-value {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .price-change {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
         }
 
@@ -706,22 +696,23 @@ export default function DashboardPage() {
         .set-alert-btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 1rem;
+          gap: 8px;
+          padding: 8px 16px;
           background: transparent;
-          border: 1px solid #F7931A;
-          color: #F7931A;
+          border: 1px solid var(--cb-accent);
+          border-radius: 2px;
+          color: var(--cb-accent);
           font-family: 'Space Mono', monospace;
           font-size: 10px;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          margin-left: 1.5rem;
-          transition: all 0.2s ease;
+          margin-left: 24px;
+          transition: all 0.15s ease;
         }
 
         .set-alert-btn:hover {
-          background: #F7931A;
+          background: var(--cb-accent);
           color: #fff;
         }
 
@@ -732,7 +723,7 @@ export default function DashboardPage() {
 
         .corner-stat {
           position: absolute;
-          padding: 1rem;
+          padding: 16px;
           z-index: 10;
         }
 
@@ -742,29 +733,29 @@ export default function DashboardPage() {
         .corner-stat.bottom-right { bottom: 0; right: 0; text-align: right; }
 
         .stat-label {
-          font-size: 9px;
-          letter-spacing: 0.15em;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #5a5a5a;
-          margin-bottom: 0.25rem;
+          color: var(--cb-text-muted);
+          margin-bottom: 4px;
         }
 
         .stat-value {
           font-size: 16px;
-          color: #e8e4dc;
+          color: var(--cb-text);
         }
 
         .dashboard-page.light-mode .stat-label {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .dashboard-page.light-mode .stat-value {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .sidebar {
-          background: #0d0d0d;
-          border-top: 1px solid #1a1a1a;
+          background: var(--cb-surface);
+          border-top: 1px solid var(--cb-border);
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
           gap: 0;
@@ -772,17 +763,17 @@ export default function DashboardPage() {
         }
 
         .dashboard-page.light-mode .sidebar {
-          background: #f5f3f0;
-          border-top-color: #c8c4bc;
+          background: var(--cb-surface);
+          border-top-color: var(--cb-border);
         }
 
         .sidebar-section {
-          padding: 1.5rem;
-          border-right: 1px solid #1a1a1a;
+          padding: 24px;
+          border-right: 1px solid var(--cb-border);
         }
 
         .dashboard-page.light-mode .sidebar-section {
-          border-right-color: #c8c4bc;
+          border-right-color: var(--cb-border);
         }
 
         .sidebar-section:last-child {
@@ -791,54 +782,55 @@ export default function DashboardPage() {
 
         .sidebar-title {
           font-size: 10px;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #5a5a5a;
-          margin-bottom: 1rem;
+          color: var(--cb-text-muted);
+          margin-bottom: 16px;
         }
 
         .metrics-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1rem;
+          gap: 16px;
         }
 
         .metric-card {
-          background: #141414;
-          padding: 1rem;
-          border: 1px solid #1a1a1a;
+          background: var(--cb-bg);
+          padding: 16px;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
         }
 
         .dashboard-page.light-mode .metric-card {
-          background: #ffffff;
-          border-color: #c8c4bc;
+          background: var(--cb-surface);
+          border-color: var(--cb-border);
         }
 
         .metric-label {
-          font-size: 9px;
-          letter-spacing: 0.1em;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #5a5a5a;
-          margin-bottom: 0.5rem;
+          color: var(--cb-text-muted);
+          margin-bottom: 8px;
         }
 
         .metric-value {
-          font-size: 14px;
-          color: #e8e4dc;
+          font-size: 13px;
+          color: var(--cb-text);
         }
 
         .dashboard-page.light-mode .metric-label {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .dashboard-page.light-mode .metric-value {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .feed-container {
           max-height: 300px;
           overflow-y: auto;
-          padding: 0 1.5rem 1.5rem;
+          padding: 0 24px 24px;
         }
 
         .feed-container::-webkit-scrollbar {
@@ -846,27 +838,27 @@ export default function DashboardPage() {
         }
 
         .feed-container::-webkit-scrollbar-track {
-          background: #0a0a0a;
+          background: var(--cb-bg);
         }
 
         .feed-container::-webkit-scrollbar-thumb {
-          background: #3a3a3a;
+          background: var(--cb-border);
           border-radius: 2px;
         }
 
         .tx-item {
           display: block;
-          padding: 0.75rem 0;
-          border-bottom: 1px solid #1a1a1a;
-          animation: fadeIn 0.3s ease;
+          padding: 12px 0;
+          border-bottom: 1px solid var(--cb-border);
+          animation: fadeIn 0.15s ease;
           text-decoration: none;
           color: inherit;
           cursor: pointer;
-          transition: background 0.2s ease;
+          transition: background 0.15s ease;
         }
 
         .dashboard-page.light-mode .tx-item {
-          border-bottom-color: #c8c4bc;
+          border-bottom-color: var(--cb-border);
         }
 
         .tx-item:hover {
@@ -884,7 +876,7 @@ export default function DashboardPage() {
 
         .tx-hash {
           font-size: 10px;
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
           font-family: 'Space Mono', monospace;
         }
 
@@ -892,12 +884,12 @@ export default function DashboardPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-top: 0.25rem;
+          margin-top: 4px;
         }
 
         .tx-location {
           font-size: 11px;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .tx-amount {
@@ -918,16 +910,16 @@ export default function DashboardPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 0.5rem 0;
-          border-bottom: 1px solid #1a1a1a;
+          padding: 8px 0;
+          border-bottom: 1px solid var(--cb-border);
           text-decoration: none;
           color: inherit;
           cursor: pointer;
-          transition: background 0.2s ease;
+          transition: background 0.15s ease;
         }
 
         .dashboard-page.light-mode .block-item {
-          border-bottom-color: #c8c4bc;
+          border-bottom-color: var(--cb-border);
         }
 
         .block-item:hover {
@@ -935,7 +927,7 @@ export default function DashboardPage() {
         }
 
         .block-item:hover .block-height {
-          color: #F7931A;
+          color: var(--cb-accent);
         }
 
         .block-item:last-child {
@@ -949,12 +941,12 @@ export default function DashboardPage() {
 
         .block-txs {
           font-size: 10px;
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
         }
 
         .block-time {
           font-size: 10px;
-          color: #3a3a3a;
+          color: var(--cb-text-muted);
         }
 
         /* Transaction Modal */
@@ -962,13 +954,12 @@ export default function DashboardPage() {
           position: fixed;
           inset: 0;
           background: rgba(0, 0, 0, 0.8);
-          backdrop-filter: blur(4px);
           z-index: 2000;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 2rem;
-          animation: modalFadeIn 0.2s ease;
+          padding: 32px;
+          animation: modalFadeIn 0.15s ease;
         }
 
         .dashboard-page.light-mode .tx-modal-overlay {
@@ -981,19 +972,19 @@ export default function DashboardPage() {
         }
 
         .tx-modal {
-          background: #0d0d0d;
-          border: 1px solid #2a2a2a;
-          border-radius: 8px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           max-width: 500px;
           width: 100%;
           max-height: 90vh;
           overflow-y: auto;
-          animation: modalSlideIn 0.2s ease;
+          animation: modalSlideIn 0.15s ease;
         }
 
         .dashboard-page.light-mode .tx-modal {
-          background: #ffffff;
-          border-color: #c8c4bc;
+          background: var(--cb-surface);
+          border-color: var(--cb-border);
         }
 
         @keyframes modalSlideIn {
@@ -1005,17 +996,17 @@ export default function DashboardPage() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 1.5rem;
-          border-bottom: 1px solid #1a1a1a;
+          padding: 24px;
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .dashboard-page.light-mode .tx-modal-header {
-          border-bottom-color: #e0dcd4;
+          border-bottom-color: var(--cb-border);
         }
 
         .tx-modal-title {
           font-size: 12px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #b5673a;
         }
@@ -1024,24 +1015,24 @@ export default function DashboardPage() {
           width: 32px;
           height: 32px;
           background: transparent;
-          border: 1px solid #3a3a3a;
-          border-radius: 4px;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
         }
 
         .tx-modal-close:hover {
-          background: #F7931A;
-          border-color: #F7931A;
+          background: var(--cb-accent);
+          border-color: var(--cb-accent);
         }
 
         .tx-modal-close svg {
           width: 16px;
           height: 16px;
-          stroke: #8a8a8a;
+          stroke: var(--cb-text-muted);
         }
 
         .tx-modal-close:hover svg {
@@ -1049,27 +1040,27 @@ export default function DashboardPage() {
         }
 
         .dashboard-page.light-mode .tx-modal-close {
-          border-color: #c8c4bc;
+          border-color: var(--cb-border);
         }
 
         .dashboard-page.light-mode .tx-modal-close svg {
-          stroke: #5a5a5a;
+          stroke: var(--cb-text-muted);
         }
 
         .tx-modal-body {
-          padding: 1.5rem;
+          padding: 24px;
         }
 
         .tx-modal-row {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          padding: 1rem 0;
-          border-bottom: 1px solid #1a1a1a;
+          padding: 16px 0;
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .dashboard-page.light-mode .tx-modal-row {
-          border-bottom-color: #e0dcd4;
+          border-bottom-color: var(--cb-border);
         }
 
         .tx-modal-row:last-child {
@@ -1078,31 +1069,31 @@ export default function DashboardPage() {
 
         .tx-modal-label {
           font-size: 10px;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
         }
 
         .dashboard-page.light-mode .tx-modal-label {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .tx-modal-value {
-          font-size: 14px;
-          color: #e8e4dc;
+          font-size: 13px;
+          color: var(--cb-text);
           text-align: right;
           word-break: break-all;
           max-width: 60%;
         }
 
         .dashboard-page.light-mode .tx-modal-value {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .tx-modal-value.hash {
           font-size: 11px;
           font-family: 'Space Mono', monospace;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .tx-modal-value.amount {
@@ -1117,13 +1108,13 @@ export default function DashboardPage() {
         .tx-modal-route {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          color: #e8e4dc;
+          gap: 8px;
+          color: var(--cb-text);
           font-size: 13px;
         }
 
         .dashboard-page.light-mode .tx-modal-route {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .tx-modal-route svg {
@@ -1133,43 +1124,43 @@ export default function DashboardPage() {
         }
 
         .tx-modal-footer {
-          padding: 1.5rem;
-          border-top: 1px solid #1a1a1a;
+          padding: 24px;
+          border-top: 1px solid var(--cb-border);
         }
 
         .dashboard-page.light-mode .tx-modal-footer {
-          border-top-color: #e0dcd4;
+          border-top-color: var(--cb-border);
         }
 
         .tx-modal-link {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 0.5rem;
+          gap: 8px;
           width: 100%;
-          padding: 0.75rem 1.5rem;
+          padding: 12px 24px;
           background: transparent;
-          border: 1px solid #3a3a3a;
-          border-radius: 4px;
-          color: #e8e4dc;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
           font-size: 11px;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           text-decoration: none;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: all 0.15s ease;
         }
 
         .tx-modal-link:hover {
-          background: #F7931A;
-          border-color: #F7931A;
+          background: var(--cb-accent);
+          border-color: var(--cb-accent);
           color: #fff;
         }
 
         .dashboard-page.light-mode .tx-modal-link {
-          border-color: #c8c4bc;
-          color: #0a0a0a;
+          border-color: var(--cb-border);
+          color: var(--cb-text);
         }
 
         .tx-modal-link svg {
@@ -1183,7 +1174,7 @@ export default function DashboardPage() {
           }
 
           .map-section {
-            padding: 1rem;
+            padding: 16px;
           }
 
           .map-container {
@@ -1196,7 +1187,7 @@ export default function DashboardPage() {
 
           .sidebar-section {
             border-right: none;
-            border-bottom: 1px solid #1a1a1a;
+            border-bottom: 1px solid var(--cb-border);
           }
 
           .sidebar-section:last-child {
@@ -1213,15 +1204,15 @@ export default function DashboardPage() {
 
           .price-header {
             flex-direction: column;
-            gap: 0.75rem;
-            padding: 1rem 1.5rem;
+            gap: 12px;
+            padding: 16px 24px;
             text-align: center;
           }
 
           .price-display {
             flex-direction: column;
             align-items: center;
-            gap: 0.5rem;
+            gap: 8px;
           }
 
           .price-value {
@@ -1230,7 +1221,7 @@ export default function DashboardPage() {
 
           .set-alert-btn {
             margin-left: 0;
-            margin-top: 0.5rem;
+            margin-top: 8px;
           }
         }
       `}</style>

@@ -93,32 +93,14 @@ export default function LearnPage() {
         }
 
         .learn-page {
-          background: #0a0a0a;
-          color: #e8e4dc;
+          background: var(--cb-bg);
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
-          font-size: 14px;
+          font-size: 13px;
           line-height: 1.7;
           overflow-x: hidden;
           min-height: 100vh;
           -webkit-font-smoothing: antialiased;
-        }
-
-        .learn-page.light-mode {
-          background: #e8e4dc;
-          color: #0a0a0a;
-        }
-
-        .learn-page::before {
-          content: '';
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.03;
-          pointer-events: none;
-          z-index: 1000;
         }
 
         .learn-hero {
@@ -130,7 +112,7 @@ export default function LearnPage() {
 
         .hero-label {
           font-size: 10px;
-          letter-spacing: 0.4em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
           margin-bottom: 2rem;
@@ -139,19 +121,20 @@ export default function LearnPage() {
         }
 
         .hero-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: clamp(2.5rem, 6vw, 4rem);
           font-weight: 400;
           line-height: 1.2;
+          letter-spacing: -0.02em;
           margin-bottom: 1.5rem;
           opacity: 0;
           animation: fadeUp 1s ease 0.3s forwards;
         }
 
         .hero-subtitle {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.4rem;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           max-width: 600px;
           margin: 0 auto;
           line-height: 1.7;
@@ -183,23 +166,18 @@ export default function LearnPage() {
         }
 
         .course-card {
-          background: #141414;
-          border: 1px solid #1a1a1a;
-          padding: 3rem;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 48px;
           position: relative;
-          transition: all 0.4s ease;
+          transition: border-color 0.15s ease;
           display: flex;
           flex-direction: column;
         }
 
-        .learn-page.light-mode .course-card {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
-        }
-
         .course-card:hover {
           border-color: #F7931A;
-          transform: translateY(-4px);
         }
 
         .course-badge {
@@ -208,83 +186,68 @@ export default function LearnPage() {
           right: 2rem;
           padding: 0.4rem 0.75rem;
           background: #F7931A;
+          border-radius: 2px;
           font-size: 9px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #f5f3f0;
+          color: #fff;
         }
 
         .course-number {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 3rem;
-          color: #3a3a3a;
+          color: var(--cb-border);
           line-height: 1;
-          margin-bottom: 1.5rem;
-        }
-
-        .learn-page.light-mode .course-number {
-          color: #c8c4bc;
+          margin-bottom: 24px;
         }
 
         .course-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2rem;
           font-weight: 400;
-          margin-bottom: 0.5rem;
+          margin-bottom: 8px;
         }
 
         .course-tagline {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.1rem;
           font-style: italic;
-          color: #d4854c;
-          margin-bottom: 1.5rem;
+          color: #F7931A;
+          margin-bottom: 24px;
         }
 
         .course-description {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           font-size: 13px;
           line-height: 1.8;
-          margin-bottom: 2rem;
+          margin-bottom: 32px;
           flex-grow: 1;
         }
 
         .course-meta {
           display: flex;
           gap: 2rem;
-          padding-top: 1.5rem;
-          border-top: 1px solid #1a1a1a;
-          margin-bottom: 2rem;
-        }
-
-        .learn-page.light-mode .course-meta {
-          border-top-color: #d8d4cc;
+          padding-top: 24px;
+          border-top: 1px solid var(--cb-border);
+          margin-bottom: 32px;
         }
 
         .meta-item {
           display: flex;
           flex-direction: column;
-          gap: 0.25rem;
+          gap: 4px;
         }
 
         .meta-label {
-          font-size: 9px;
-          letter-spacing: 0.2em;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #3a3a3a;
-        }
-
-        .learn-page.light-mode .meta-label {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .meta-value {
           font-size: 13px;
-          color: #e8e4dc;
-        }
-
-        .learn-page.light-mode .meta-value {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .course-btn {
@@ -292,54 +255,34 @@ export default function LearnPage() {
           align-items: center;
           justify-content: center;
           gap: 0.75rem;
-          padding: 1rem 2rem;
+          padding: 16px 32px;
           background: transparent;
-          border: 1px solid #e8e4dc;
-          color: #e8e4dc;
+          border: 1px solid var(--cb-text);
+          border-radius: 2px;
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
           font-size: 11px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           text-decoration: none;
-          transition: all 0.3s ease;
-        }
-
-        .learn-page.light-mode .course-btn {
-          border-color: #0a0a0a;
-          color: #0a0a0a;
+          transition: background 0.15s ease, color 0.15s ease;
         }
 
         .course-btn:hover {
-          background: #e8e4dc;
-          color: #0a0a0a;
-        }
-
-        .learn-page.light-mode .course-btn:hover {
-          background: #0a0a0a;
-          color: #e8e4dc;
+          background: var(--cb-text);
+          color: var(--cb-bg);
         }
 
         .course-btn svg {
           width: 16px;
           height: 16px;
-          transition: transform 0.3s ease;
-        }
-
-        .course-btn:hover svg {
-          transform: translateX(4px);
         }
 
         .path-section {
-          padding: 6rem 3rem;
-          background: #141414;
-          border-top: 1px solid #1a1a1a;
-          border-bottom: 1px solid #1a1a1a;
-        }
-
-        .learn-page.light-mode .path-section {
-          background: #f5f3f0;
-          border-top-color: #d8d4cc;
-          border-bottom-color: #d8d4cc;
+          padding: 64px 48px;
+          background: var(--cb-surface);
+          border-top: 1px solid var(--cb-border);
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .path-inner {
@@ -349,21 +292,22 @@ export default function LearnPage() {
 
         .path-header {
           text-align: center;
-          margin-bottom: 4rem;
+          margin-bottom: 64px;
         }
 
         .path-label {
           font-size: 10px;
-          letter-spacing: 0.4em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
-          margin-bottom: 1rem;
+          margin-bottom: 16px;
         }
 
         .path-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2rem;
           font-weight: 400;
+          letter-spacing: -0.02em;
         }
 
         .path-steps {
@@ -375,13 +319,9 @@ export default function LearnPage() {
         .path-step {
           display: grid;
           grid-template-columns: 80px 1fr;
-          gap: 2rem;
-          padding: 2rem 0;
-          border-bottom: 1px solid #1a1a1a;
-        }
-
-        .learn-page.light-mode .path-step {
-          border-bottom-color: #d8d4cc;
+          gap: 32px;
+          padding: 32px 0;
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .path-step:last-child {
@@ -389,49 +329,45 @@ export default function LearnPage() {
         }
 
         .step-number {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2.5rem;
           color: #F7931A;
           line-height: 1;
         }
 
         .step-content h3 {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.4rem;
           font-weight: 400;
-          margin-bottom: 0.5rem;
+          margin-bottom: 8px;
         }
 
         .step-content p {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           font-size: 13px;
           line-height: 1.7;
         }
 
         .philosophy-section {
-          padding: 6rem 3rem;
+          padding: 64px 48px;
           max-width: 800px;
           margin: 0 auto;
           text-align: center;
         }
 
         .philosophy-quote {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.75rem;
           font-style: italic;
           line-height: 1.6;
-          margin-bottom: 1.5rem;
-          color: #e8e4dc;
-        }
-
-        .learn-page.light-mode .philosophy-quote {
-          color: #0a0a0a;
+          margin-bottom: 24px;
+          color: var(--cb-text);
         }
 
         .philosophy-source {
           font-size: 12px;
           color: #F7931A;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
         }
 
@@ -439,30 +375,26 @@ export default function LearnPage() {
           display: flex;
           align-items: center;
           gap: 0.75rem;
-          margin-top: 1rem;
+          margin-top: 16px;
           font-size: 11px;
-          color: #8a8a8a;
-          letter-spacing: 0.1em;
+          color: var(--cb-text-muted);
+          letter-spacing: 0.08em;
           text-transform: uppercase;
         }
 
         .course-progress-bar {
           flex: 1;
           height: 4px;
-          background: #1a1a1a;
+          background: var(--cb-border);
           border-radius: 2px;
           overflow: hidden;
-        }
-
-        .learn-page.light-mode .course-progress-bar {
-          background: #d8d4cc;
         }
 
         .course-progress-fill {
           height: 100%;
           background: #22c55e;
           border-radius: 2px;
-          transition: width 0.5s ease;
+          transition: width 0.15s ease;
         }
 
         @media (max-width: 768px) {
@@ -472,26 +404,26 @@ export default function LearnPage() {
 
           .path-step {
             grid-template-columns: 1fr;
-            gap: 1rem;
+            gap: 16px;
           }
 
           .learn-hero {
-            padding: 10rem 1.5rem 4rem;
+            padding: 10rem 24px 4rem;
           }
 
           .courses-section {
-            padding: 2rem 1rem 4rem;
+            padding: 32px 16px 64px;
           }
 
           .courses-grid {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
+            gap: 24px;
           }
 
           .course-card {
-            padding: 1.5rem;
+            padding: 24px;
             width: 100%;
             max-width: 100%;
             box-sizing: border-box;
@@ -499,7 +431,7 @@ export default function LearnPage() {
 
           .course-meta {
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 16px;
           }
 
           .meta-item {
@@ -512,11 +444,11 @@ export default function LearnPage() {
           }
 
           .path-section {
-            padding: 4rem 1.5rem;
+            padding: 64px 24px;
           }
 
           .philosophy-section {
-            padding: 4rem 1.5rem;
+            padding: 64px 24px;
           }
 
           .philosophy-quote {

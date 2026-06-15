@@ -82,16 +82,16 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
         }
 
         .one-sat-label {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 13px;
-          color: ${lm ? '#6a6a6a' : '#8a8a8a'};
+          color: var(--cb-text-muted);
           text-align: center;
           margin-bottom: 1.5rem;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.08em;
         }
 
         .one-sat-label span {
-          color: #F7931A;
+          color: var(--cb-accent);
         }
 
         .inputs-container {
@@ -106,11 +106,11 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
         }
 
         .input-label {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.15em;
-          color: #8a8a8a;
+          letter-spacing: 0.08em;
+          color: var(--cb-text-muted);
           margin-bottom: 0.4rem;
           display: block;
         }
@@ -122,25 +122,25 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
 
         .input-container input {
           width: 100%;
-          background: ${lm ? '#f5f3f0' : '#0a0a0a'};
-          border: 1px solid ${lm ? '#d0ccc4' : '#3a3a3a'};
-          color: ${lm ? '#0a0a0a' : '#e8e4dc'};
+          background: var(--cb-bg);
+          border: 1px solid var(--cb-border);
+          color: var(--cb-text);
           padding: 1rem;
           padding-right: 4.5rem;
           font-size: 18px;
-          font-family: 'Space Mono', monospace;
-          border-radius: 6px;
+          font-family: var(--cb-font-mono);
+          border-radius: 2px;
           outline: none;
-          transition: border-color 0.2s ease;
+          transition: border-color 0.15s ease;
           box-sizing: border-box;
         }
 
         .input-container input:focus {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .input-container input::placeholder {
-          color: ${lm ? '#b0aca4' : '#4a4a4a'};
+          color: var(--cb-text-muted);
         }
 
         .currency-tag {
@@ -148,10 +148,10 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
           right: 1rem;
           top: 50%;
           transform: translateY(-50%);
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 13px;
-          color: ${lm ? '#999' : '#666'};
-          letter-spacing: 0.1em;
+          color: var(--cb-text-muted);
+          letter-spacing: 0.08em;
           pointer-events: none;
           user-select: none;
         }
@@ -159,22 +159,21 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
         .swap-button {
           width: 40px;
           height: 40px;
-          border-radius: 50%;
-          border: 1px solid ${lm ? '#d0ccc4' : '#3a3a3a'};
-          background: ${lm ? '#eae7e1' : '#141414'};
-          color: #F7931A;
+          border-radius: 2px;
+          border: 1px solid var(--cb-border);
+          background: var(--cb-surface);
+          color: var(--cb-accent);
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: transform 0.3s ease, border-color 0.2s ease;
+          transition: border-color 0.15s ease;
           flex-shrink: 0;
           margin: 0.25rem 0;
         }
 
         .swap-button:hover {
-          transform: rotate(180deg);
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .swap-button svg {
@@ -185,15 +184,15 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
         .quick-ref-section {
           margin-top: 2rem;
           padding-top: 1.5rem;
-          border-top: 1px solid ${lm ? '#e0dcd4' : '#1e1e1e'};
+          border-top: 1px solid var(--cb-border);
         }
 
         .quick-ref-title {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.15em;
-          color: #8a8a8a;
+          letter-spacing: 0.08em;
+          color: var(--cb-text-muted);
           margin-bottom: 1rem;
         }
 
@@ -216,15 +215,15 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
         }
 
         .quick-ref-amount {
-          font-family: 'Space Mono', monospace;
-          font-size: 12px;
-          color: ${lm ? '#6a6a6a' : '#8a8a8a'};
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
+          color: var(--cb-text-muted);
         }
 
         .quick-ref-sats {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.3rem;
-          color: #F7931A;
+          color: var(--cb-accent);
         }
       `}</style>
 

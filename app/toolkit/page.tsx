@@ -40,18 +40,13 @@ export default function ToolkitPage() {
     <>
       <style jsx global>{`
         .toolkit-page {
-          background: var(--contraband-black);
-          color: var(--contraband-cream);
-          font-family: 'Space Mono', monospace;
-          font-size: 14px;
+          background: var(--cb-bg);
+          color: var(--cb-text);
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
           line-height: 1.7;
           min-height: 100vh;
           overflow-x: hidden;
-        }
-
-        .toolkit-page.light-mode {
-          background: #e8e4dc;
-          color: #0a0a0a;
         }
 
         .toolkit-header {
@@ -65,34 +60,30 @@ export default function ToolkitPage() {
           align-items: baseline;
           gap: 2rem;
           margin-bottom: 1rem;
-          border-bottom: 1px solid #3a3a3a;
+          border-bottom: 1px solid var(--cb-border);
           padding-bottom: 1.5rem;
         }
 
-        .toolkit-page.light-mode .toolkit-header-top {
-          border-bottom-color: #d0ccc4;
-        }
-
         .toolkit-section-number {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-size: 3rem;
-          color: #F7931A;
+          color: var(--cb-accent);
           line-height: 1;
         }
 
         .toolkit-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-size: 2.5rem;
           font-weight: 400;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
         }
 
         .toolkit-subtitle {
-          font-size: 12px;
-          letter-spacing: 0.3em;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           margin-top: 0.5rem;
         }
 
@@ -103,8 +94,8 @@ export default function ToolkitPage() {
           display: flex;
           align-items: center;
           gap: 2rem;
-          font-size: 12px;
-          letter-spacing: 0.1em;
+          font-size: 13px;
+          letter-spacing: 0.08em;
         }
 
         .toolkit-price-item {
@@ -114,23 +105,19 @@ export default function ToolkitPage() {
         }
 
         .toolkit-price-label {
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           text-transform: uppercase;
           font-size: 10px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
         }
 
         .toolkit-price-value {
-          color: #F7931A;
+          color: var(--cb-accent);
           font-weight: 700;
         }
 
         .toolkit-price-sep {
-          color: #3a3a3a;
-        }
-
-        .toolkit-page.light-mode .toolkit-price-sep {
-          color: #d0ccc4;
+          color: var(--cb-border);
         }
 
         .toolkit-tabs {
@@ -143,42 +130,33 @@ export default function ToolkitPage() {
           display: inline-flex;
           align-items: center;
           gap: 0;
-          background: #141414;
-          border: 1px solid #3a3a3a;
-          border-radius: 6px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           overflow: hidden;
         }
 
-        .toolkit-page.light-mode .toolkit-tab-bar {
-          background: #ffffff;
-          border-color: #c8c4bc;
-        }
-
         .toolkit-tab {
-          font-size: 11px;
-          letter-spacing: 0.15em;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           padding: 0.65rem 1.5rem;
           background: transparent;
           border: none;
           cursor: pointer;
-          font-family: 'Space Mono', monospace;
-          transition: all 0.3s ease;
+          font-family: var(--cb-font-mono);
+          transition: color 0.15s ease;
           white-space: nowrap;
         }
 
         .toolkit-tab:hover {
-          color: #e8e4dc;
-        }
-
-        .toolkit-page.light-mode .toolkit-tab:hover {
-          color: #0a0a0a;
+          color: var(--cb-text);
         }
 
         .toolkit-tab.active {
           color: #fff;
-          background: #F7931A;
+          background: var(--cb-accent);
         }
 
         .toolkit-content {

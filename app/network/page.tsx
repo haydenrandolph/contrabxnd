@@ -23,7 +23,7 @@ const NetworkMap = dynamic(() => import('@/components/network/NetworkMap'), {
       alignItems: 'center',
       justifyContent: 'center',
     }}>
-      <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: '8px' }} />
+      <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: '2px' }} />
     </div>
   ),
 });
@@ -230,36 +230,18 @@ export default function NetworkPage() {
         }
 
         .network-page {
-          background: #0a0a0a;
-          color: #e8e4dc;
+          background: var(--cb-bg);
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
-          font-size: 14px;
+          font-size: 13px;
           line-height: 1.7;
           overflow-x: hidden;
           min-height: 100vh;
           -webkit-font-smoothing: antialiased;
         }
 
-        .network-page.light-mode {
-          background: #e8e4dc;
-          color: #0a0a0a;
-        }
-
-        .network-page::before {
-          content: '';
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.03;
-          pointer-events: none;
-          z-index: 1000;
-        }
-
         .network-hero {
-          padding: 12rem 3rem 4rem;
+          padding: 12rem 48px 64px;
           max-width: 1000px;
           margin: 0 auto;
           text-align: center;
@@ -267,30 +249,31 @@ export default function NetworkPage() {
 
         .hero-label {
           font-size: 10px;
-          letter-spacing: 0.4em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
-          margin-bottom: 2rem;
+          margin-bottom: 32px;
           opacity: 0;
           animation: fadeUp 1s ease 0.2s forwards;
         }
 
         .hero-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: clamp(2.5rem, 6vw, 4rem);
           font-weight: 400;
           line-height: 1.2;
-          margin-bottom: 1.5rem;
+          letter-spacing: -0.02em;
+          margin-bottom: 24px;
           opacity: 0;
           animation: fadeUp 1s ease 0.3s forwards;
         }
 
         .hero-subtitle {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.4rem;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           max-width: 600px;
-          margin: 0 auto 2rem;
+          margin: 0 auto 32px;
           line-height: 1.7;
           opacity: 0;
           animation: fadeUp 1s ease 0.4s forwards;
@@ -299,24 +282,24 @@ export default function NetworkPage() {
         .hero-cta {
           display: inline-flex;
           align-items: center;
-          gap: 0.75rem;
-          padding: 1rem 2rem;
+          gap: 12px;
+          padding: 16px 32px;
           background: #F7931A;
           border: none;
+          border-radius: 2px;
           color: #fff;
           font-family: 'Space Mono', monospace;
           font-size: 11px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: background 0.15s ease;
           opacity: 0;
           animation: fadeUp 1s ease 0.5s forwards;
         }
 
         .hero-cta:hover {
           background: #e8850f;
-          transform: translateY(-2px);
         }
 
         .hero-cta svg {
@@ -336,14 +319,14 @@ export default function NetworkPage() {
         }
 
         .network-controls {
-          padding: 0 3rem 2rem;
+          padding: 0 48px 32px;
           max-width: 1200px;
           margin: 0 auto;
         }
 
         .controls-row {
           display: flex;
-          gap: 1rem;
+          gap: 16px;
           flex-wrap: wrap;
           align-items: center;
         }
@@ -351,19 +334,14 @@ export default function NetworkPage() {
         .search-input {
           flex: 1;
           min-width: 200px;
-          padding: 0.75rem 1rem;
-          background: #141414;
-          border: 1px solid #2a2a2a;
-          color: #e8e4dc;
+          padding: 12px 16px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
           font-size: 13px;
-          transition: border-color 0.2s ease;
-        }
-
-        .network-page.light-mode .search-input {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
-          color: #0a0a0a;
+          transition: border-color 0.15s ease;
         }
 
         .search-input:focus {
@@ -372,24 +350,19 @@ export default function NetworkPage() {
         }
 
         .search-input::placeholder {
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
         }
 
         .category-select {
-          padding: 0.75rem 1rem;
-          background: #141414;
-          border: 1px solid #2a2a2a;
-          color: #e8e4dc;
+          padding: 12px 16px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
           font-size: 13px;
           cursor: pointer;
-          transition: border-color 0.2s ease;
-        }
-
-        .network-page.light-mode .category-select {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
-          color: #0a0a0a;
+          transition: border-color 0.15s ease;
         }
 
         .category-select:focus {
@@ -399,30 +372,26 @@ export default function NetworkPage() {
 
         .results-count {
           font-size: 12px;
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
           margin-left: auto;
         }
 
         .location-controls {
           display: flex;
-          gap: 1rem;
+          gap: 16px;
           align-items: center;
           flex-wrap: wrap;
-          margin-top: 1rem;
-          padding-top: 1rem;
-          border-top: 1px solid #1a1a1a;
-        }
-
-        .network-page.light-mode .location-controls {
-          border-top-color: #d8d4cc;
+          margin-top: 16px;
+          padding-top: 16px;
+          border-top: 1px solid var(--cb-border);
         }
 
         .location-status {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 8px;
           font-size: 11px;
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
         }
 
         .location-status svg {
@@ -441,19 +410,16 @@ export default function NetworkPage() {
         .sort-toggle {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.5rem 0.75rem;
+          gap: 8px;
+          padding: 8px 12px;
           background: transparent;
-          border: 1px solid #2a2a2a;
-          color: #8a8a8a;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          color: var(--cb-text-muted);
           font-family: 'Space Mono', monospace;
           font-size: 11px;
           cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .network-page.light-mode .sort-toggle {
-          border-color: #d8d4cc;
+          transition: border-color 0.15s ease, color 0.15s ease;
         }
 
         .sort-toggle:hover {
@@ -462,7 +428,6 @@ export default function NetworkPage() {
         }
 
         .sort-toggle.active {
-          background: rgba(247, 147, 26, 0.1);
           border-color: #F7931A;
           color: #F7931A;
         }
@@ -475,10 +440,10 @@ export default function NetworkPage() {
         .business-location {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 8px;
           font-size: 11px;
-          color: #5a5a5a;
-          margin-top: 0.5rem;
+          color: var(--cb-text-muted);
+          margin-top: 8px;
         }
 
         .business-location svg {
@@ -499,19 +464,16 @@ export default function NetworkPage() {
           min-height: 500px;
           max-width: 1600px;
           margin: 0 auto;
-          padding: 0 2rem 2rem;
-          gap: 1.5rem;
+          padding: 0 32px 32px;
+          gap: 24px;
         }
 
         .map-container {
           flex: 1;
           min-width: 0;
-          border: 1px solid #1a1a1a;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           overflow: hidden;
-        }
-
-        .network-page.light-mode .map-container {
-          border-color: #d8d4dc;
         }
 
         .list-panel {
@@ -523,25 +485,21 @@ export default function NetworkPage() {
         }
 
         .list-header {
-          padding-bottom: 1rem;
-          border-bottom: 1px solid #1a1a1a;
-          margin-bottom: 1rem;
-        }
-
-        .network-page.light-mode .list-header {
-          border-bottom-color: #d8d4cc;
+          padding-bottom: 16px;
+          border-bottom: 1px solid var(--cb-border);
+          margin-bottom: 16px;
         }
 
         .list-header h3 {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.2rem;
           font-weight: 400;
-          margin-bottom: 0.25rem;
+          margin-bottom: 4px;
         }
 
         .list-count {
           font-size: 11px;
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
         }
 
         .business-cards {
@@ -549,8 +507,8 @@ export default function NetworkPage() {
           overflow-y: auto;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
-          padding-right: 0.5rem;
+          gap: 16px;
+          padding-right: 8px;
         }
 
         .business-cards::-webkit-scrollbar {
@@ -558,73 +516,59 @@ export default function NetworkPage() {
         }
 
         .business-cards::-webkit-scrollbar-track {
-          background: #1a1a1a;
+          background: var(--cb-bg);
         }
 
         .business-cards::-webkit-scrollbar-thumb {
-          background: #3a3a3a;
-          border-radius: 3px;
+          background: var(--cb-border);
+          border-radius: 2px;
         }
 
         .business-cards::-webkit-scrollbar-thumb:hover {
           background: #F7931A;
         }
 
-        .network-page.light-mode .business-cards::-webkit-scrollbar-track {
-          background: #e8e4dc;
-        }
-
-        .network-page.light-mode .business-cards::-webkit-scrollbar-thumb {
-          background: #c8c4bc;
-        }
-
         .business-card {
-          background: #141414;
-          border: 1px solid #1a1a1a;
-          padding: 1.25rem;
-          transition: all 0.3s ease;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 20px;
+          transition: border-color 0.15s ease;
           cursor: pointer;
           flex-shrink: 0;
         }
 
-        .network-page.light-mode .business-card {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
-        }
-
         .business-card:hover {
           border-color: #F7931A;
-          transform: translateY(-2px);
         }
 
         .business-card.selected {
           border-color: #F7931A;
-          background: rgba(247, 147, 26, 0.05);
         }
 
         .business-header {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          margin-bottom: 1rem;
+          margin-bottom: 16px;
         }
 
         .business-name {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.4rem;
           font-weight: 400;
-          margin-right: 1rem;
+          margin-right: 16px;
         }
 
         .business-badge {
           display: inline-flex;
           align-items: center;
-          gap: 0.25rem;
-          padding: 0.25rem 0.5rem;
-          background: rgba(247, 147, 26, 0.1);
+          gap: 4px;
+          padding: 4px 8px;
           border: 1px solid #F7931A;
+          border-radius: 2px;
           font-size: 10px;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
           white-space: nowrap;
@@ -632,60 +576,52 @@ export default function NetworkPage() {
 
         .business-category {
           font-size: 10px;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #5a5a5a;
-          margin-bottom: 0.75rem;
+          color: var(--cb-text-muted);
+          margin-bottom: 12px;
         }
 
         .business-description {
           font-size: 13px;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           line-height: 1.7;
-          margin-bottom: 1.5rem;
+          margin-bottom: 24px;
         }
 
         .business-footer {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding-top: 1rem;
-          border-top: 1px solid #1a1a1a;
-        }
-
-        .network-page.light-mode .business-footer {
-          border-top-color: #d8d4cc;
+          padding-top: 16px;
+          border-top: 1px solid var(--cb-border);
         }
 
         .payment-methods {
           display: flex;
-          gap: 0.5rem;
+          gap: 8px;
         }
 
         .payment-tag {
           font-size: 10px;
-          padding: 0.25rem 0.5rem;
-          background: #1a1a1a;
-          color: #8a8a8a;
+          padding: 4px 8px;
+          background: var(--cb-bg);
+          border-radius: 2px;
+          color: var(--cb-text-muted);
           text-transform: uppercase;
           letter-spacing: 0.05em;
-        }
-
-        .network-page.light-mode .payment-tag {
-          background: #e8e4dc;
-          color: #5a5a5a;
         }
 
         .visit-link {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 8px;
           font-size: 11px;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
           text-decoration: none;
-          transition: opacity 0.2s ease;
+          transition: opacity 0.15s ease;
         }
 
         .visit-link:hover {
@@ -699,33 +635,33 @@ export default function NetworkPage() {
 
         .loading-state {
           text-align: center;
-          padding: 4rem 2rem;
-          color: #5a5a5a;
+          padding: 64px 32px;
+          color: var(--cb-text-muted);
         }
 
         .empty-state {
           text-align: center;
-          padding: 4rem 2rem;
+          padding: 64px 32px;
         }
 
         .empty-state-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.5rem;
-          margin-bottom: 0.5rem;
+          margin-bottom: 8px;
         }
 
         .empty-state-text {
-          color: #5a5a5a;
+          color: var(--cb-text-muted);
           font-size: 13px;
         }
 
         @media (max-width: 768px) {
           .network-hero {
-            padding: 10rem 2rem 3rem;
+            padding: 10rem 32px 48px;
           }
 
           .network-controls {
-            padding: 0 2rem 2rem;
+            padding: 0 32px 32px;
           }
 
           .controls-row {
@@ -746,7 +682,7 @@ export default function NetworkPage() {
           .split-view {
             flex-direction: column;
             height: auto;
-            padding: 0 1rem 2rem;
+            padding: 0 16px 32px;
           }
 
           .map-container {

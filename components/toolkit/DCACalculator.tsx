@@ -242,7 +242,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
               <span className="dca-metric-label">Current Value</span>
               <span
                 className="dca-metric-value"
-                style={results.currentValue > results.totalInvested ? { color: '#F7931A' } : undefined}
+                style={results.currentValue > results.totalInvested ? { color: 'var(--cb-accent)' } : undefined}
               >
                 {formatUSD(results.currentValue)}
               </span>
@@ -285,11 +285,11 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         }
 
         .dca-field-label {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: ${isLightMode ? '#5a5a5a' : '#8a8a8a'};
+          color: var(--cb-text-muted);
         }
 
         .dca-amount-wrap {
@@ -301,9 +301,9 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         .dca-dollar-prefix {
           position: absolute;
           left: 12px;
-          font-family: 'Space Mono', monospace;
-          font-size: 14px;
-          color: ${isLightMode ? '#5a5a5a' : '#8a8a8a'};
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
+          color: var(--cb-text-muted);
           pointer-events: none;
           z-index: 1;
         }
@@ -311,19 +311,19 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         .dca-input {
           width: 100%;
           padding: 0.75rem 1rem;
-          background: ${isLightMode ? '#f5f3f0' : '#0a0a0a'};
-          border: 1px solid ${isLightMode ? '#d0ccc4' : '#3a3a3a'};
-          color: ${isLightMode ? '#0a0a0a' : '#e8e4dc'};
-          font-family: 'Space Mono', monospace;
-          font-size: 14px;
-          border-radius: 4px;
-          transition: border-color 0.2s ease;
+          background: var(--cb-bg);
+          border: 1px solid var(--cb-border);
+          color: var(--cb-text);
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
+          border-radius: 2px;
+          transition: border-color 0.15s ease;
           box-sizing: border-box;
         }
 
         .dca-input:focus {
           outline: none;
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .dca-input-amount {
@@ -343,9 +343,9 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         .dca-freq-toggle {
           display: inline-flex;
           align-items: center;
-          background: ${isLightMode ? '#f5f3f0' : '#141414'};
-          border: 1px solid ${isLightMode ? '#c8c4bc' : '#3a3a3a'};
-          border-radius: 6px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           overflow: hidden;
         }
 
@@ -353,44 +353,43 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           padding: 0.5rem 1rem;
           background: transparent;
           border: none;
-          color: ${isLightMode ? '#5a5a5a' : '#8a8a8a'};
-          font-family: 'Space Mono', monospace;
-          font-size: 11px;
-          letter-spacing: 0.1em;
+          color: var(--cb-text-muted);
+          font-family: var(--cb-font-mono);
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: color 0.15s ease, background 0.15s ease;
           white-space: nowrap;
         }
 
         .dca-freq-btn:hover {
-          color: ${isLightMode ? '#0a0a0a' : '#e8e4dc'};
+          color: var(--cb-text);
         }
 
         .dca-freq-btn.active {
-          background: #F7931A;
-          color: ${isLightMode ? '#fff' : '#e8e4dc'};
+          background: var(--cb-accent);
+          color: #fff;
         }
 
         .dca-calculate-btn {
           width: 100%;
           padding: 0.9rem;
-          background: #F7931A;
-          border: 1px solid #F7931A;
+          background: var(--cb-accent);
+          border: 1px solid var(--cb-accent);
           color: #fff;
-          font-family: 'Space Mono', monospace;
-          font-size: 12px;
-          letter-spacing: 0.15em;
+          font-family: var(--cb-font-mono);
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          transition: all 0.3s ease;
-          border-radius: 4px;
+          transition: opacity 0.15s ease;
+          border-radius: 2px;
           margin-bottom: 1.5rem;
         }
 
         .dca-calculate-btn:hover:not(:disabled) {
-          background: #ff6600;
-          border-color: #ff6600;
+          opacity: 0.88;
         }
 
         .dca-calculate-btn:disabled {
@@ -399,8 +398,8 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         }
 
         .dca-error {
-          font-family: 'Space Mono', monospace;
-          font-size: 12px;
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
           color: #ef4444;
           margin-bottom: 1rem;
           text-align: center;
@@ -408,7 +407,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
 
         /* Skeleton loading */
         .dca-skeleton-area {
-          animation: skeletonFadeIn 0.3s ease;
+          animation: skeletonFadeIn 0.15s ease;
         }
 
         @keyframes skeletonFadeIn {
@@ -424,9 +423,9 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         }
 
         .dca-skeleton-card {
-          background: ${isLightMode ? '#ffffff' : '#141414'};
-          border: 1px solid ${isLightMode ? '#d0ccc4' : '#1a1a1a'};
-          border-radius: 4px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
@@ -434,15 +433,9 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         }
 
         .dca-skeleton-line {
-          border-radius: 3px;
+          border-radius: 2px;
           height: 14px;
-          background: linear-gradient(
-            90deg,
-            ${isLightMode ? '#e0dcd4' : '#1a1a1a'} 25%,
-            ${isLightMode ? '#ece9e3' : '#252525'} 50%,
-            ${isLightMode ? '#e0dcd4' : '#1a1a1a'} 75%
-          );
-          background-size: 200% 100%;
+          background: var(--cb-border);
           animation: shimmer 1.5s ease-in-out infinite;
         }
 
@@ -459,30 +452,25 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         .dca-skeleton-chart {
           width: 100%;
           height: 200px;
-          border-radius: 4px;
-          background: linear-gradient(
-            90deg,
-            ${isLightMode ? '#e0dcd4' : '#1a1a1a'} 25%,
-            ${isLightMode ? '#ece9e3' : '#252525'} 50%,
-            ${isLightMode ? '#e0dcd4' : '#1a1a1a'} 75%
-          );
-          background-size: 200% 100%;
+          border-radius: 2px;
+          background: var(--cb-border);
           animation: shimmer 1.5s ease-in-out infinite;
         }
 
         @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
+          0% { opacity: 0.5; }
+          50% { opacity: 1; }
+          100% { opacity: 0.5; }
         }
 
         /* Results */
         .dca-results {
-          animation: resultsFadeIn 0.4s ease;
+          animation: resultsFadeIn 0.15s ease;
         }
 
         @keyframes resultsFadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
 
         .dca-metrics {
@@ -493,9 +481,9 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         }
 
         .dca-metric-card {
-          background: ${isLightMode ? '#ffffff' : '#141414'};
-          border: 1px solid ${isLightMode ? '#d0ccc4' : '#1a1a1a'};
-          border-radius: 4px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
@@ -503,19 +491,19 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         }
 
         .dca-metric-label {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .dca-metric-value {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.8rem;
           font-weight: 400;
           line-height: 1.2;
-          color: ${isLightMode ? '#0a0a0a' : '#e8e4dc'};
+          color: var(--cb-text);
         }
 
         .dca-metric-value.btc {
@@ -525,10 +513,10 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         .dca-chart-wrapper {
           width: 100%;
           aspect-ratio: 2 / 1;
-          border: 1px solid ${isLightMode ? '#d0ccc4' : '#1a1a1a'};
-          border-radius: 4px;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
           overflow: hidden;
-          background: ${isLightMode ? '#ffffff' : '#0a0a0a'};
+          background: var(--cb-bg);
         }
 
         @media (max-width: 768px) {
