@@ -156,9 +156,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
 
   return (
     <div className="dca-calculator">
-      {/* Input row */}
       <div className="dca-inputs">
-        {/* Amount */}
         <div className="dca-field">
           <label className="dca-field-label">Amount</label>
           <div className="dca-amount-wrap">
@@ -174,7 +172,6 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           </div>
         </div>
 
-        {/* Frequency */}
         <div className="dca-field">
           <label className="dca-field-label">Frequency</label>
           <div className="dca-freq-toggle">
@@ -190,7 +187,6 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           </div>
         </div>
 
-        {/* Start date */}
         <div className="dca-field">
           <label className="dca-field-label">Start Date</label>
           <input
@@ -202,16 +198,18 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
             className="dca-input"
           />
         </div>
-      </div>
 
-      {/* Calculate button */}
-      <button
-        className="dca-calculate-btn"
-        onClick={handleCalculate}
-        disabled={loading}
-      >
-        {loading ? 'Calculating...' : 'Calculate'}
-      </button>
+        <div className="dca-field dca-field-btn">
+          <label className="dca-field-label">&nbsp;</label>
+          <button
+            className="dca-calculate-btn"
+            onClick={handleCalculate}
+            disabled={loading}
+          >
+            {loading ? 'Calculating...' : 'Calculate'}
+          </button>
+        </div>
+      </div>
 
       {error && <p className="dca-error">{error}</p>}
 
@@ -273,9 +271,10 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
 
         .dca-inputs {
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
+          grid-template-columns: 1fr 1fr 1fr auto;
           gap: 1.25rem;
-          margin-bottom: 1.25rem;
+          align-items: end;
+          margin-bottom: 1.5rem;
         }
 
         .dca-field {
@@ -372,9 +371,13 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           color: #fff;
         }
 
+        .dca-field-btn {
+          min-width: 0;
+        }
+
         .dca-calculate-btn {
           width: 100%;
-          padding: 0.9rem;
+          padding: 0.75rem 1.5rem;
           background: var(--cb-accent);
           border: 1px solid var(--cb-accent);
           color: #fff;
@@ -385,7 +388,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           cursor: pointer;
           transition: opacity 0.15s ease;
           border-radius: 2px;
-          margin-bottom: 1.5rem;
+          white-space: nowrap;
         }
 
         .dca-calculate-btn:hover:not(:disabled) {
@@ -522,6 +525,9 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         @media (max-width: 768px) {
           .dca-inputs {
             grid-template-columns: 1fr;
+          }
+          .dca-field-btn label {
+            display: none;
           }
 
           .dca-metrics,
