@@ -1107,6 +1107,44 @@ export default function TerminalPage() {
                         Add SOSOVALUE_API_KEY to .env.local to enable ETF flow data.
                       </div>
                     )}
+
+                    {/* Feed */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderTop: '1px solid var(--cb-border)', marginTop: '8px' }}>
+                      <div className="sidebar-section-title">Feed</div>
+                      <div className="sidebar-feed">
+                        {feedItems.length === 0 ? (
+                          <div className="feed-empty">Awaiting data...</div>
+                        ) : feedItems.map((item) => {
+                          if (item.kind === 'tx' && item.tx) {
+                            const tx = item.tx;
+                            return (
+                              <div key={item.id} className="feed-item" onClick={() => setSelectedTx(tx)}>
+                                <span className={`feed-badge ${tx.type === 'whale' ? 'whale' : ''}`}>TX</span>
+                                <div className="feed-body">
+                                  <div className="feed-primary">{tx.amount < 1 ? tx.amount.toFixed(4) : tx.amount.toFixed(2)} BTC</div>
+                                  <div className="feed-secondary">{tx.fromCity} → {tx.toCity}</div>
+                                </div>
+                                <span className="feed-time">{fmtAgo(tx.timestamp)}</span>
+                              </div>
+                            );
+                          }
+                          if (item.kind === 'block' && item.block) {
+                            const block = item.block;
+                            return (
+                              <div key={item.id} className="feed-item" onClick={() => setSelectedBlock(block)}>
+                                <span className="feed-badge block">BLK</span>
+                                <div className="feed-body">
+                                  <div className="feed-primary">#{block.height.toLocaleString()}</div>
+                                  <div className="feed-secondary">{block.txCount.toLocaleString()} transactions</div>
+                                </div>
+                                <span className="feed-time">{fmtAgo(block.timestamp * 1000)}</span>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })}
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -1140,43 +1178,7 @@ export default function TerminalPage() {
                 )}
               </div>
 
-              {/* 5. Feed (always visible) */}
-              <div className="sidebar-section" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderBottom: 'none' }}>
-                <div className="sidebar-section-title">Feed</div>
-                <div className="sidebar-feed">
-                  {feedItems.length === 0 ? (
-                    <div className="feed-empty">Awaiting data...</div>
-                  ) : feedItems.map((item) => {
-                    if (item.kind === 'tx' && item.tx) {
-                      const tx = item.tx;
-                      return (
-                        <div key={item.id} className="feed-item" onClick={() => setSelectedTx(tx)}>
-                          <span className={`feed-badge ${tx.type === 'whale' ? 'whale' : ''}`}>TX</span>
-                          <div className="feed-body">
-                            <div className="feed-primary">{tx.amount < 1 ? tx.amount.toFixed(4) : tx.amount.toFixed(2)} BTC</div>
-                            <div className="feed-secondary">{tx.fromCity} → {tx.toCity}</div>
-                          </div>
-                          <span className="feed-time">{fmtAgo(tx.timestamp)}</span>
-                        </div>
-                      );
-                    }
-                    if (item.kind === 'block' && item.block) {
-                      const block = item.block;
-                      return (
-                        <div key={item.id} className="feed-item" onClick={() => setSelectedBlock(block)}>
-                          <span className="feed-badge block">BLK</span>
-                          <div className="feed-body">
-                            <div className="feed-primary">#{block.height.toLocaleString()}</div>
-                            <div className="feed-secondary">{block.txCount.toLocaleString()} transactions</div>
-                          </div>
-                          <span className="feed-time">{fmtAgo(block.timestamp * 1000)}</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              </div>
+              {/* Feed moved into FLOWS tab */}
             </div>
           </div>
         </div>
