@@ -30,6 +30,11 @@ const TOOLS: ToolCard[] = [
     href: '/toolkit/time-machine',
   },
   {
+    title: 'MCP Server',
+    description: 'Connect any AI client to live Contrabxnd intelligence data via the Model Context Protocol.',
+    href: '/toolkit/mcp',
+  },
+  {
     title: "Indexer",
     description: "Query and analyze the blockchain through the Contrabxnd Bitcoin node.",
     comingSoon: true,

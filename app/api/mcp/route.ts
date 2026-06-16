@@ -1,10 +1,45 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
+import { createAdminClient } from '@/lib/supabase/server';
+import crypto from 'crypto';
 import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.contrabxnd.io';
+
+function hashKey(key: string): string {
+  return crypto.createHash('sha256').update(key).digest('hex');
+}
+
+async function validateApiKey(req: Request): Promise<boolean> {
+  const auth = req.headers.get('authorization');
+  if (!auth?.startsWith('Bearer cbx_')) return false;
+
+  const key = auth.slice(7);
+  const keyHash = hashKey(key);
+
+  const supabase = createAdminClient();
+  if (!supabase) return false;
+
+  const { data } = await supabase
+    .from('api_keys')
+    .select('id')
+    .eq('key_hash', keyHash)
+    .is('revoked_at', null)
+    .limit(1)
+    .single();
+
+  if (!data) return false;
+
+  supabase
+    .from('api_keys')
+    .update({ last_used_at: new Date().toISOString() })
+    .eq('id', data.id)
+    .then(() => {});
+
+  return true;
+}
 
 async function fetchInternal(path: string) {
   const res = await fetch(`${BASE_URL}${path}`, { cache: 'no-store' });
@@ -160,14 +195,44 @@ async function handleMcpRequest(req: Request): Promise<Response> {
   }
 }
 
+async function authGuard(req: Request): Promise<Response | null> {
+  const valid = await validateApiKey(req);
+  if (!valid) {
+    return new Response(
+      JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message: 'Invalid or missing API key. Get one at https://contrabxnd.io/toolkit/mcp' }, id: null }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+  return null;
+}
+
 export async function POST(req: Request) {
+  const denied = await authGuard(req);
+  if (denied) return denied;
   return handleMcpRequest(req);
 }
 
 export async function GET(req: Request) {
+  const url = new URL(req.url);
+  if (!url.searchParams.has('sessionId')) {
+    return new Response(JSON.stringify({
+      name: 'contrabxnd',
+      version: '1.0.0',
+      description: 'Contrabxnd Bitcoin Intelligence Platform - MCP Server. Get your API key at https://contrabxnd.io/toolkit/mcp',
+      tools: [
+        'get_signal_score', 'get_bitcoin_price', 'get_net_liquidity',
+        'get_fedwatch', 'get_etf_flows', 'get_polymarket',
+        'get_fear_greed', 'get_slr', 'get_market_brief', 'get_bitcoin_history',
+      ],
+    }), { headers: { 'Content-Type': 'application/json' } });
+  }
+  const denied = await authGuard(req);
+  if (denied) return denied;
   return handleMcpRequest(req);
 }
 
 export async function DELETE(req: Request) {
+  const denied = await authGuard(req);
+  if (denied) return denied;
   return handleMcpRequest(req);
 }

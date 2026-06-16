@@ -1,0 +1,474 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
+import SiteNav from '@/components/SiteNav';
+import SiteFooter from '@/components/SiteFooter';
+import ThemeToggle from '@/components/ThemeToggle';
+import { createBrowserClient } from '@supabase/ssr';
+
+interface ApiKey {
+  id: string;
+  key_prefix: string;
+  name: string;
+  last_used_at: string | null;
+  created_at: string;
+  revoked_at: string | null;
+}
+
+function useAuth() {
+  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    );
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user ? { id: data.user.id, email: data.user.email } : null);
+      setLoading(false);
+    });
+  }, []);
+
+  return { user, loading };
+}
+
+export default function McpPage() {
+  const { isLightMode } = useTheme();
+  const { user, loading: authLoading } = useAuth();
+  const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [newKey, setNewKey] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const fetchKeys = useCallback(async () => {
+    const res = await fetch('/api/keys');
+    if (res.ok) {
+      const data = await res.json();
+      setKeys(data.keys || []);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchKeys();
+  }, [user, fetchKeys]);
+
+  const generateKey = async () => {
+    setGenerating(true);
+    setError(null);
+    setNewKey(null);
+    const res = await fetch('/api/keys', { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      setNewKey(data.key);
+      fetchKeys();
+    } else {
+      setError(data.error);
+    }
+    setGenerating(false);
+  };
+
+  const revokeKey = async (id: string) => {
+    await fetch('/api/keys', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    });
+    fetchKeys();
+    if (newKey) setNewKey(null);
+  };
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const activeKeys = keys.filter(k => !k.revoked_at);
+
+  const configJson = `{
+  "mcpServers": {
+    "contrabxnd": {
+      "url": "https://www.contrabxnd.io/api/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}`;
+
+  return (
+    <>
+      <style jsx global>{`
+        .tool-page {
+          background: var(--cb-bg);
+          color: var(--cb-text);
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
+          line-height: 1.7;
+          min-height: 100vh;
+          overflow-x: hidden;
+        }
+        .page-header {
+          max-width: 720px;
+          margin: 0 auto;
+          padding: 80px 48px 0;
+        }
+        .page-label {
+          font-family: 'Space Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--cb-accent);
+          margin-bottom: 16px;
+        }
+        .page-label a {
+          color: var(--cb-text-muted);
+          text-decoration: none;
+          transition: color 0.15s ease;
+        }
+        .page-label a:hover { color: var(--cb-text); }
+        .page-title {
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-size: clamp(2rem, 4vw, 3rem);
+          font-weight: 400;
+          letter-spacing: -0.02em;
+          line-height: 1.15;
+          color: var(--cb-text);
+          margin-bottom: 12px;
+        }
+        .page-subtitle {
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
+          color: var(--cb-text-muted);
+          max-width: 600px;
+          line-height: 1.6;
+        }
+        .page-divider {
+          width: 100%;
+          height: 1px;
+          background: var(--cb-border);
+          margin-top: 32px;
+        }
+        .tool-content {
+          max-width: 720px;
+          margin: 0 auto;
+          padding: 48px 48px 96px;
+        }
+
+        .mcp-section {
+          margin-bottom: 48px;
+        }
+        .mcp-section-title {
+          font-family: 'Space Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          margin-bottom: 16px;
+        }
+        .mcp-tools-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1px;
+          background: var(--cb-border);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+        }
+        .mcp-tool-item {
+          padding: 12px 16px;
+          background: var(--cb-surface);
+        }
+        .mcp-tool-name {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--cb-text);
+          font-family: 'Space Mono', monospace;
+        }
+        .mcp-tool-desc {
+          font-size: 11px;
+          color: var(--cb-text-muted);
+          margin-top: 2px;
+        }
+
+        .mcp-code-block {
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 16px 20px;
+          font-family: 'Space Mono', monospace;
+          font-size: 12px;
+          line-height: 1.6;
+          overflow-x: auto;
+          white-space: pre;
+          color: var(--cb-text);
+          position: relative;
+        }
+        .mcp-code-copy {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          background: var(--cb-bg);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 4px 10px;
+          font-size: 10px;
+          font-family: 'Space Mono', monospace;
+          color: var(--cb-text-muted);
+          cursor: pointer;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+        .mcp-code-copy:hover { color: var(--cb-text); }
+
+        .mcp-auth-box {
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 24px;
+        }
+        .mcp-auth-signin {
+          text-align: center;
+          padding: 32px;
+        }
+        .mcp-auth-signin a {
+          color: var(--cb-accent);
+          text-decoration: none;
+          font-weight: 700;
+        }
+        .mcp-btn {
+          background: var(--cb-text);
+          color: var(--cb-bg);
+          border: none;
+          border-radius: 2px;
+          padding: 8px 20px;
+          font-family: 'Space Mono', monospace;
+          font-size: 11px;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          cursor: pointer;
+        }
+        .mcp-btn:hover { opacity: 0.85; }
+        .mcp-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .mcp-btn-danger {
+          background: transparent;
+          color: #ef4444;
+          border: 1px solid #ef4444;
+          padding: 4px 12px;
+          font-size: 10px;
+        }
+
+        .mcp-new-key {
+          margin-top: 16px;
+          padding: 16px;
+          background: var(--cb-bg);
+          border: 1px solid var(--cb-accent);
+          border-radius: 2px;
+        }
+        .mcp-new-key-label {
+          font-size: 10px;
+          color: var(--cb-accent);
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 8px;
+        }
+        .mcp-new-key-value {
+          font-family: 'Space Mono', monospace;
+          font-size: 12px;
+          word-break: break-all;
+          color: var(--cb-text);
+          margin-bottom: 8px;
+        }
+        .mcp-new-key-warn {
+          font-size: 11px;
+          color: var(--cb-text-muted);
+        }
+
+        .mcp-key-list {
+          margin-top: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .mcp-key-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 16px;
+          background: var(--cb-bg);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+        }
+        .mcp-key-prefix {
+          font-family: 'Space Mono', monospace;
+          font-size: 12px;
+          color: var(--cb-text);
+        }
+        .mcp-key-meta {
+          font-size: 10px;
+          color: var(--cb-text-muted);
+        }
+        .mcp-error {
+          color: #ef4444;
+          font-size: 12px;
+          margin-top: 8px;
+        }
+
+        @media (max-width: 768px) {
+          .page-header { padding: 72px 24px 0; }
+          .tool-content { padding: 32px 24px 64px; }
+          .mcp-tools-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+
+      <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
+        <ThemeToggle />
+        <SiteNav activePath="/toolkit" />
+
+        <div className="page-header">
+          <div className="page-label">
+            <a href="/toolkit">TOOL₿OX</a> / MCP SERVER
+          </div>
+          <h1 className="page-title">MCP Server</h1>
+          <p className="page-subtitle">
+            Connect any AI client to live Contrabxnd intelligence data via the Model Context Protocol.
+          </p>
+          <div className="page-divider" />
+        </div>
+
+        <div className="tool-content">
+          {/* Available Tools */}
+          <div className="mcp-section">
+            <div className="mcp-section-title">Available Tools</div>
+            <div className="mcp-tools-grid">
+              {[
+                ['get_signal_score', 'Composite Contrabxnd Score'],
+                ['get_bitcoin_price', 'Live BTC price and market data'],
+                ['get_net_liquidity', 'Fed balance sheet, TGA, RRP, M2'],
+                ['get_fedwatch', 'FOMC rate cut/hold/hike probabilities'],
+                ['get_etf_flows', 'ARKB, IBIT ETF flow data'],
+                ['get_polymarket', 'Bitcoin prediction market odds'],
+                ['get_fear_greed', 'Fear and Greed Index'],
+                ['get_slr', 'SLR regime and leverage data'],
+                ['get_market_brief', 'Full intelligence brief (all signals)'],
+                ['get_bitcoin_history', 'Historical BTC price data'],
+              ].map(([name, desc]) => (
+                <div key={name} className="mcp-tool-item">
+                  <div className="mcp-tool-name">{name}</div>
+                  <div className="mcp-tool-desc">{desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* API Key */}
+          <div className="mcp-section">
+            <div className="mcp-section-title">API Key</div>
+            <div className="mcp-auth-box">
+              {authLoading ? (
+                <div style={{ color: 'var(--cb-text-muted)' }}>Loading...</div>
+              ) : !user ? (
+                <div className="mcp-auth-signin">
+                  <p style={{ marginBottom: 16, color: 'var(--cb-text-muted)' }}>
+                    Sign in to generate an API key for the MCP server.
+                  </p>
+                  <a href="/account" className="mcp-btn" style={{ textDecoration: 'none', color: 'var(--cb-bg)' }}>
+                    Sign In
+                  </a>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--cb-text-muted)', fontSize: 12 }}>
+                      {user.email} — {activeKeys.length}/3 keys
+                    </span>
+                    <button
+                      className="mcp-btn"
+                      onClick={generateKey}
+                      disabled={generating || activeKeys.length >= 3}
+                    >
+                      {generating ? 'Generating...' : 'Generate Key'}
+                    </button>
+                  </div>
+
+                  {error && <div className="mcp-error">{error}</div>}
+
+                  {newKey && (
+                    <div className="mcp-new-key">
+                      <div className="mcp-new-key-label">Your new API key (shown once)</div>
+                      <div className="mcp-new-key-value">{newKey}</div>
+                      <button
+                        className="mcp-btn"
+                        style={{ marginBottom: 8 }}
+                        onClick={() => copyToClipboard(newKey, 'key')}
+                      >
+                        {copied === 'key' ? 'Copied' : 'Copy Key'}
+                      </button>
+                      <div className="mcp-new-key-warn">
+                        Save this key now. It cannot be retrieved after you leave this page.
+                      </div>
+                    </div>
+                  )}
+
+                  {activeKeys.length > 0 && (
+                    <div className="mcp-key-list">
+                      {activeKeys.map(k => (
+                        <div key={k.id} className="mcp-key-row">
+                          <div>
+                            <div className="mcp-key-prefix">{k.key_prefix}</div>
+                            <div className="mcp-key-meta">
+                              Created {new Date(k.created_at).toLocaleDateString()}
+                              {k.last_used_at && ` — Last used ${new Date(k.last_used_at).toLocaleDateString()}`}
+                            </div>
+                          </div>
+                          <button className="mcp-btn mcp-btn-danger" onClick={() => revokeKey(k.id)}>
+                            Revoke
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Configuration */}
+          <div className="mcp-section">
+            <div className="mcp-section-title">Configuration</div>
+            <p style={{ color: 'var(--cb-text-muted)', marginBottom: 16 }}>
+              Add this to your Claude Desktop config file or any MCP-compatible client:
+            </p>
+            <div className="mcp-code-block">
+              <button
+                className="mcp-code-copy"
+                onClick={() => copyToClipboard(configJson, 'config')}
+              >
+                {copied === 'config' ? 'Copied' : 'Copy'}
+              </button>
+              {configJson}
+            </div>
+            <p style={{ color: 'var(--cb-text-muted)', marginTop: 16, fontSize: 12 }}>
+              Config file locations: macOS <code style={{ background: 'var(--cb-surface)', padding: '2px 6px', borderRadius: 2 }}>~/Library/Application Support/Claude/claude_desktop_config.json</code>
+              {' '}Windows <code style={{ background: 'var(--cb-surface)', padding: '2px 6px', borderRadius: 2 }}>%APPDATA%\Claude\claude_desktop_config.json</code>
+            </p>
+          </div>
+
+          {/* Endpoint */}
+          <div className="mcp-section">
+            <div className="mcp-section-title">Endpoint</div>
+            <div className="mcp-code-block">
+POST https://www.contrabxnd.io/api/mcp
+Authorization: Bearer cbx_your_key_here
+Content-Type: application/json
+Accept: application/json, text/event-stream</div>
+          </div>
+        </div>
+
+        <SiteFooter />
+      </div>
+    </>
+  );
+}

@@ -29,6 +29,7 @@ const NAV_LINKS: NavLink[] = [
       { href: '/toolkit/converter', label: 'Sats Converter' },
       { href: '/toolkit/dca', label: 'DCA Calculator' },
       { href: '/toolkit/time-machine', label: 'Time Machine' },
+      { href: '/toolkit/mcp', label: 'MCP Server' },
       { label: 'Indexer', comingSoon: true },
       { label: 'Lightning', comingSoon: true },
     ],
