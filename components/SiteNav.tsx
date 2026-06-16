@@ -21,7 +21,7 @@ const NAV_LINKS: NavLink[] = [
   { href: '/toolkit', label: 'Toolkit' },
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
-  { href: '/network', label: 'Network' },
+  { href: '/network', label: 'Merchants' },
   { label: 'Podcasts', comingSoon: true },
   { label: 'Videos', comingSoon: true },
   { label: 'Merch', comingSoon: true },
