@@ -251,7 +251,7 @@ export default function NetworkPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 32px;
           opacity: 0;
           animation: fadeUp 1s ease 0.2s forwards;
@@ -284,7 +284,7 @@ export default function NetworkPage() {
           align-items: center;
           gap: 12px;
           padding: 16px 32px;
-          background: #F7931A;
+          background: var(--cb-accent);
           border: none;
           border-radius: 2px;
           color: #fff;
@@ -346,7 +346,7 @@ export default function NetworkPage() {
 
         .search-input:focus {
           outline: none;
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .search-input::placeholder {
@@ -367,7 +367,7 @@ export default function NetworkPage() {
 
         .category-select:focus {
           outline: none;
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .results-count {
@@ -404,7 +404,7 @@ export default function NetworkPage() {
         }
 
         .location-status.loading {
-          color: #F7931A;
+          color: var(--cb-accent);
         }
 
         .sort-toggle {
@@ -423,13 +423,13 @@ export default function NetworkPage() {
         }
 
         .sort-toggle:hover {
-          border-color: #F7931A;
-          color: #F7931A;
+          border-color: var(--cb-accent);
+          color: var(--cb-accent);
         }
 
         .sort-toggle.active {
-          border-color: #F7931A;
-          color: #F7931A;
+          border-color: var(--cb-accent);
+          color: var(--cb-accent);
         }
 
         .sort-toggle svg {
@@ -453,7 +453,7 @@ export default function NetworkPage() {
         }
 
         .business-distance {
-          color: #F7931A;
+          color: var(--cb-accent);
           font-size: 10px;
           margin-left: auto;
         }
@@ -525,7 +525,7 @@ export default function NetworkPage() {
         }
 
         .business-cards::-webkit-scrollbar-thumb:hover {
-          background: #F7931A;
+          background: var(--cb-accent);
         }
 
         .business-card {
@@ -539,11 +539,11 @@ export default function NetworkPage() {
         }
 
         .business-card:hover {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .business-card.selected {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .business-header {
@@ -565,12 +565,12 @@ export default function NetworkPage() {
           align-items: center;
           gap: 4px;
           padding: 4px 8px;
-          border: 1px solid #F7931A;
+          border: 1px solid var(--cb-accent);
           border-radius: 2px;
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           white-space: nowrap;
         }
 
@@ -619,7 +619,7 @@ export default function NetworkPage() {
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           text-decoration: none;
           transition: opacity 0.15s ease;
         }

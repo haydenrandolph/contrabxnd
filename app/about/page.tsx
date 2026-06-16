@@ -48,7 +48,7 @@ export default function AboutPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 32px;
           opacity: 0;
           animation: fadeUp 1s ease 0.3s forwards;
@@ -77,7 +77,7 @@ export default function AboutPage() {
         }
 
         .highlight-text {
-          color: #F7931A;
+          color: var(--cb-accent);
         }
 
         .definition {

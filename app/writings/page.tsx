@@ -139,7 +139,7 @@ export default function WritingsPage() {
         .page-number {
           font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 4rem;
-          color: #F7931A;
+          color: var(--cb-accent);
           line-height: 1;
         }
 
@@ -194,7 +194,7 @@ export default function WritingsPage() {
           left: 0;
           width: 100%;
           height: 1px;
-          background: #F7931A;
+          background: var(--cb-accent);
         }
 
         .articles-section {
@@ -216,7 +216,7 @@ export default function WritingsPage() {
         }
 
         .featured-article:hover {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .featured-image {
@@ -238,7 +238,7 @@ export default function WritingsPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 24px;
         }
 
@@ -285,7 +285,7 @@ export default function WritingsPage() {
         }
 
         .article-card:hover {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .article-number {
@@ -301,7 +301,7 @@ export default function WritingsPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 16px;
           position: relative;
           z-index: 1;
@@ -340,7 +340,7 @@ export default function WritingsPage() {
         .article-arrow {
           width: 24px;
           height: 24px;
-          stroke: #F7931A;
+          stroke: var(--cb-accent);
         }
 
         @media (max-width: 1000px) {

@@ -114,7 +114,7 @@ export default function LearnPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 2rem;
           opacity: 0;
           animation: fadeUp 1s ease 0.2s forwards;
@@ -177,7 +177,7 @@ export default function LearnPage() {
         }
 
         .course-card:hover {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .course-badge {
@@ -185,7 +185,7 @@ export default function LearnPage() {
           top: 2rem;
           right: 2rem;
           padding: 0.4rem 0.75rem;
-          background: #F7931A;
+          background: var(--cb-accent);
           border-radius: 2px;
           font-size: 9px;
           letter-spacing: 0.08em;
@@ -212,7 +212,7 @@ export default function LearnPage() {
           font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.1rem;
           font-style: italic;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 24px;
         }
 
@@ -299,7 +299,7 @@ export default function LearnPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 16px;
         }
 
@@ -331,7 +331,7 @@ export default function LearnPage() {
         .step-number {
           font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2.5rem;
-          color: #F7931A;
+          color: var(--cb-accent);
           line-height: 1;
         }
 
@@ -366,7 +366,7 @@ export default function LearnPage() {
 
         .philosophy-source {
           font-size: 12px;
-          color: #F7931A;
+          color: var(--cb-accent);
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
