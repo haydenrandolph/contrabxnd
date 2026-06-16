@@ -31,12 +31,12 @@ const TOOLS: ToolCard[] = [
   },
   {
     title: 'Indexer',
-    description: 'Run your own Bitcoin node index powered by Umbrel.',
+    description: 'Query the blockchain through Feeling Moody Labs’ Bitcoin node.',
     comingSoon: true,
   },
   {
     title: 'Lightning Channel',
-    description: 'Open and manage Lightning Network payment channels.',
+    description: 'Open a Lightning channel with Feeling Moody Labs’ node for instant payments.',
     comingSoon: true,
   },
 ];

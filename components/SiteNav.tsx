@@ -137,6 +137,11 @@ export default function SiteNav({
           display: flex;
           gap: 32px;
         }
+        .nav-links > a,
+        .nav-links > span {
+          display: flex;
+          align-items: center;
+        }
         .nav-links a,
         .nav-links span,
         .nav-links .nav-dropdown-trigger {
@@ -151,6 +156,7 @@ export default function SiteNav({
           background: none;
           border: none;
           font-family: 'Space Mono', monospace;
+          line-height: 1;
         }
         .nav-links a:hover,
         .nav-dropdown-wrap:hover .nav-dropdown-trigger {
@@ -181,10 +187,12 @@ export default function SiteNav({
 
         .nav-dropdown-wrap {
           position: relative;
+          display: flex;
+          align-items: center;
         }
         .nav-dropdown {
           position: absolute;
-          top: 100%;
+          top: 48px;
           left: 50%;
           transform: translateX(-50%);
           min-width: 180px;
