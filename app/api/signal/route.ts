@@ -66,13 +66,14 @@ export async function GET() {
 
   try {
     // Fetch all data sources in parallel
-    const [etfResult, liquidityResult, fedwatchResult, fearGreedResult, slrResult] =
+    const [etfResult, liquidityResult, fedwatchResult, fearGreedResult, slrResult, polymarketResult] =
       await Promise.allSettled([
         fetchEtfData(supabase),
         fetchLiquidityData(supabase),
         fetchFedwatchData(supabase),
         fetchFearGreedData(),
         fetchSlrData(supabase),
+        fetchPolymarketData(supabase),
       ]);
 
     // Build components map with their default weights
@@ -90,11 +91,12 @@ export async function GET() {
       }
     };
 
-    tryAdd('etf_flows', 0.30, etfResult);
+    tryAdd('etf_flows', 0.25, etfResult);
     tryAdd('net_liquidity', 0.25, liquidityResult);
     tryAdd('fedwatch', 0.20, fedwatchResult);
+    tryAdd('polymarket', 0.10, polymarketResult);
     tryAdd('fear_greed', 0.10, fearGreedResult);
-    tryAdd('slr', 0.10, slrResult);
+    tryAdd('slr', 0.05, slrResult);
 
     // TGA is derived from the liquidity result
     if (liquidityResult.status === 'fulfilled' && liquidityResult.value != null) {
@@ -307,6 +309,47 @@ async function fetchSlrData(supabase: any): Promise<ComponentResult | null> {
   if (policySignal > 0) label = 'EASING';
   else if (policySignal < 0) label = 'TIGHTENING';
   const detail = `${label} regime`;
+
+  return { score, weight: 0, detail };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchPolymarketData(supabase: any): Promise<ComponentResult | null> {
+  const { data: rows } = await supabase
+    .from('polymarket_snapshots')
+    .select('question, outcome_yes, volume, slug')
+    .order('date', { ascending: false })
+    .limit(20);
+
+  if (!rows?.length) return null;
+
+  // Dedupe by slug (take most recent per market)
+  const seen = new Set<string>();
+  const markets: Array<{ question: string; outcome_yes: number; volume: number }> = [];
+  for (const r of rows as Array<{ question: string; outcome_yes: number; volume: number; slug: string }>) {
+    if (seen.has(r.slug)) continue;
+    seen.add(r.slug);
+    markets.push(r);
+  }
+
+  if (markets.length === 0) return null;
+
+  // Volume-weighted average of "Yes" probabilities for bullish Bitcoin markets
+  let totalVol = 0;
+  let weightedYes = 0;
+  for (const m of markets) {
+    totalVol += m.volume;
+    weightedYes += m.outcome_yes * m.volume;
+  }
+
+  if (totalVol === 0) return null;
+
+  const avgYes = weightedYes / totalVol;
+
+  // avgYes 0.0 → -100 (market thinks nothing bullish happens), 1.0 → +100
+  const score = clamp(linearMap(avgYes, 0, 1, -100, 100));
+  const pct = (avgYes * 100).toFixed(0);
+  const detail = `${pct}% avg bull prob (${markets.length} markets)`;
 
   return { score, weight: 0, detail };
 }

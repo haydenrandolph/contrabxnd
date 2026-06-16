@@ -64,12 +64,13 @@ LIVE DATA:
 ${JSON.stringify(ctx, null, 2)}
 
 SIGNAL MODEL:
-- Contrabxnd Score: -100 (bearish) to +100 (bullish). Components: ETF flows 30%, Net Liquidity 25%, FedWatch 20%, Fear & Greed 10%, SLR 10%, TGA 5%.
+- Contrabxnd Score: -100 (bearish) to +100 (bullish). Components: ETF flows 25%, Net Liquidity 25%, FedWatch 20%, Polymarket 10%, Fear & Greed 10%, SLR 5%, TGA 5%.
 - Net Liquidity = WALCL - TGA - RRP. Rising = bullish.
 - FedWatch = market-implied Fed rate probabilities. Cuts = bullish.
 - SLR regime affects bank balance sheets. Easing = bullish.
 - ETF flows = institutional demand via ARKB, IBIT, etc.
 - Fear & Greed: 0-25 extreme fear, 75-100 extreme greed.
+- Polymarket = prediction market probabilities for Bitcoin price targets, reserve policy, etc. Higher avg "Yes" = market expects bullish catalysts.
 
 RULES:
 - 2-4 sentences for simple questions. Short paragraph max for complex analysis.
