@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { createAdminClient } from '@/lib/supabase/server';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
 const FRED_TGA_SERIES = 'WTREGEN';
 const NYFED_RRP = 'https://markets.newyorkfed.org/api/rp/reverserepo/propositions/search.json';
-
-function supabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-  return createServiceClient(url, key);
-}
 
 async function fetchFredHistory(
   seriesId: string,
@@ -69,7 +66,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'FRED_API_KEY not set' }, { status: 500 });
   }
 
-  const sb = supabaseAdmin();
+  const sb = createAdminClient();
+  if (!sb) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+  }
   const endDate = new Date().toISOString().slice(0, 10);
   const startDate = '2022-01-01';
 
