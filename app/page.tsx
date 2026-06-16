@@ -63,6 +63,33 @@ interface EtfFlowData {
   netFlow: number | null;
 }
 
+interface SignalData {
+  score: number;
+  label: string;
+  components: Record<string, { score: number; weight: number; detail: string }>;
+}
+
+interface FedWatchData {
+  date: string | null;
+  current_rate: number | null;
+  next_meeting: { date: string; cut: number; hold: number; hike: number } | null;
+}
+
+interface LiquidityData {
+  date: string | null;
+  net_liquidity: number | null;
+  momentum_13w: number | null;
+  tga_trend: string | null;
+  rrp_trend: string | null;
+}
+
+interface SlrData {
+  date: string | null;
+  policy_signal: number | null;
+  policy_label: string | null;
+  leverage_subindex: number | null;
+}
+
 export default function TerminalPage() {
   const [networkData, setNetworkData] = useState<NetworkData>({
     price: 0, change24h: 0, marketCap: 0, volume24h: 0,
@@ -78,6 +105,11 @@ export default function TerminalPage() {
   const [chartPair, setChartPair] = useState('usd');
   const [fearGreed, setFearGreed] = useState<FearGreedData>({ value: null, label: null });
   const [etfFlows, setEtfFlows] = useState<EtfFlowData | null>(null);
+  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'network'>('macro');
+  const [signalData, setSignalData] = useState<SignalData | null>(null);
+  const [fedwatchData, setFedwatchData] = useState<FedWatchData | null>(null);
+  const [liquidityData, setLiquidityData] = useState<LiquidityData | null>(null);
+  const [slrData, setSlrData] = useState<SlrData | null>(null);
   const { isLightMode } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
@@ -199,6 +231,25 @@ export default function TerminalPage() {
     return () => clearInterval(i);
   }, []);
 
+  useEffect(() => {
+    const fetchMacro = async () => {
+      const fetches = [
+        fetch('/api/signal').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/fedwatch').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/liquidity').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/slr').then(r => r.ok ? r.json() : null).catch(() => null),
+      ];
+      const [sig, fed, liq, slr] = await Promise.all(fetches);
+      if (sig && sig.score !== undefined) setSignalData(sig);
+      if (fed) setFedwatchData(fed);
+      if (liq) setLiquidityData(liq);
+      if (slr) setSlrData(slr);
+    };
+    fetchMacro();
+    const i = setInterval(fetchMacro, 5 * 60 * 1000);
+    return () => clearInterval(i);
+  }, []);
+
   // WebSocket
   useEffect(() => {
     let txPoll: NodeJS.Timeout;
@@ -299,6 +350,25 @@ export default function TerminalPage() {
   };
 
   const skel = (w: string) => <span className="skeleton" style={{ width: w, height: '1em', display: 'inline-block' }} />;
+
+  const fmtTrillion = (n: number | null | undefined) => {
+    if (n == null) return '—';
+    const abs = Math.abs(n);
+    if (abs >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
+    if (abs >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+    if (abs >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
+    return `$${n.toFixed(0)}`;
+  };
+
+  const scoreLabel = (score: number): string => {
+    if (score >= 50) return 'BULLISH';
+    if (score >= 15) return 'LEAN BULL';
+    if (score > -15) return 'NEUTRAL';
+    if (score > -50) return 'LEAN BEAR';
+    return 'BEARISH';
+  };
+
+  const scoreBarWidth = (score: number): number => ((score + 100) / 200) * 100;
 
   return (
     <>
@@ -541,6 +611,143 @@ export default function TerminalPage() {
           line-height: 1.6;
         }
 
+        /* Score */
+
+        .score-section { padding: 16px 24px; }
+
+        .score-header {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          margin-bottom: 4px;
+        }
+
+        .score-label-title {
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+        }
+
+        .score-number {
+          font-size: 24px;
+          font-weight: 700;
+          color: var(--cb-text);
+          font-variant-numeric: tabular-nums;
+          line-height: 1;
+        }
+
+        .score-bar {
+          width: 100%;
+          height: 4px;
+          background: var(--cb-surface);
+          border-radius: 2px;
+          overflow: hidden;
+          margin-top: 8px;
+          margin-bottom: 8px;
+        }
+
+        .score-bar-fill {
+          height: 100%;
+          background: var(--cb-accent);
+          border-radius: 2px;
+          transition: width 0.6s ease;
+        }
+
+        .score-signal-label {
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          text-align: right;
+        }
+
+        .score-calibrating {
+          font-size: 11px;
+          color: var(--cb-text-muted);
+          font-style: italic;
+        }
+
+        /* Tab bar */
+
+        .sidebar-tabs {
+          display: flex;
+          border-bottom: 1px solid var(--cb-border);
+        }
+
+        .sidebar-tab-btn {
+          flex: 1;
+          font-family: 'Space Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          padding: 12px 0;
+          background: transparent;
+          border: none;
+          border-bottom: 1px solid transparent;
+          color: var(--cb-text-muted);
+          cursor: pointer;
+          transition: color 0.15s ease, border-color 0.15s ease;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .sidebar-tab-btn:hover {
+          color: var(--cb-text);
+        }
+
+        .sidebar-tab-btn.active {
+          color: var(--cb-accent);
+          border-bottom-color: var(--cb-accent);
+        }
+
+        .tab-content {
+          min-height: 0;
+        }
+
+        /* Macro rows */
+
+        .macro-row {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          padding: 10px 24px;
+          border-bottom: 1px solid var(--cb-border);
+        }
+
+        .macro-row:last-child { border-bottom: none; }
+
+        .macro-label {
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          flex-shrink: 0;
+        }
+
+        .macro-value-group {
+          display: flex;
+          align-items: baseline;
+          gap: 8px;
+          text-align: right;
+        }
+
+        .macro-value {
+          font-size: 13px;
+          font-variant-numeric: tabular-nums;
+          color: var(--cb-text);
+        }
+
+        .macro-detail {
+          font-size: 10px;
+          color: var(--cb-text-muted);
+        }
+
+        .macro-detail.positive { color: #22c55e; }
+        .macro-detail.negative { color: #ef4444; }
+
         /* Feed */
 
         .sidebar-feed {
@@ -731,6 +938,7 @@ export default function TerminalPage() {
 
             {/* ── Sidebar ── */}
             <div className="terminal-sidebar">
+              {/* 1. Price (unchanged) */}
               <div className="sidebar-section">
                 <div className="sidebar-price">
                   <div className="price-pair">BTC / USD</div>
@@ -754,83 +962,185 @@ export default function TerminalPage() {
                 </div>
               </div>
 
+              {/* 2. Contrabxnd Score (hero) */}
               <div className="sidebar-section">
-                <div className="sidebar-section-title">Network</div>
-                <div className="metrics-grid">
-                  <div className="metric-cell">
-                    <div className="metric-label">Block</div>
-                    <div className="metric-value">{networkData.blockHeight === 0 ? skel('70px') : networkData.blockHeight.toLocaleString()}</div>
+                <div className="score-section">
+                  <div className="score-header">
+                    <span className="score-label-title">Contrabxnd Score</span>
+                    {signalData ? (
+                      <span className="score-number">{signalData.score > 0 ? '+' : ''}{signalData.score}</span>
+                    ) : null}
                   </div>
-                  <div className="metric-cell">
-                    <div className="metric-label">Hash Rate</div>
-                    <div className="metric-value">{networkData.hashRate === 0 ? skel('60px') : `${networkData.hashRate.toFixed(1)} EH/s`}</div>
-                  </div>
-                  <div className="metric-cell">
-                    <div className="metric-label">Mempool</div>
-                    <div className="metric-value">{networkData.mempoolCount === 0 ? skel('50px') : fmtNum(networkData.mempoolCount, 0)}</div>
-                  </div>
-                  <div className="metric-cell">
-                    <div className="metric-label">Fee</div>
-                    <div className="metric-value">{networkData.priorityFee === 0 ? skel('50px') : `${networkData.priorityFee} sat/vB`}</div>
-                  </div>
-                  <div className="metric-cell">
-                    <div className="metric-label">Mkt Cap</div>
-                    <div className="metric-value">{networkData.marketCap === 0 ? skel('60px') : `$${fmtNum(networkData.marketCap)}`}</div>
-                  </div>
-                  <div className="metric-cell">
-                    <div className="metric-label">24h Vol</div>
-                    <div className="metric-value">{networkData.volume24h === 0 ? skel('60px') : `$${fmtNum(networkData.volume24h)}`}</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="sidebar-section">
-                <div className="sidebar-section-title">Sentiment</div>
-                <div className="sentiment-content">
-                  {fearGreed.value !== null ? (
+                  {signalData ? (
                     <>
-                      <div className="fg-row">
-                        <span className="fg-value">{fearGreed.value}</span>
-                        <span className="fg-label">{fearGreed.label}</span>
+                      <div className="score-bar">
+                        <div className="score-bar-fill" style={{ width: `${scoreBarWidth(signalData.score)}%` }} />
                       </div>
-                      <div className="fg-bar">
-                        <div className="fg-bar-fill" style={{ width: `${fearGreed.value}%` }} />
-                      </div>
-                    </>
-                  ) : <span className="fg-unavailable">Loading...</span>}
-                </div>
-              </div>
-
-              <div className="sidebar-section">
-                <div className="sidebar-section-title">ETF Flows{etfFlows?.date ? ` · ${etfFlows.date}` : ''}</div>
-                <div className="etf-content">
-                  {etfFlows && etfFlows.source !== 'unavailable' ? (
-                    <>
-                      {etfFlows.funds.map((fund) => (
-                        <div key={fund.ticker} className="etf-row">
-                          <span className="etf-ticker">{fund.ticker}</span>
-                          <span className="etf-name">{fund.name}</span>
-                          <span className={`etf-flow ${fund.flow === null ? 'unavailable' : fund.flow >= 0 ? 'positive' : 'negative'}`}>
-                            {fund.flow !== null ? fmtFlow(fund.flow) : '—'}
-                          </span>
-                        </div>
-                      ))}
-                      {etfFlows.netFlow !== null && (
-                        <div className="etf-row net-row">
-                          <span className="etf-ticker">NET</span>
-                          <span className="etf-name">All Funds</span>
-                          <span className={`etf-flow ${etfFlows.netFlow >= 0 ? 'positive' : 'negative'}`}>{fmtFlow(etfFlows.netFlow)}</span>
-                        </div>
-                      )}
+                      <div className="score-signal-label">{signalData.label || scoreLabel(signalData.score)}</div>
                     </>
                   ) : (
-                    <div className="etf-setup-note">
-                      Add SOSOVALUE_API_KEY to .env.local to enable ETF flow data.
-                    </div>
+                    <span className="score-calibrating">CALIBRATING...</span>
                   )}
                 </div>
               </div>
 
+              {/* 3. Tab bar */}
+              <div className="sidebar-tabs">
+                <button
+                  className={`sidebar-tab-btn ${sidebarTab === 'macro' ? 'active' : ''}`}
+                  onClick={() => setSidebarTab('macro')}
+                >
+                  Macro
+                </button>
+                <button
+                  className={`sidebar-tab-btn ${sidebarTab === 'flows' ? 'active' : ''}`}
+                  onClick={() => setSidebarTab('flows')}
+                >
+                  Flows
+                </button>
+                <button
+                  className={`sidebar-tab-btn ${sidebarTab === 'network' ? 'active' : ''}`}
+                  onClick={() => setSidebarTab('network')}
+                >
+                  Network
+                </button>
+              </div>
+
+              {/* 4. Tab content */}
+              <div className="sidebar-section tab-content">
+                {sidebarTab === 'macro' && (
+                  <>
+                    {/* Net Liquidity */}
+                    <div className="macro-row">
+                      <span className="macro-label">Net Liquidity</span>
+                      <div className="macro-value-group">
+                        <span className="macro-value">
+                          {liquidityData?.net_liquidity != null ? fmtTrillion(liquidityData.net_liquidity) : '—'}
+                        </span>
+                        {liquidityData?.momentum_13w != null && (
+                          <span className={`macro-detail ${liquidityData.momentum_13w >= 0 ? 'positive' : 'negative'}`}>
+                            {liquidityData.momentum_13w >= 0 ? '↑' : '↓'} {Math.abs(liquidityData.momentum_13w * 100).toFixed(1)}% 13w
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* FedWatch */}
+                    <div className="macro-row">
+                      <span className="macro-label">FedWatch</span>
+                      <div className="macro-value-group">
+                        <span className="macro-value">
+                          {fedwatchData?.next_meeting?.cut != null
+                            ? `${Math.round(fedwatchData.next_meeting.cut)}% CUT`
+                            : '—'}
+                        </span>
+                        {fedwatchData?.next_meeting?.date && (
+                          <span className="macro-detail">
+                            {new Date(fedwatchData.next_meeting.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* SLR Regime */}
+                    <div className="macro-row">
+                      <span className="macro-label">SLR Regime</span>
+                      <div className="macro-value-group">
+                        <span className="macro-value">
+                          {slrData?.policy_label != null ? slrData.policy_label.toUpperCase() : '—'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Fear & Greed (moved from Sentiment section) */}
+                    <div className="macro-row" style={{ flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', width: '100%' }}>
+                        <span className="macro-label">Fear &amp; Greed</span>
+                        <div className="macro-value-group">
+                          {fearGreed.value !== null ? (
+                            <>
+                              <span className="macro-value" style={{ color: 'var(--cb-accent)' }}>{fearGreed.value}</span>
+                              <span className="macro-detail">{fearGreed.label}</span>
+                            </>
+                          ) : (
+                            <span className="macro-value">—</span>
+                          )}
+                        </div>
+                      </div>
+                      {fearGreed.value !== null && (
+                        <div className="fg-bar" style={{ width: '100%' }}>
+                          <div className="fg-bar-fill" style={{ width: `${fearGreed.value}%` }} />
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {sidebarTab === 'flows' && (
+                  <div className="etf-content">
+                    {etfFlows?.date && (
+                      <div style={{ padding: '8px 24px 0', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: 'var(--cb-text-muted)' }}>
+                        {etfFlows.date}
+                      </div>
+                    )}
+                    {etfFlows && etfFlows.source !== 'unavailable' ? (
+                      <>
+                        {etfFlows.funds.map((fund) => (
+                          <div key={fund.ticker} className="etf-row">
+                            <span className="etf-ticker">{fund.ticker}</span>
+                            <span className="etf-name">{fund.name}</span>
+                            <span className={`etf-flow ${fund.flow === null ? 'unavailable' : fund.flow >= 0 ? 'positive' : 'negative'}`}>
+                              {fund.flow !== null ? fmtFlow(fund.flow) : '—'}
+                            </span>
+                          </div>
+                        ))}
+                        {etfFlows.netFlow !== null && (
+                          <div className="etf-row net-row">
+                            <span className="etf-ticker">NET</span>
+                            <span className="etf-name">All Funds</span>
+                            <span className={`etf-flow ${etfFlows.netFlow >= 0 ? 'positive' : 'negative'}`}>{fmtFlow(etfFlows.netFlow)}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="etf-setup-note">
+                        Add SOSOVALUE_API_KEY to .env.local to enable ETF flow data.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {sidebarTab === 'network' && (
+                  <div className="metrics-grid">
+                    <div className="metric-cell">
+                      <div className="metric-label">Block</div>
+                      <div className="metric-value">{networkData.blockHeight === 0 ? skel('70px') : networkData.blockHeight.toLocaleString()}</div>
+                    </div>
+                    <div className="metric-cell">
+                      <div className="metric-label">Hash Rate</div>
+                      <div className="metric-value">{networkData.hashRate === 0 ? skel('60px') : `${networkData.hashRate.toFixed(1)} EH/s`}</div>
+                    </div>
+                    <div className="metric-cell">
+                      <div className="metric-label">Mempool</div>
+                      <div className="metric-value">{networkData.mempoolCount === 0 ? skel('50px') : fmtNum(networkData.mempoolCount, 0)}</div>
+                    </div>
+                    <div className="metric-cell">
+                      <div className="metric-label">Fee</div>
+                      <div className="metric-value">{networkData.priorityFee === 0 ? skel('50px') : `${networkData.priorityFee} sat/vB`}</div>
+                    </div>
+                    <div className="metric-cell">
+                      <div className="metric-label">Mkt Cap</div>
+                      <div className="metric-value">{networkData.marketCap === 0 ? skel('60px') : `$${fmtNum(networkData.marketCap)}`}</div>
+                    </div>
+                    <div className="metric-cell">
+                      <div className="metric-label">24h Vol</div>
+                      <div className="metric-value">{networkData.volume24h === 0 ? skel('60px') : `$${fmtNum(networkData.volume24h)}`}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 5. Feed (always visible) */}
               <div className="sidebar-section" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderBottom: 'none' }}>
                 <div className="sidebar-section-title">Feed</div>
                 <div className="sidebar-feed">
