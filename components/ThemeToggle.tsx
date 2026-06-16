@@ -31,7 +31,7 @@ export default function ThemeToggle() {
         .theme-toggle svg {
           width: 24px;
           height: 24px;
-          stroke: #f5f3f0;
+          stroke: #f7f7f8;
         }
         .theme-toggle.light {
           background: #0a0a0a;

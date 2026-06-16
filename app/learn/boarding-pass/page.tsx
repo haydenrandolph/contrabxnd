@@ -51,7 +51,7 @@ export default function BoardingPassCoursePage() {
 
         .course-page {
           background: #0a0a0a;
-          color: #e8e4dc;
+          color: #e5e5e6;
           font-family: 'Space Mono', monospace;
           font-size: 14px;
           line-height: 1.7;
@@ -61,7 +61,7 @@ export default function BoardingPassCoursePage() {
         }
 
         .course-page.light-mode {
-          background: #e8e4dc;
+          background: #e5e5e6;
           color: #0a0a0a;
         }
 
@@ -156,8 +156,8 @@ export default function BoardingPassCoursePage() {
         }
 
         .course-page.light-mode .course-meta-bar {
-          border-top-color: #d8d4cc;
-          border-bottom-color: #d8d4cc;
+          border-top-color: #d0d0d1;
+          border-bottom-color: #d0d0d1;
         }
 
         .meta-item {
@@ -179,7 +179,7 @@ export default function BoardingPassCoursePage() {
 
         .meta-value {
           font-size: 14px;
-          color: #e8e4dc;
+          color: #e5e5e6;
         }
 
         .course-page.light-mode .meta-value {
@@ -224,7 +224,7 @@ export default function BoardingPassCoursePage() {
 
         .outcome-text {
           font-size: 14px;
-          color: #e8e4dc;
+          color: #e5e5e6;
           line-height: 1.6;
         }
 
@@ -264,7 +264,7 @@ export default function BoardingPassCoursePage() {
         }
 
         .course-page.light-mode .week-header {
-          border-bottom-color: #d8d4cc;
+          border-bottom-color: #d0d0d1;
         }
 
         .week-number {
@@ -302,7 +302,7 @@ export default function BoardingPassCoursePage() {
         }
 
         .course-page.light-mode .lesson-item {
-          border-bottom-color: #d8d4cc;
+          border-bottom-color: #d0d0d1;
         }
 
         .lesson-item:hover {
@@ -313,7 +313,7 @@ export default function BoardingPassCoursePage() {
         }
 
         .course-page.light-mode .lesson-item:hover {
-          background: #f5f3f0;
+          background: #f7f7f8;
         }
 
         .lesson-item:last-child {
@@ -327,7 +327,7 @@ export default function BoardingPassCoursePage() {
         }
 
         .course-page.light-mode .lesson-number {
-          color: #c8c4bc;
+          color: #c0c0c1;
         }
 
         .lesson-content h4 {
@@ -401,7 +401,7 @@ export default function BoardingPassCoursePage() {
         }
 
         .course-page.light-mode .progress-bar-outer {
-          background: #d8d4cc;
+          background: #d0d0d1;
         }
 
         .progress-bar-inner {
@@ -418,8 +418,8 @@ export default function BoardingPassCoursePage() {
         }
 
         .course-page.light-mode .start-section {
-          background: #f5f3f0;
-          border-top-color: #d8d4cc;
+          background: #f7f7f8;
+          border-top-color: #d0d0d1;
         }
 
         .start-inner {
@@ -455,7 +455,7 @@ export default function BoardingPassCoursePage() {
           padding: 1.25rem 2.5rem;
           background: #F7931A;
           border: 1px solid #F7931A;
-          color: #f5f3f0;
+          color: #f7f7f8;
           font-family: 'Space Mono', monospace;
           font-size: 12px;
           letter-spacing: 0.15em;
@@ -534,8 +534,8 @@ export default function BoardingPassCoursePage() {
           }
 
           .course-page.light-mode .course-meta-bar {
-            background: #d8d4cc;
-            border-color: #d8d4cc;
+            background: #d0d0d1;
+            border-color: #d0d0d1;
           }
 
           .meta-item {
@@ -545,7 +545,7 @@ export default function BoardingPassCoursePage() {
           }
 
           .course-page.light-mode .meta-item {
-            background: #f5f3f0;
+            background: #f7f7f8;
           }
 
           .meta-value {
@@ -567,9 +567,9 @@ export default function BoardingPassCoursePage() {
           }
 
           .course-page.light-mode .outcomes-section {
-            background: #f5f3f0;
-            border-top-color: #d8d4cc;
-            border-bottom-color: #d8d4cc;
+            background: #f7f7f8;
+            border-top-color: #d0d0d1;
+            border-bottom-color: #d0d0d1;
           }
 
           .section-title {
@@ -625,9 +625,9 @@ export default function BoardingPassCoursePage() {
           }
 
           .course-page.light-mode .week-header {
-            background: #f5f3f0;
-            border-top-color: #d8d4cc;
-            border-bottom-color: #d8d4cc;
+            background: #f7f7f8;
+            border-top-color: #d0d0d1;
+            border-bottom-color: #d0d0d1;
           }
 
           .week-header:active {
@@ -635,7 +635,7 @@ export default function BoardingPassCoursePage() {
           }
 
           .course-page.light-mode .week-header:active {
-            background: #e8e4dc;
+            background: #e5e5e6;
           }
 
           .week-number {
@@ -651,7 +651,7 @@ export default function BoardingPassCoursePage() {
           }
 
           .course-page.light-mode .lessons-list {
-            background: #e8e4dc;
+            background: #e5e5e6;
           }
 
           .lesson-item {
@@ -674,7 +674,7 @@ export default function BoardingPassCoursePage() {
           }
 
           .course-page.light-mode .lesson-item:active {
-            background: #f5f3f0;
+            background: #f7f7f8;
           }
 
           .lesson-number {
@@ -691,7 +691,7 @@ export default function BoardingPassCoursePage() {
           }
 
           .course-page.light-mode .lesson-number {
-            border-color: #c8c4bc;
+            border-color: #c0c0c1;
           }
 
           .lesson-content {

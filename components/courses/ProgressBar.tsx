@@ -66,7 +66,7 @@ export default function ProgressBar({
         }
 
         :global(.light-mode) .progress-bar {
-          background: #d8d4cc;
+          background: #d0d0d1;
         }
       `}</style>
 

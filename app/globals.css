@@ -9,7 +9,7 @@
   --contraband-cream: #e8e4dc;
   --contraband-rust: #F7931A;
   --contraband-rust-light: #ff6600;
-  --contraband-white: #f5f3f0;
+  --contraband-white: #f7f7f8;
 
   /* Design system — Anduril/Palantir inspired */
   --cb-bg: #0a0a0a;
@@ -24,7 +24,7 @@
 }
 
 html.light-mode {
-  --cb-bg: #f5f3f0;
+  --cb-bg: #f7f7f8;
   --cb-surface: #ffffff;
   --cb-border: rgba(0, 0, 0, 0.08);
   --cb-text: #0a0a0a;
@@ -100,11 +100,11 @@ html.light-mode body {
    --------------------------------------------------------------------------- */
 html.light-mode .auth-modal {
   background: #ffffff;
-  border-color: #c8c4bc;
+  border-color: #d0d0d1;
 }
 
 html.light-mode .auth-modal-header {
-  border-bottom-color: #e0dcd4;
+  border-bottom-color: #e5e5e6;
 }
 
 html.light-mode .auth-modal-title {
@@ -112,7 +112,7 @@ html.light-mode .auth-modal-title {
 }
 
 html.light-mode .auth-modal-close {
-  border-color: #c8c4bc;
+  border-color: #d0d0d1;
 }
 
 html.light-mode .auth-modal-close svg {
@@ -124,8 +124,8 @@ html.light-mode .auth-label {
 }
 
 html.light-mode .auth-input {
-  background: #f5f3f0;
-  border-color: #d8d4cc;
+  background: #f7f7f8;
+  border-color: #d0d0d1;
   color: #0a0a0a;
 }
 
@@ -134,7 +134,7 @@ html.light-mode .auth-input::placeholder {
 }
 
 html.light-mode .auth-switch {
-  border-top-color: #e0dcd4;
+  border-top-color: #e5e5e6;
   color: #6a6a6a;
 }
 
@@ -164,7 +164,7 @@ html.light-mode .auth-success-text {
 }
 
 html.light-mode .skeleton {
-  background: linear-gradient(90deg, #e0dcd4 25%, #ece8e0 50%, #e0dcd4 75%);
+  background: linear-gradient(90deg, #e5e5e6 25%, #efefef 50%, #e5e5e6 75%);
   background-size: 200% 100%;
 }
 

@@ -60,7 +60,7 @@ export default function SiteNav({
           line-height: 1;
         }
         .site-nav.light {
-          background: #f5f3f0;
+          background: #f7f7f8;
           border-bottom-color: rgba(0, 0, 0, 0.08);
         }
         .site-nav.blend {
@@ -219,7 +219,7 @@ export default function SiteNav({
           transition: opacity 0.2s ease, visibility 0.2s ease;
         }
         .mobile-overlay.light {
-          background: #f5f3f0;
+          background: #f7f7f8;
         }
         .mobile-overlay.open {
           opacity: 1;

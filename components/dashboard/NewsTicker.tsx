@@ -63,8 +63,8 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
       <div className="news-ticker-container">
         <style jsx>{`
           .news-ticker-container {
-            background: ${isLightMode ? '#d8d4cc' : '#0d0d0d'};
-            border-bottom: 1px solid ${isLightMode ? '#c8c4bc' : '#1a1a1a'};
+            background: ${isLightMode ? '#d0d0d1' : '#0d0d0d'};
+            border-bottom: 1px solid ${isLightMode ? '#c0c0c1' : '#1a1a1a'};
             padding: 0.75rem 0;
             overflow: hidden;
           }
@@ -96,8 +96,8 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
     <>
       <style jsx>{`
         .news-ticker-container {
-          background: ${isLightMode ? '#d8d4cc' : '#0d0d0d'};
-          border-bottom: 1px solid ${isLightMode ? '#c8c4bc' : '#1a1a1a'};
+          background: ${isLightMode ? '#d0d0d1' : '#0d0d0d'};
+          border-bottom: 1px solid ${isLightMode ? '#c0c0c1' : '#1a1a1a'};
           padding: 0.75rem 0;
           overflow: hidden;
           position: relative;
@@ -116,12 +116,12 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
 
         .news-ticker-container::before {
           left: 0;
-          background: linear-gradient(to right, ${isLightMode ? '#d8d4cc' : '#0d0d0d'}, transparent);
+          background: linear-gradient(to right, ${isLightMode ? '#d0d0d1' : '#0d0d0d'}, transparent);
         }
 
         .news-ticker-container::after {
           right: 0;
-          background: linear-gradient(to left, ${isLightMode ? '#d8d4cc' : '#0d0d0d'}, transparent);
+          background: linear-gradient(to left, ${isLightMode ? '#d0d0d1' : '#0d0d0d'}, transparent);
         }
 
         .news-ticker-track {

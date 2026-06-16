@@ -300,13 +300,13 @@ export default function NetworkMap({
           color: #F7931A !important;
         }
         .network-page.light-mode .btc-popup .leaflet-popup-content-wrapper {
-          background: #f5f3f0;
+          background: #f7f7f8;
           color: #0a0a0a;
-          border-color: #d8d4cc;
+          border-color: #d0d0d1;
         }
         .network-page.light-mode .btc-popup .leaflet-popup-tip {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
         }
         .leaflet-control-zoom a {
           background: #141414 !important;
@@ -318,9 +318,9 @@ export default function NetworkMap({
           color: #F7931A !important;
         }
         .network-page.light-mode .leaflet-control-zoom a {
-          background: #f5f3f0 !important;
+          background: #f7f7f8 !important;
           color: #0a0a0a !important;
-          border-color: #d8d4cc !important;
+          border-color: #d0d0d1 !important;
         }
       `}</style>
       <div

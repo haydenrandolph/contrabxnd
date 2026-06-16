@@ -134,7 +134,7 @@ export default function HighlightPopover({ contentType, contentSlug }: Highlight
         :global(.article-page.light-mode) .hl-btn,
         :global(.lesson-page.light-mode) .hl-btn {
           background: #ffffff;
-          border-color: #d8d4cc;
+          border-color: #d0d0d1;
           color: #0a0a0a;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
         }
@@ -177,7 +177,7 @@ export default function HighlightPopover({ contentType, contentSlug }: Highlight
         :global(.article-page.light-mode) .hl-toast,
         :global(.lesson-page.light-mode) .hl-toast {
           background: #ffffff;
-          border-color: #d8d4cc;
+          border-color: #d0d0d1;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
         }
 

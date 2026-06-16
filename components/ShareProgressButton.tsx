@@ -124,7 +124,7 @@ export default function ShareProgressButton() {
 
         :global(.light-mode) .share-progress-btn,
         :global(.account-page.light-mode) .share-progress-btn {
-          border-color: #c8c4bc;
+          border-color: #c0c0c1;
           color: #5a5a5a;
         }
 

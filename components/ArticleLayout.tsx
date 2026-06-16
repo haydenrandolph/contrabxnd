@@ -89,7 +89,7 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode .article-progress-container {
-          background: #d8d4cc;
+          background: #d0d0d1;
         }
 
         .article-progress-bar {
@@ -134,7 +134,7 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode .article-header {
-          border-bottom-color: #c8c4bc;
+          border-bottom-color: #c0c0c1;
         }
 
         .article-type {
@@ -226,7 +226,7 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode .article-footer {
-          border-top-color: #c8c4bc;
+          border-top-color: #c0c0c1;
         }
 
         .share-section {
@@ -261,15 +261,15 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode .share-button {
-          background: #f5f3f0;
-          border-color: #c8c4bc;
+          background: #f7f7f8;
+          border-color: #c0c0c1;
           color: #070713;
         }
 
         .share-button:hover {
           background: #F7931A;
           border-color: #F7931A;
-          color: #f5f3f0;
+          color: #f7f7f8;
         }
 
         .related-articles {
@@ -280,7 +280,7 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode .related-articles {
-          border-top-color: #d8d4cc;
+          border-top-color: #d0d0d1;
         }
 
         .related-title {
@@ -311,8 +311,8 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode .related-card {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
         }
 
         .related-card:hover {

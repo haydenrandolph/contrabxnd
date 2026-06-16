@@ -312,8 +312,8 @@ export default function TerminalPage() {
       hide_legend: false,
       allow_symbol_change: false,
       save_image: false,
-      backgroundColor: isLightMode ? '#f5f3f0' : '#0a0a0a',
-      gridColor: isLightMode ? '#e0dcd4' : '#1a1a1a',
+      backgroundColor: isLightMode ? '#f7f7f8' : '#0a0a0a',
+      gridColor: isLightMode ? '#e5e5e6' : '#1a1a1a',
       withdateranges: true,
       support_host: 'https://www.tradingview.com',
     });
