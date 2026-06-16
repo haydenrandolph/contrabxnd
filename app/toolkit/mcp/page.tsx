@@ -316,10 +316,87 @@ export default function McpPage() {
           margin-top: 8px;
         }
 
+        .mcp-roadmap {
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
+        }
+        .mcp-roadmap-phase {
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          overflow: hidden;
+        }
+        .mcp-roadmap-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 16px;
+          background: var(--cb-surface);
+          border-bottom: 1px solid var(--cb-border);
+        }
+        .mcp-roadmap-phase-label {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .mcp-roadmap-phase-tag {
+          font-size: 9px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          background: var(--cb-bg);
+          padding: 2px 8px;
+          border-radius: 2px;
+          border: 1px solid var(--cb-border);
+        }
+        .mcp-roadmap-title {
+          font-size: 13px;
+          font-weight: 700;
+          color: var(--cb-text);
+        }
+        .mcp-roadmap-status {
+          font-size: 9px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+        }
+        .mcp-roadmap-status.soon {
+          color: var(--cb-accent);
+        }
+        .mcp-roadmap-tools {
+          display: flex;
+          flex-direction: column;
+        }
+        .mcp-roadmap-tool {
+          display: flex;
+          align-items: baseline;
+          gap: 12px;
+          padding: 8px 16px;
+          border-bottom: 1px solid var(--cb-border);
+          opacity: 0.5;
+        }
+        .mcp-roadmap-tool:last-child {
+          border-bottom: none;
+        }
+        .mcp-roadmap-tool-name {
+          font-size: 11px;
+          font-weight: 700;
+          color: var(--cb-text);
+          font-family: 'Space Mono', monospace;
+          white-space: nowrap;
+          min-width: 160px;
+        }
+        .mcp-roadmap-tool-desc {
+          font-size: 11px;
+          color: var(--cb-text-muted);
+        }
+
         @media (max-width: 768px) {
           .page-header { padding: 72px 24px 0; }
           .tool-content { padding: 32px 24px 64px; }
           .mcp-tools-grid { grid-template-columns: 1fr; }
+          .mcp-roadmap-tool { flex-direction: column; gap: 2px; }
+          .mcp-roadmap-tool-name { min-width: auto; }
         }
       `}</style>
 
@@ -464,6 +541,98 @@ POST https://www.contrabxnd.io/api/mcp
 Authorization: Bearer cbx_your_key_here
 Content-Type: application/json
 Accept: application/json, text/event-stream</div>
+          </div>
+
+          {/* Roadmap */}
+          <div className="mcp-section">
+            <div className="mcp-section-title">Roadmap</div>
+            <div className="mcp-roadmap">
+              {[
+                {
+                  phase: 'Phase 2',
+                  title: 'Indexer',
+                  status: 'coming soon',
+                  tools: [
+                    ['query_address', 'Balance, tx count, UTXO set for any address'],
+                    ['query_transaction', 'Full tx details: inputs, outputs, fee, confirmations'],
+                    ['query_block', 'Block header, tx list, miner, size, weight'],
+                    ['get_mempool_analysis', 'Real-time mempool depth and fee distribution'],
+                    ['trace_funds', 'Follow BTC flow across transaction chains'],
+                    ['decode_script', 'Decode and explain any Bitcoin script'],
+                    ['estimate_fee', 'Smart fee estimation from node mempool'],
+                  ],
+                },
+                {
+                  phase: 'Phase 3',
+                  title: 'Lightning',
+                  status: 'coming soon',
+                  tools: [
+                    ['get_node_info', 'Contrabxnd node pubkey, capacity, channel count'],
+                    ['list_channels', 'Active channels with balance and peer info'],
+                    ['open_channel', 'Open a channel to the Contrabxnd node'],
+                    ['create_invoice', 'Generate a BOLT11 Lightning invoice'],
+                    ['pay_invoice', 'Pay any Lightning invoice through the node'],
+                    ['decode_invoice', 'Decode BOLT11 to see amount, description, expiry'],
+                    ['get_forwarding_history', 'Routing revenue and forward stats'],
+                  ],
+                },
+                {
+                  phase: 'Phase 4',
+                  title: 'Wallets',
+                  status: 'planned',
+                  tools: [
+                    ['create_wallet', 'Create a Contrabxnd wallet (on-chain + Lightning)'],
+                    ['get_balance', 'Combined on-chain and Lightning balance'],
+                    ['send_bitcoin', 'Send on-chain BTC with fee selection'],
+                    ['receive_lightning', 'Create invoice for incoming Lightning payment'],
+                    ['send_lightning', 'Pay Lightning invoice from wallet balance'],
+                    ['export_xpub', 'Export wallet xpub for watch-only access'],
+                  ],
+                },
+                {
+                  phase: 'Phase 5',
+                  title: 'Trading',
+                  status: 'planned',
+                  tools: [
+                    ['buy_bitcoin', 'Buy BTC via Coinbase into Contrabxnd wallet'],
+                    ['sell_bitcoin', 'Sell BTC from wallet, settle to bank'],
+                    ['place_limit_order', 'Place a limit buy/sell on exchange'],
+                    ['auto_dca', 'Set up recurring buys at any interval'],
+                    ['get_trade_history', 'Past trades with P&L'],
+                  ],
+                },
+                {
+                  phase: 'Phase 6',
+                  title: 'x402 Micropayments',
+                  status: 'planned',
+                  tools: [
+                    ['create_paywall', 'Gate any tool behind a Lightning micropayment'],
+                    ['verify_payment', 'Verify BOLT11 payment before granting access'],
+                    ['get_pricing', 'List paywalled tools and their sat prices'],
+                  ],
+                },
+              ].map(({ phase, title, status, tools }) => (
+                <div key={phase} className="mcp-roadmap-phase">
+                  <div className="mcp-roadmap-header">
+                    <div className="mcp-roadmap-phase-label">
+                      <span className="mcp-roadmap-phase-tag">{phase}</span>
+                      <span className="mcp-roadmap-title">{title}</span>
+                    </div>
+                    <span className={`mcp-roadmap-status ${status === 'coming soon' ? 'soon' : ''}`}>
+                      {status}
+                    </span>
+                  </div>
+                  <div className="mcp-roadmap-tools">
+                    {tools.map(([name, desc]) => (
+                      <div key={name} className="mcp-roadmap-tool">
+                        <span className="mcp-roadmap-tool-name">{name}</span>
+                        <span className="mcp-roadmap-tool-desc">{desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

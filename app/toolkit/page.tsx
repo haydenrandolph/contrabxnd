@@ -44,6 +44,16 @@ const TOOLS: ToolCard[] = [
     description: "Open a Lightning channel with the Contrabxnd node for instant payments.",
     comingSoon: true,
   },
+  {
+    title: "Wallets",
+    description: "Create a Contrabxnd wallet for autonomous Bitcoin sending and receiving — on-chain and Lightning.",
+    comingSoon: true,
+  },
+  {
+    title: "Trading",
+    description: "Buy and sell Bitcoin through Contrabxnd wallets via Coinbase integration. AI-driven DCA and limit orders.",
+    comingSoon: true,
+  },
 ];
 
 export default function ToolboxPage() {

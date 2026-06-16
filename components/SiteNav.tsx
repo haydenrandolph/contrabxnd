@@ -32,6 +32,8 @@ const NAV_LINKS: NavLink[] = [
       { href: '/toolkit/mcp', label: 'MCP Server' },
       { label: 'Indexer', comingSoon: true },
       { label: 'Lightning', comingSoon: true },
+      { label: 'Wallets', comingSoon: true },
+      { label: 'Trading', comingSoon: true },
     ],
   },
   { href: '/learn', label: 'Stu₿y' },
