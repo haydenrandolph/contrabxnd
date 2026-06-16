@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
 const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
-const TREASURY_BASE = 'https://api.fiscaldata.treasury.gov/services/api/fiscal_service';
-const NYFED_RRP = 'https://markets.newyorkfed.org/api/rp/reverserepo/search.json';
+const FRED_TGA_SERIES = 'WTREGEN';
+const NYFED_RRP = 'https://markets.newyorkfed.org/api/rp/reverserepo/propositions/search.json';
 
 function supabaseAdmin() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -29,39 +29,12 @@ async function fetchFredHistory(
     }));
 }
 
-async function fetchTreasuryTGA(
+async function fetchFredTGA(
+  apiKey: string,
   startDate: string,
   endDate: string
 ): Promise<Array<{ date: string; value: number }>> {
-  const results: Array<{ date: string; value: number }> = [];
-  let page = 1;
-  const pageSize = 1000;
-
-  while (true) {
-    const url = `${TREASURY_BASE}/v1/accounting/dts/dts_table_1?` +
-      `filter=record_date:gte:${startDate},record_date:lte:${endDate},account_type:eq:Federal Reserve Account` +
-      `&fields=record_date,close_today_bal` +
-      `&sort=-record_date` +
-      `&page[number]=${page}&page[size]=${pageSize}&format=json`;
-
-    const res = await fetch(url, { cache: 'no-store' });
-    if (!res.ok) break;
-    const data = await res.json();
-    const rows = data?.data || [];
-    if (rows.length === 0) break;
-
-    for (const row of rows) {
-      const val = parseFloat(row.close_today_bal);
-      if (!isNaN(val)) {
-        results.push({ date: row.record_date, value: val });
-      }
-    }
-
-    if (rows.length < pageSize) break;
-    page++;
-  }
-
-  return results;
+  return fetchFredHistory(FRED_TGA_SERIES, apiKey, startDate, endDate);
 }
 
 async function fetchNYFedRRP(
@@ -112,8 +85,8 @@ export async function POST(request: NextRequest) {
       fetchFredHistory('QBPBSLEVK', fredKey, startDate, endDate),
     ]);
 
-    // Fetch Treasury TGA
-    const tga = await fetchTreasuryTGA(startDate, endDate);
+    // Fetch TGA from FRED (WTREGEN — weekly, in millions)
+    const tga = await fetchFredTGA(fredKey, startDate, endDate);
 
     // Fetch NY Fed RRP
     const rrp = await fetchNYFedRRP(startDate, endDate);
@@ -147,21 +120,22 @@ export async function POST(request: NextRequest) {
     const walclFilled = forwardFill(walclMap, sortedDates);
     const wresbalFilled = forwardFill(wresbalMap, sortedDates);
     const m2Filled = forwardFill(m2Map, sortedDates);
+    const tgaFilled = forwardFill(tgaMap, sortedDates);
 
-    // Build liquidity snapshots for dates where we have TGA or RRP (daily data)
+    // Build liquidity snapshots for all dates where we have RRP (daily anchor)
     const liquidityRows: Array<Record<string, unknown>> = [];
-    const dailyDates = new Set([...tgaMap.keys(), ...rrpMap.keys()]);
+    const dailyDates = new Set([...rrpMap.keys()]);
 
     for (const date of [...dailyDates].sort()) {
       const fedBs = walclFilled.get(date) ?? null;
-      const tgaBal = tgaMap.get(date) ?? null;
+      const tgaBal = tgaFilled.get(date) ?? null;
       const rrpBal = rrpMap.get(date) ?? null;
       const bankRes = wresbalFilled.get(date) ?? null;
       const m2Val = m2Filled.get(date) ?? null;
 
-      // TGA from Treasury is in millions, RRP from NY Fed is in billions
+      // FRED data (WALCL, WTREGEN, M2) is in millions; NY Fed RRP is in raw dollars
       const tgaMillions = tgaBal;
-      const rrpMillions = rrpBal ? rrpBal * 1000 : null;
+      const rrpMillions = rrpBal ? rrpBal / 1_000_000 : null;
 
       const netLiquidity =
         fedBs != null && tgaMillions != null && rrpMillions != null
