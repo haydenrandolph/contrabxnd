@@ -130,7 +130,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .progress-container {
-          background: #d8d4cc;
+          background: #d0d0d1;
         }
 
         .progress-bar {
@@ -274,7 +274,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           font-size: 1.75rem;
           font-weight: 400;
           margin: 3rem 0 1.5rem;
-          color: #f5f3f0;
+          color: #f7f7f8;
         }
 
         .lesson-page.light-mode .lesson-content h2 {
@@ -286,7 +286,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           font-size: 1.35rem;
           font-weight: 400;
           margin: 2.5rem 0 1rem;
-          color: #f5f3f0;
+          color: #f7f7f8;
         }
 
         .lesson-page.light-mode .lesson-content h3 {
@@ -312,7 +312,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-content strong {
-          color: #f5f3f0;
+          color: #f7f7f8;
           font-weight: 600;
         }
 
@@ -340,8 +340,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .key-concept {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
         }
 
         .key-concept-label {
@@ -374,8 +374,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .highlight-box {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
           border-left-color: #F7931A;
         }
 
@@ -407,8 +407,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .illustration {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
         }
 
         .illustration-label {
@@ -441,8 +441,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .lesson-summary {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
         }
 
         .summary-title {
@@ -450,7 +450,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           font-size: 1.25rem;
           font-weight: 400;
           margin-bottom: 1rem;
-          color: #f5f3f0;
+          color: #f7f7f8;
         }
 
         .lesson-page.light-mode .summary-title {
@@ -503,7 +503,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         .mark-complete-btn:hover:not(:disabled) {
           background: #F7931A;
-          color: #f5f3f0;
+          color: #f7f7f8;
         }
 
         .mark-complete-btn:disabled {
@@ -513,7 +513,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         .mark-complete-btn.completed {
           background: #22c55e;
           border-color: #22c55e;
-          color: #f5f3f0;
+          color: #f7f7f8;
         }
 
         .mark-complete-btn svg {
@@ -532,7 +532,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .lesson-navigation {
-          border-top-color: #d8d4cc;
+          border-top-color: #d0d0d1;
         }
 
         .nav-btn {
@@ -552,7 +552,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .nav-btn {
-          border-color: #c8c4bc;
+          border-color: #c0c0c1;
           color: #0a0a0a;
         }
 
@@ -569,7 +569,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         .nav-btn.primary {
           background: #F7931A;
           border-color: #F7931A;
-          color: #f5f3f0;
+          color: #f7f7f8;
         }
 
         .nav-btn.primary:hover {
@@ -744,7 +744,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
           .lesson-page.light-mode .lesson-navigation {
             background: #e8e4dc;
-            border-top-color: #d8d4cc;
+            border-top-color: #d0d0d1;
           }
 
           .nav-btn {

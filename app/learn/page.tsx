@@ -103,59 +103,55 @@ export default function LearnPage() {
           -webkit-font-smoothing: antialiased;
         }
 
-        .learn-hero {
-          padding: 12rem 3rem 6rem;
-          max-width: 1000px;
+        .page-header {
+          max-width: 1100px;
           margin: 0 auto;
-          text-align: center;
+          padding: 80px 48px 0;
         }
 
-        .hero-label {
+        .page-label {
+          font-family: 'Space Mono', monospace;
           font-size: 10px;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
-          color: #F7931A;
-          margin-bottom: 2rem;
-          opacity: 0;
-          animation: fadeUp 1s ease 0.2s forwards;
+          color: var(--cb-accent);
+          margin-bottom: 16px;
         }
 
-        .hero-title {
+        .page-title {
           font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
-          font-size: clamp(2.5rem, 6vw, 4rem);
+          font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
-          line-height: 1.2;
           letter-spacing: -0.02em;
-          margin-bottom: 1.5rem;
-          opacity: 0;
-          animation: fadeUp 1s ease 0.3s forwards;
+          line-height: 1.15;
+          color: var(--cb-text);
+          margin-bottom: 12px;
         }
 
-        .hero-subtitle {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
-          font-size: 1.4rem;
+        .page-subtitle {
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
           color: var(--cb-text-muted);
           max-width: 600px;
-          margin: 0 auto;
-          line-height: 1.7;
-          opacity: 0;
-          animation: fadeUp 1s ease 0.4s forwards;
+          line-height: 1.6;
         }
 
-        @keyframes fadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        .page-divider {
+          width: 100%;
+          height: 1px;
+          background: var(--cb-border);
+          margin-top: 32px;
+        }
+
+        .page-content {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 48px 48px 96px;
         }
 
         .courses-section {
-          padding: 4rem 3rem 8rem;
-          max-width: 1200px;
+          padding: 48px 48px 96px;
+          max-width: 1100px;
           margin: 0 auto;
         }
 
@@ -177,7 +173,7 @@ export default function LearnPage() {
         }
 
         .course-card:hover {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .course-badge {
@@ -185,7 +181,7 @@ export default function LearnPage() {
           top: 2rem;
           right: 2rem;
           padding: 0.4rem 0.75rem;
-          background: #F7931A;
+          background: var(--cb-accent);
           border-radius: 2px;
           font-size: 9px;
           letter-spacing: 0.08em;
@@ -212,7 +208,7 @@ export default function LearnPage() {
           font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.1rem;
           font-style: italic;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 24px;
         }
 
@@ -299,7 +295,7 @@ export default function LearnPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 16px;
         }
 
@@ -331,7 +327,7 @@ export default function LearnPage() {
         .step-number {
           font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2.5rem;
-          color: #F7931A;
+          color: var(--cb-accent);
           line-height: 1;
         }
 
@@ -366,7 +362,7 @@ export default function LearnPage() {
 
         .philosophy-source {
           font-size: 12px;
-          color: #F7931A;
+          color: var(--cb-accent);
           letter-spacing: 0.08em;
           text-transform: uppercase;
         }
@@ -407,12 +403,11 @@ export default function LearnPage() {
             gap: 16px;
           }
 
-          .learn-hero {
-            padding: 10rem 24px 4rem;
-          }
+          .page-header { padding: 72px 24px 0; }
+          .page-content { padding: 32px 24px 64px; }
 
           .courses-section {
-            padding: 32px 16px 64px;
+            padding: 32px 24px 64px;
           }
 
           .courses-grid {
@@ -462,11 +457,12 @@ export default function LearnPage() {
         <ThemeToggle />
         <SiteNav activePath="/learn" />
 
-        <section className="learn-hero">
-          <p className="hero-label">Bitcoin Education</p>
-          <h1 className="hero-title">The education they satisfactorily hope you never get</h1>
-          <p className="hero-subtitle">Free courses on Bitcoin—from first principles to full sovereignty. No hype, no shilling, no shortcuts.</p>
-        </section>
+        <div className="page-header">
+          <div className="page-label">STU₿Y</div>
+          <h1 className="page-title">Bitcoin Education</h1>
+          <p className="page-subtitle">From first principles to full sovereignty.</p>
+          <div className="page-divider" />
+        </div>
 
         <section className="courses-section">
           <div className="courses-grid">

@@ -201,6 +201,88 @@ export interface Database {
           created_at?: string;
         };
       };
+      slr_snapshots: {
+        Row: {
+          id: string;
+          date: string;
+          leverage_subindex: number | null;
+          tier1_leverage_capital: number | null;
+          policy_signal: number;
+          policy_event: string | null;
+          source: string;
+          raw_data: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          date: string;
+          leverage_subindex?: number | null;
+          tier1_leverage_capital?: number | null;
+          policy_signal?: number;
+          policy_event?: string | null;
+          source?: string;
+          raw_data?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          date?: string;
+          leverage_subindex?: number | null;
+          tier1_leverage_capital?: number | null;
+          policy_signal?: number;
+          policy_event?: string | null;
+          source?: string;
+          raw_data?: Json;
+          created_at?: string;
+        };
+      };
+      liquidity_snapshots: {
+        Row: {
+          id: string;
+          date: string;
+          fed_balance_sheet: number | null;
+          tga_balance: number | null;
+          reverse_repo: number | null;
+          bank_reserves: number | null;
+          m2: number | null;
+          net_liquidity: number | null;
+          sofr: number | null;
+          effr: number | null;
+          source: string;
+          raw_data: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          date: string;
+          fed_balance_sheet?: number | null;
+          tga_balance?: number | null;
+          reverse_repo?: number | null;
+          bank_reserves?: number | null;
+          m2?: number | null;
+          net_liquidity?: number | null;
+          sofr?: number | null;
+          effr?: number | null;
+          source?: string;
+          raw_data?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          date?: string;
+          fed_balance_sheet?: number | null;
+          tga_balance?: number | null;
+          reverse_repo?: number | null;
+          bank_reserves?: number | null;
+          m2?: number | null;
+          net_liquidity?: number | null;
+          sofr?: number | null;
+          effr?: number | null;
+          source?: string;
+          raw_data?: Json;
+          created_at?: string;
+        };
+      };
     };
   };
 }
@@ -211,3 +293,5 @@ export type PriceAlert = Database['public']['Tables']['price_alerts']['Row'];
 export type PushSubscription = Database['public']['Tables']['push_subscriptions']['Row'];
 export type EtfSnapshot = Database['public']['Tables']['etf_snapshots']['Row'];
 export type FedWatchSnapshot = Database['public']['Tables']['fedwatch_snapshots']['Row'];
+export type SlrSnapshot = Database['public']['Tables']['slr_snapshots']['Row'];
+export type LiquiditySnapshot = Database['public']['Tables']['liquidity_snapshots']['Row'];

@@ -7,6 +7,14 @@
     {
       "path": "/api/cron/fedwatch-scrape",
       "schedule": "0 22 * * 1-5"
+    },
+    {
+      "path": "/api/cron/liquidity-scrape",
+      "schedule": "0 23 * * 1-5"
+    },
+    {
+      "path": "/api/cron/slr-scrape",
+      "schedule": "30 23 * * 1-5"
     }
   ]
 }

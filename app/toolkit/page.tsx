@@ -1,45 +1,53 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import ThemeToggle from '@/components/ThemeToggle';
-import SatsConverter from '@/components/toolkit/SatsConverter';
-import DCACalculator from '@/components/toolkit/DCACalculator';
-import PurchasingPowerComparison from '@/components/toolkit/PurchasingPowerComparison';
 
-type ToolTab = 'sats' | 'dca' | 'power';
+interface ToolCard {
+  title: string;
+  description: string;
+  href?: string;
+  comingSoon?: boolean;
+}
 
-export default function ToolkitPage() {
-  const [activeTab, setActiveTab] = useState<ToolTab>('sats');
-  const [currentPrice, setCurrentPrice] = useState(0);
+const TOOLS: ToolCard[] = [
+  {
+    title: 'Sats Converter',
+    description: 'Convert between USD and Satoshis at the current exchange rate.',
+    href: '/toolkit/converter',
+  },
+  {
+    title: 'DCA Calculator',
+    description: 'Simulate dollar-cost averaging returns over any historical period.',
+    href: '/toolkit/dca',
+  },
+  {
+    title: 'Time Machine',
+    description: 'See what your money would be worth if you had bought Bitcoin.',
+    href: '/toolkit/time-machine',
+  },
+  {
+    title: "Indexer",
+    description: "Query and analyze the blockchain through the Contrabxnd Bitcoin node.",
+    comingSoon: true,
+  },
+  {
+    title: "Lightning Channel",
+    description: "Open a Lightning channel with the Contrabxnd node for instant payments.",
+    comingSoon: true,
+  },
+];
+
+export default function ToolboxPage() {
   const { isLightMode } = useTheme();
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      try {
-        const res = await fetch('/api/price');
-        if (res.ok) {
-          const data = await res.json();
-          setCurrentPrice(data.price ?? 0);
-        }
-      } catch { /* ignore */ }
-    };
-    fetchPrice();
-    const interval = setInterval(fetchPrice, 30_000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const formatUSD = (n: number) =>
-    n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-
-  const satPrice = currentPrice > 0 ? (currentPrice / 100_000_000) : 0;
 
   return (
     <>
       <style jsx global>{`
-        .toolkit-page {
+        .toolbox-page {
           background: var(--cb-bg);
           color: var(--cb-text);
           font-family: var(--cb-font-mono);
@@ -49,210 +57,177 @@ export default function ToolkitPage() {
           overflow-x: hidden;
         }
 
-        .toolkit-header {
-          max-width: 1200px;
+        .page-header {
+          max-width: 1100px;
           margin: 0 auto;
-          padding: 8rem 3rem 0;
+          padding: 80px 48px 0;
         }
 
-        .toolkit-header-top {
-          display: flex;
-          align-items: baseline;
-          gap: 2rem;
-          margin-bottom: 1rem;
-          border-bottom: 1px solid var(--cb-border);
-          padding-bottom: 1.5rem;
-        }
-
-        .toolkit-section-number {
-          font-family: var(--cb-font-display);
-          font-size: 3rem;
+        .page-label {
+          font-family: 'Space Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
           color: var(--cb-accent);
-          line-height: 1;
+          margin-bottom: 16px;
         }
 
-        .toolkit-title {
-          font-family: var(--cb-font-display);
-          font-size: 2.5rem;
+        .page-title {
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
+          letter-spacing: -0.02em;
+          line-height: 1.15;
+          color: var(--cb-text);
+          margin-bottom: 12px;
         }
 
-        .toolkit-subtitle {
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--cb-text-muted);
-          margin-top: 0.5rem;
-        }
-
-        .toolkit-price-bar {
-          max-width: 1200px;
-          margin: 2rem auto 0;
-          padding: 0 3rem;
-          display: flex;
-          align-items: center;
-          gap: 2rem;
+        .page-subtitle {
+          font-family: 'Space Mono', monospace;
           font-size: 13px;
-          letter-spacing: 0.08em;
-        }
-
-        .toolkit-price-item {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .toolkit-price-label {
           color: var(--cb-text-muted);
-          text-transform: uppercase;
-          font-size: 10px;
-          letter-spacing: 0.08em;
+          max-width: 600px;
+          line-height: 1.6;
         }
 
-        .toolkit-price-value {
-          color: var(--cb-accent);
-          font-weight: 700;
+        .page-divider {
+          width: 100%;
+          height: 1px;
+          background: var(--cb-border);
+          margin-top: 32px;
         }
 
-        .toolkit-price-sep {
-          color: var(--cb-border);
-        }
-
-        .toolkit-tabs {
-          max-width: 1200px;
-          margin: 2.5rem auto 0;
-          padding: 0 3rem;
-        }
-
-        .toolkit-tab-bar {
-          display: inline-flex;
-          align-items: center;
-          gap: 0;
-          background: var(--cb-surface);
+        .toolbox-grid {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 48px 48px 96px;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 1px;
+          background: var(--cb-border);
           border: 1px solid var(--cb-border);
           border-radius: 2px;
-          overflow: hidden;
         }
 
-        .toolkit-tab {
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--cb-text-muted);
-          padding: 0.65rem 1.5rem;
-          background: transparent;
-          border: none;
-          cursor: pointer;
-          font-family: var(--cb-font-mono);
-          transition: color 0.15s ease;
-          white-space: nowrap;
+        .toolbox-card {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 32px;
+          background: var(--cb-surface);
+          text-decoration: none;
+          color: var(--cb-text);
+          transition: background 0.15s ease;
+          min-height: 180px;
         }
 
-        .toolkit-tab:hover {
+        a.toolbox-card:hover {
+          background: var(--cb-bg);
+        }
+
+        .toolbox-card-soon {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        .toolbox-card-top {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .toolbox-card-title {
+          font-family: var(--cb-font-display);
+          font-size: 1.4rem;
+          font-weight: 400;
+          letter-spacing: -0.01em;
           color: var(--cb-text);
         }
 
-        .toolkit-tab.active {
-          color: #fff;
-          background: var(--cb-accent);
+        .toolbox-card-desc {
+          font-family: var(--cb-font-mono);
+          font-size: 12px;
+          color: var(--cb-text-muted);
+          line-height: 1.6;
         }
 
-        .toolkit-content {
-          max-width: 1200px;
-          margin: 3rem auto;
-          padding: 0 3rem 6rem;
+        .toolbox-card-footer {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 24px;
+          font-family: var(--cb-font-mono);
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        a.toolbox-card .toolbox-card-footer {
+          color: var(--cb-accent);
+        }
+
+        .toolbox-card-soon .toolbox-card-footer {
+          color: var(--cb-text-muted);
+        }
+
+        .toolbox-card-soon .toolbox-card-title {
+          text-decoration: line-through;
+          text-decoration-thickness: 1px;
         }
 
         @media (max-width: 768px) {
-          .toolkit-header {
-            padding: 6rem 2rem 0;
+          .page-header { padding: 72px 24px 0; }
+          .toolbox-grid {
+            padding: 32px 24px 64px;
+            grid-template-columns: 1fr;
+            background: transparent;
+            border: none;
+            gap: 16px;
           }
-
-          .toolkit-header-top {
-            flex-direction: column;
-            gap: 0.5rem;
-          }
-
-          .toolkit-title {
-            font-size: 1.8rem;
-          }
-
-          .toolkit-price-bar {
-            padding: 0 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-          }
-
-          .toolkit-tabs {
-            padding: 0 2rem;
-          }
-
-          .toolkit-tab-bar {
-            display: flex;
-            width: 100%;
-          }
-
-          .toolkit-tab {
-            flex: 1;
-            text-align: center;
-            padding: 0.65rem 0.75rem;
-            font-size: 10px;
-          }
-
-          .toolkit-content {
-            padding: 0 2rem 4rem;
+          .toolbox-card {
+            border: 1px solid var(--cb-border);
+            border-radius: 2px;
+            min-height: auto;
           }
         }
       `}</style>
 
-      <div className={`toolkit-page ${isLightMode ? 'light-mode' : ''}`}>
+      <div className={`toolbox-page ${isLightMode ? 'light-mode' : ''}`}>
         <ThemeToggle />
         <SiteNav activePath="/toolkit" />
 
-        <div className="toolkit-header">
-          <div className="toolkit-header-top">
-            <span className="toolkit-section-number">₿</span>
-            <h1 className="toolkit-title">Toolkit</h1>
-          </div>
-          <p className="toolkit-subtitle">Calculate · Convert · Compare</p>
+        <div className="page-header">
+          <div className="page-label">TOOL₿OX</div>
+          <h1 className="page-title">Tool₿ox</h1>
+          <p className="page-subtitle">Calculate · Convert · Compare · Build</p>
+          <div className="page-divider" />
         </div>
 
-        <div className="toolkit-price-bar">
-          <div className="toolkit-price-item">
-            <span className="toolkit-price-label">BTC</span>
-            <span className="toolkit-price-value">
-              {currentPrice > 0 ? formatUSD(currentPrice) : <span className="skeleton" style={{ width: 80, height: 14, display: 'inline-block' }} />}
-            </span>
-          </div>
-          <span className="toolkit-price-sep">|</span>
-          <div className="toolkit-price-item">
-            <span className="toolkit-price-label">1 sat</span>
-            <span className="toolkit-price-value">
-              {satPrice > 0 ? `$${satPrice.toFixed(6)}` : <span className="skeleton" style={{ width: 60, height: 14, display: 'inline-block' }} />}
-            </span>
-          </div>
-        </div>
-
-        <div className="toolkit-tabs">
-          <div className="toolkit-tab-bar">
-            <button className={`toolkit-tab ${activeTab === 'sats' ? 'active' : ''}`} onClick={() => setActiveTab('sats')}>
-              Sats Converter
-            </button>
-            <button className={`toolkit-tab ${activeTab === 'dca' ? 'active' : ''}`} onClick={() => setActiveTab('dca')}>
-              DCA Calculator
-            </button>
-            <button className={`toolkit-tab ${activeTab === 'power' ? 'active' : ''}`} onClick={() => setActiveTab('power')}>
-              Time Machine
-            </button>
-          </div>
-        </div>
-
-        <div className="toolkit-content">
-          {activeTab === 'sats' && <SatsConverter isLightMode={isLightMode} currentPrice={currentPrice} />}
-          {activeTab === 'dca' && <DCACalculator isLightMode={isLightMode} currentPrice={currentPrice} />}
-          {activeTab === 'power' && <PurchasingPowerComparison isLightMode={isLightMode} currentPrice={currentPrice} />}
+        <div className="toolbox-grid">
+          {TOOLS.map((tool) =>
+            tool.comingSoon ? (
+              <div key={tool.title} className="toolbox-card toolbox-card-soon">
+                <div className="toolbox-card-top">
+                  <div className="toolbox-card-title">{tool.title}</div>
+                  <div className="toolbox-card-desc">{tool.description}</div>
+                </div>
+                <div className="toolbox-card-footer">Coming Soon</div>
+              </div>
+            ) : (
+              <Link key={tool.title} href={tool.href!} className="toolbox-card">
+                <div className="toolbox-card-top">
+                  <div className="toolbox-card-title">{tool.title}</div>
+                  <div className="toolbox-card-desc">{tool.description}</div>
+                </div>
+                <div className="toolbox-card-footer">
+                  Open Tool
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M7 17L17 7M17 7H7M17 7v10" />
+                  </svg>
+                </div>
+              </Link>
+            )
+          )}
         </div>
 
         <SiteFooter />

@@ -185,7 +185,7 @@ export default function AccountPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 16px;
         }
 
@@ -223,7 +223,7 @@ export default function AccountPage() {
         .section-icon {
           width: 24px;
           height: 24px;
-          stroke: #F7931A;
+          stroke: var(--cb-accent);
         }
 
         .course-progress-item {
@@ -252,7 +252,7 @@ export default function AccountPage() {
           gap: 8px;
           margin-top: 16px;
           font-size: 12px;
-          color: #F7931A;
+          color: var(--cb-accent);
           text-decoration: none;
           transition: opacity 0.15s ease;
         }
@@ -287,7 +287,7 @@ export default function AccountPage() {
           align-items: center;
           gap: 8px;
           padding: 16px 32px;
-          background: #F7931A;
+          background: var(--cb-accent);
           border: none;
           border-radius: 2px;
           color: #fff;
@@ -319,9 +319,9 @@ export default function AccountPage() {
           gap: 8px;
           padding: 12px 24px;
           background: transparent;
-          border: 1px solid #F7931A;
+          border: 1px solid var(--cb-accent);
           border-radius: 2px;
-          color: #F7931A;
+          color: var(--cb-accent);
           font-family: 'Space Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.08em;
@@ -331,7 +331,7 @@ export default function AccountPage() {
         }
 
         .start-learning-btn:hover {
-          background: #F7931A;
+          background: var(--cb-accent);
           color: #fff;
         }
 
@@ -363,9 +363,9 @@ export default function AccountPage() {
           letter-spacing: 0.08em;
           text-transform: uppercase;
           padding: 4px 8px;
-          border: 1px solid #F7931A;
+          border: 1px solid var(--cb-accent);
           border-radius: 2px;
-          color: #F7931A;
+          color: var(--cb-accent);
           flex-shrink: 0;
         }
 
@@ -378,7 +378,7 @@ export default function AccountPage() {
         }
 
         .bookmark-link:hover {
-          color: #F7931A;
+          color: var(--cb-accent);
         }
 
         .bookmark-date {
@@ -413,7 +413,7 @@ export default function AccountPage() {
           font-style: italic;
           line-height: 1.6;
           color: var(--cb-text);
-          border-left: 3px solid #F7931A;
+          border-left: 3px solid var(--cb-accent);
           padding-left: 16px;
           margin: 0 0 12px;
         }
@@ -427,7 +427,7 @@ export default function AccountPage() {
         }
 
         .highlight-source-link {
-          color: #F7931A;
+          color: var(--cb-accent);
           text-decoration: none;
           font-size: 11px;
           transition: opacity 0.15s ease;

@@ -15,13 +15,27 @@ interface SiteNavProps {
   liveIndicator?: { connected: boolean };
 }
 
-type NavLink = { href: string; label: string; comingSoon?: false } | { label: string; comingSoon: true; href?: undefined };
+type DropdownItem = { href: string; label: string; comingSoon?: false } | { label: string; comingSoon: true; href?: undefined };
+type NavLink =
+  | { href: string; label: string; comingSoon?: false; dropdown?: undefined }
+  | { label: string; comingSoon: true; href?: undefined; dropdown?: undefined }
+  | { label: string; href: string; dropdown: DropdownItem[]; comingSoon?: false };
 
 const NAV_LINKS: NavLink[] = [
-  { href: '/toolkit', label: 'Toolkit' },
+  {
+    href: '/toolkit',
+    label: 'Tool₿ox',
+    dropdown: [
+      { href: '/toolkit/converter', label: 'Sats Converter' },
+      { href: '/toolkit/dca', label: 'DCA Calculator' },
+      { href: '/toolkit/time-machine', label: 'Time Machine' },
+      { label: 'Indexer', comingSoon: true },
+      { label: 'Lightning', comingSoon: true },
+    ],
+  },
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
-  { href: '/network', label: 'Network' },
+  { href: '/network', label: 'Merchants' },
   { label: 'Podcasts', comingSoon: true },
   { label: 'Videos', comingSoon: true },
   { label: 'Merch', comingSoon: true },
@@ -60,14 +74,14 @@ export default function SiteNav({
           line-height: 1;
         }
         .site-nav.light {
-          background: #f5f3f0;
+          background: #f7f7f8;
           border-bottom-color: rgba(0, 0, 0, 0.08);
         }
         .site-nav.blend {
           background: rgba(10, 10, 10, 0.95);
         }
         .site-nav.blend.light {
-          background: rgba(245, 243, 240, 0.95);
+          background: rgba(247, 247, 248, 0.95);
         }
 
         .logo-link {
@@ -80,6 +94,19 @@ export default function SiteNav({
         .site-nav.light .logo-link,
         .site-nav.light .back-link {
           color: #0a0a0a;
+        }
+        .logo-sep {
+          color: var(--cb-text-muted);
+          font-size: 12px;
+          opacity: 0.4;
+        }
+        .logo-badge {
+          font-family: 'Space Mono', monospace;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          color: var(--cb-accent);
+          line-height: 1;
         }
         .logo-text {
           font-family: 'Space Mono', monospace;
@@ -110,8 +137,14 @@ export default function SiteNav({
           display: flex;
           gap: 32px;
         }
+        .nav-links > a,
+        .nav-links > span {
+          display: flex;
+          align-items: center;
+        }
         .nav-links a,
-        .nav-links span {
+        .nav-links span,
+        .nav-links .nav-dropdown-trigger {
           color: #6a6a6a;
           text-decoration: none;
           font-size: 10px;
@@ -119,24 +152,86 @@ export default function SiteNav({
           text-transform: uppercase;
           padding: 16px 0;
           transition: color 0.15s ease;
+          cursor: pointer;
+          background: none;
+          border: none;
+          font-family: 'Space Mono', monospace;
+          line-height: 1;
         }
-        .nav-links a:hover {
+        .nav-links a:hover,
+        .nav-dropdown-wrap:hover .nav-dropdown-trigger {
           color: #e8e4dc;
         }
-        .nav-links a.active {
+        .nav-links a.active,
+        .nav-dropdown-wrap.active .nav-dropdown-trigger {
           color: #F7931A;
         }
         .site-nav.light .nav-links a,
-        .site-nav.light .nav-links span {
+        .site-nav.light .nav-links span,
+        .site-nav.light .nav-dropdown-trigger {
           color: #6a6a6a;
         }
-        .site-nav.light .nav-links a:hover {
+        .site-nav.light .nav-links a:hover,
+        .site-nav.light .nav-dropdown-wrap:hover .nav-dropdown-trigger {
           color: #0a0a0a;
         }
-        .site-nav.light .nav-links a.active {
+        .site-nav.light .nav-links a.active,
+        .site-nav.light .nav-dropdown-wrap.active .nav-dropdown-trigger {
           color: #F7931A;
         }
         .nav-links span.coming-soon {
+          opacity: 0.3;
+          cursor: not-allowed;
+          text-decoration: line-through;
+        }
+
+        .nav-dropdown-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        .nav-dropdown {
+          position: absolute;
+          top: 48px;
+          left: 50%;
+          transform: translateX(-50%);
+          min-width: 180px;
+          background: #0a0a0a;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 2px;
+          padding: 8px 0;
+          opacity: 0;
+          visibility: hidden;
+          transition: opacity 0.15s ease, visibility 0.15s ease;
+          z-index: 200;
+        }
+        .site-nav.light .nav-dropdown {
+          background: #ffffff;
+          border-color: rgba(0, 0, 0, 0.08);
+        }
+        .nav-dropdown-wrap:hover .nav-dropdown {
+          opacity: 1;
+          visibility: visible;
+        }
+        .nav-dropdown a,
+        .nav-dropdown span {
+          display: block;
+          padding: 8px 16px !important;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #6a6a6a;
+          text-decoration: none;
+          transition: color 0.15s ease;
+          white-space: nowrap;
+        }
+        .nav-dropdown a:hover {
+          color: #e8e4dc;
+        }
+        .site-nav.light .nav-dropdown a:hover {
+          color: #0a0a0a;
+        }
+        .nav-dropdown span.dd-coming-soon {
           opacity: 0.3;
           cursor: not-allowed;
           text-decoration: line-through;
@@ -219,7 +314,7 @@ export default function SiteNav({
           transition: opacity 0.2s ease, visibility 0.2s ease;
         }
         .mobile-overlay.light {
-          background: #f5f3f0;
+          background: #f7f7f8;
         }
         .mobile-overlay.open {
           opacity: 1;
@@ -276,6 +371,8 @@ export default function SiteNav({
           <Link href="/" className="logo-link">
             <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={28} height={28} />
             <span className="logo-text">Contra₿and</span>
+            <span className="logo-sep">|</span>
+            <span className="logo-badge">BIP</span>
           </Link>
         )}
 
@@ -285,6 +382,21 @@ export default function SiteNav({
               <span key={link.label} className="coming-soon" aria-disabled="true" aria-label={`${link.label} — coming soon`}>
                 {link.label}
               </span>
+            ) : link.dropdown ? (
+              <div key={link.href} className={`nav-dropdown-wrap${activePath?.startsWith(link.href) ? ' active' : ''}`}>
+                <Link href={link.href} className="nav-dropdown-trigger">
+                  {link.label}
+                </Link>
+                <div className="nav-dropdown">
+                  {link.dropdown.map((item) =>
+                    item.comingSoon ? (
+                      <span key={item.label} className="dd-coming-soon">{item.label}</span>
+                    ) : (
+                      <Link key={item.href} href={item.href}>{item.label}</Link>
+                    )
+                  )}
+                </div>
+              </div>
             ) : (
               <Link key={link.href} href={link.href} className={activePath === link.href ? 'active' : ''}>
                 {link.label}
@@ -314,16 +426,31 @@ export default function SiteNav({
 
       <div className={`mobile-overlay${light}${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
         <nav className="mobile-nav" onClick={(e) => e.stopPropagation()}>
-          {NAV_LINKS.map((link) =>
-            link.comingSoon ? (
+          {NAV_LINKS.flatMap((link) =>
+            link.comingSoon ? [
               <a key={link.label} className="coming-soon" aria-disabled="true" aria-label={`${link.label} — coming soon`}>
                 {link.label}
               </a>
-            ) : (
+            ] : link.dropdown ? [
+              <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>
+                {link.label}
+              </Link>,
+              ...link.dropdown.map((item) =>
+                item.comingSoon ? (
+                  <a key={`mob-${item.label}`} className="coming-soon" style={{ fontSize: '1.2rem', opacity: 0.25 }} aria-disabled="true">
+                    {item.label}
+                  </a>
+                ) : (
+                  <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} style={{ fontSize: '1.2rem', opacity: 0.6 }}>
+                    {item.label}
+                  </Link>
+                )
+              ),
+            ] : [
               <Link key={link.href} href={link.href!} onClick={() => setMenuOpen(false)}>
                 {link.label}
               </Link>
-            )
+            ]
           )}
         </nav>
       </div>

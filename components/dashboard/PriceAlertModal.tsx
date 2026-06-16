@@ -350,10 +350,10 @@ export default function PriceAlertModal({
         /* Light-mode overrides (theme class lives on <html>) */
         :global(.light-mode) .modal-content {
           background: #ffffff;
-          border-color: #c8c4bc;
+          border-color: #c0c0c1;
         }
         :global(.light-mode) .modal-header {
-          border-bottom-color: #e0dcd4;
+          border-bottom-color: #e5e5e6;
         }
         :global(.light-mode) .modal-title {
           color: #b5673a;
@@ -365,7 +365,7 @@ export default function PriceAlertModal({
           color: #0a0a0a;
         }
         :global(.light-mode) .current-price {
-          background: #f5f3f0;
+          background: #f7f7f8;
         }
         :global(.light-mode) .current-price-label {
           color: #6a6a6a;
@@ -377,16 +377,16 @@ export default function PriceAlertModal({
           color: #6a6a6a;
         }
         :global(.light-mode) .form-input {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
           color: #0a0a0a;
         }
         :global(.light-mode) .form-input::placeholder {
           color: #a0a0a0;
         }
         :global(.light-mode) .direction-btn {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
           color: #6a6a6a;
         }
         :global(.light-mode) .direction-btn.active {

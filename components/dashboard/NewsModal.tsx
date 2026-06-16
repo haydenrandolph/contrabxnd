@@ -82,8 +82,8 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
         }
 
         .news-modal {
-          background: ${isLightMode ? '#f5f3f0' : '#0d0d0d'};
-          border: 1px solid ${isLightMode ? '#d8d4cc' : '#2a2a2a'};
+          background: ${isLightMode ? '#f7f7f8' : '#0d0d0d'};
+          border: 1px solid ${isLightMode ? '#d0d0d1' : '#2a2a2a'};
           max-width: 600px;
           width: 100%;
           max-height: 80vh;
@@ -127,7 +127,7 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
 
         .news-modal-header {
           padding: 2rem 2rem 1rem;
-          border-bottom: 1px solid ${isLightMode ? '#d8d4cc' : '#1a1a1a'};
+          border-bottom: 1px solid ${isLightMode ? '#d0d0d1' : '#1a1a1a'};
         }
 
         .news-modal-meta {
@@ -183,7 +183,7 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
           gap: 0.75rem;
           padding: 1rem;
           background: ${isLightMode ? '#e8e4dc' : '#141414'};
-          border: 1px solid ${isLightMode ? '#d8d4cc' : '#1a1a1a'};
+          border: 1px solid ${isLightMode ? '#d0d0d1' : '#1a1a1a'};
           margin-bottom: 1.5rem;
         }
 

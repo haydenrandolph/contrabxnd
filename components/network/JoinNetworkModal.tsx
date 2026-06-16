@@ -365,16 +365,16 @@ export default function JoinNetworkModal({
         /* Light-mode overrides (theme class lives on <html>) */
         :global(.light-mode) .modal-content {
           background: #ffffff;
-          border-color: #c8c4bc;
+          border-color: #c0c0c1;
         }
         :global(.light-mode) .modal-header {
-          border-bottom-color: #e0dcd4;
+          border-bottom-color: #e5e5e6;
         }
         :global(.light-mode) .modal-title {
           color: #0a0a0a;
         }
         :global(.light-mode) .modal-close {
-          border-color: #c8c4bc;
+          border-color: #c0c0c1;
         }
         :global(.light-mode) .modal-close svg {
           stroke: #5a5a5a;
@@ -385,8 +385,8 @@ export default function JoinNetworkModal({
         :global(.light-mode) .form-input,
         :global(.light-mode) .form-select,
         :global(.light-mode) .form-textarea {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
           color: #0a0a0a;
         }
         :global(.light-mode) .form-input::placeholder,
@@ -406,8 +406,8 @@ export default function JoinNetworkModal({
           color: #6a6a6a;
         }
         :global(.light-mode) .payment-option {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: #f7f7f8;
+          border-color: #d0d0d1;
           color: #6a6a6a;
         }
         :global(.light-mode) .payment-option.active {

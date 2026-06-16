@@ -123,45 +123,54 @@ export default function WritingsPage() {
         }
 
         .page-header {
-          padding: 12rem 48px 64px;
-          max-width: 1400px;
+          max-width: 1100px;
           margin: 0 auto;
+          padding: 80px 48px 0;
         }
 
-        .page-header-inner {
-          display: flex;
-          align-items: baseline;
-          gap: 32px;
-          border-bottom: 1px solid var(--cb-border);
-          padding-bottom: 32px;
-        }
-
-        .page-number {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
-          font-size: 4rem;
-          color: #F7931A;
-          line-height: 1;
+        .page-label {
+          font-family: 'Space Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: var(--cb-accent);
+          margin-bottom: 16px;
         }
 
         .page-title {
           font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
-          font-size: 4rem;
+          font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
           letter-spacing: -0.02em;
-          text-transform: uppercase;
+          line-height: 1.15;
+          color: var(--cb-text);
+          margin-bottom: 12px;
         }
 
-        .page-description {
-          max-width: 600px;
-          margin-top: 32px;
-          color: var(--cb-text-muted);
-          line-height: 1.8;
+        .page-subtitle {
+          font-family: 'Space Mono', monospace;
           font-size: 13px;
+          color: var(--cb-text-muted);
+          max-width: 600px;
+          line-height: 1.6;
+        }
+
+        .page-divider {
+          width: 100%;
+          height: 1px;
+          background: var(--cb-border);
+          margin-top: 32px;
+        }
+
+        .page-content {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 48px 48px 96px;
         }
 
         .filter-bar {
           padding: 32px 48px;
-          max-width: 1400px;
+          max-width: 1100px;
           margin: 0 auto;
           display: flex;
           gap: 32px;
@@ -194,12 +203,12 @@ export default function WritingsPage() {
           left: 0;
           width: 100%;
           height: 1px;
-          background: #F7931A;
+          background: var(--cb-accent);
         }
 
         .articles-section {
           padding: 64px 48px;
-          max-width: 1400px;
+          max-width: 1100px;
           margin: 0 auto;
         }
 
@@ -216,7 +225,7 @@ export default function WritingsPage() {
         }
 
         .featured-article:hover {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .featured-image {
@@ -238,7 +247,7 @@ export default function WritingsPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 24px;
         }
 
@@ -285,7 +294,7 @@ export default function WritingsPage() {
         }
 
         .article-card:hover {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .article-number {
@@ -301,7 +310,7 @@ export default function WritingsPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin-bottom: 16px;
           position: relative;
           z-index: 1;
@@ -340,7 +349,7 @@ export default function WritingsPage() {
         .article-arrow {
           width: 24px;
           height: 24px;
-          stroke: #F7931A;
+          stroke: var(--cb-accent);
         }
 
         @media (max-width: 1000px) {
@@ -358,19 +367,8 @@ export default function WritingsPage() {
         }
 
         @media (max-width: 768px) {
-          .page-header {
-            padding: 10rem 32px 64px;
-          }
-
-          .page-header-inner {
-            flex-direction: column;
-            gap: 16px;
-          }
-
-          .page-number,
-          .page-title {
-            font-size: 2.5rem;
-          }
+          .page-header { padding: 72px 24px 0; }
+          .page-content { padding: 32px 24px 64px; }
 
           .filter-bar {
             padding: 24px 32px;
@@ -392,16 +390,12 @@ export default function WritingsPage() {
         <SiteNav activePath="/writings" />
         <ThemeToggle />
 
-        <header className="page-header">
-          <div className="page-header-inner">
-            <span className="page-number">01</span>
-            <h1 className="page-title">Writings</h1>
-          </div>
-          <p className="page-description">
-            Long-form essays, analysis, and opinions on the ideas that refuse to stay buried.
-            Exploring the gray markets of thought where the most valuable insights are found.
-          </p>
-        </header>
+        <div className="page-header">
+          <div className="page-label">WRITINGS</div>
+          <h1 className="page-title">Writings</h1>
+          <p className="page-subtitle">Essays, analysis, and opinion.</p>
+          <div className="page-divider" />
+        </div>
 
         <div className="filter-bar">
           {filters.map((filter) => (

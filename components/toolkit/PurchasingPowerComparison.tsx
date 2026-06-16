@@ -91,45 +91,25 @@ export default function PurchasingPowerComparison({
     }
   };
 
-  const cardBg = 'var(--cb-surface)';
-  const textPrimary = 'var(--cb-text)';
-  const textSecondary = 'var(--cb-text-muted)';
-  const inputBg = 'var(--cb-bg)';
-  const inputBorder = 'var(--cb-border)';
-  const containerBg = 'var(--cb-bg)';
-
   return (
     <>
       <style jsx>{`
         .ppc-container {
           width: 100%;
-          max-width: 640px;
-          margin: 0 auto;
-          background: ${containerBg};
-          border-radius: 2px;
-          padding: 2rem;
-        }
-
-        .ppc-title {
-          font-family: var(--cb-font-display);
-          font-size: 1.5rem;
-          color: ${textPrimary};
-          margin: 0 0 1.5rem;
-          text-align: center;
         }
 
         .ppc-inputs {
-          display: flex;
+          display: grid;
+          grid-template-columns: 1fr 1fr auto;
           gap: 1rem;
-          margin-bottom: 1rem;
-          align-items: flex-end;
+          align-items: end;
+          margin-bottom: 1.5rem;
         }
 
         .ppc-field {
-          flex: 1;
           display: flex;
           flex-direction: column;
-          gap: 0.375rem;
+          gap: 0.4rem;
         }
 
         .ppc-label {
@@ -137,17 +117,17 @@ export default function PurchasingPowerComparison({
           font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: ${textSecondary};
+          color: var(--cb-text-muted);
         }
 
         .ppc-input {
           font-family: var(--cb-font-mono);
           font-size: 13px;
-          padding: 0.5rem 0.75rem;
-          border: 1px solid ${inputBorder};
+          padding: 0.75rem 1rem;
+          border: 1px solid var(--cb-border);
           border-radius: 2px;
-          background: ${inputBg};
-          color: ${textPrimary};
+          background: var(--cb-bg);
+          color: var(--cb-text);
           outline: none;
           width: 100%;
           box-sizing: border-box;
@@ -164,17 +144,17 @@ export default function PurchasingPowerComparison({
 
         .ppc-dollar-sign {
           position: absolute;
-          left: 0.75rem;
+          left: 1rem;
           top: 50%;
           transform: translateY(-50%);
           font-family: var(--cb-font-mono);
           font-size: 13px;
-          color: ${textSecondary};
+          color: var(--cb-text-muted);
           pointer-events: none;
         }
 
         .ppc-input-dollar {
-          padding-left: 1.5rem;
+          padding-left: 1.75rem;
         }
 
         .ppc-btn {
@@ -183,7 +163,7 @@ export default function PurchasingPowerComparison({
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          padding: 0.5rem 1.5rem;
+          padding: 0.75rem 1.5rem;
           background: var(--cb-accent);
           color: #ffffff;
           border: 1px solid var(--cb-accent);
@@ -206,38 +186,23 @@ export default function PurchasingPowerComparison({
           font-family: var(--cb-font-display);
           font-style: italic;
           font-size: 1.25rem;
-          color: ${textPrimary};
+          color: var(--cb-text);
           text-align: center;
           margin: 2rem 0 1rem;
         }
 
         .ppc-cards {
-          display: flex;
-          gap: 1rem;
-        }
-
-        @media (max-width: 768px) {
-          .ppc-cards {
-            flex-direction: column;
-          }
-          .ppc-inputs {
-            flex-direction: column;
-          }
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1px;
+          background: var(--cb-border);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
         }
 
         .ppc-card {
-          flex: 1;
-          background: ${cardBg};
-          border-radius: 2px;
-          padding: 1.25rem;
-        }
-
-        .ppc-card-then {
-          border-left: 3px solid var(--cb-text-muted);
-        }
-
-        .ppc-card-now {
-          border-left: 3px solid var(--cb-accent);
+          background: var(--cb-surface);
+          padding: 1.5rem;
         }
 
         .ppc-card-label {
@@ -245,7 +210,7 @@ export default function PurchasingPowerComparison({
           font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: ${textSecondary};
+          color: var(--cb-text-muted);
           margin: 0 0 1rem;
         }
 
@@ -254,7 +219,7 @@ export default function PurchasingPowerComparison({
           font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 0.08em;
-          color: ${textSecondary};
+          color: var(--cb-text-muted);
           margin: 0.75rem 0 0.125rem;
         }
 
@@ -265,7 +230,7 @@ export default function PurchasingPowerComparison({
         .ppc-value {
           font-family: var(--cb-font-display);
           font-size: 1.5rem;
-          color: ${textPrimary};
+          color: var(--cb-text);
           margin: 0;
           line-height: 1.2;
         }
@@ -279,9 +244,9 @@ export default function PurchasingPowerComparison({
         }
 
         .ppc-banner {
-          margin-top: 1rem;
+          margin-top: 1px;
           background: var(--cb-accent);
-          border-radius: 2px;
+          border-radius: 0 0 2px 2px;
           padding: 1.25rem;
           text-align: center;
         }
@@ -308,7 +273,7 @@ export default function PurchasingPowerComparison({
           position: relative;
           overflow: hidden;
           border-radius: 2px;
-          background: ${cardBg};
+          background: var(--cb-surface);
           animation: ppc-shimmer 1.5s ease-in-out infinite;
         }
 
@@ -319,30 +284,35 @@ export default function PurchasingPowerComparison({
         }
 
         .ppc-skeleton-cards {
-          display: flex;
-          gap: 1rem;
-        }
-
-        @media (max-width: 768px) {
-          .ppc-skeleton-cards {
-            flex-direction: column;
-          }
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1px;
+          background: var(--cb-border);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
         }
 
         .ppc-skeleton-card {
-          flex: 1;
           height: 200px;
         }
 
         .ppc-skeleton-banner {
-          margin-top: 1rem;
+          margin-top: 1px;
           height: 80px;
+        }
+
+        @media (max-width: 768px) {
+          .ppc-inputs {
+            grid-template-columns: 1fr;
+          }
+          .ppc-cards,
+          .ppc-skeleton-cards {
+            grid-template-columns: 1fr;
+          }
         }
       `}</style>
 
       <div className="ppc-container">
-        <h3 className="ppc-title">What if you&apos;d bought Bitcoin?</h3>
-
         <div className="ppc-inputs">
           <div className="ppc-field">
             <label className="ppc-label">Date</label>
@@ -395,7 +365,7 @@ export default function PurchasingPowerComparison({
             </p>
 
             <div className="ppc-cards">
-              <div className="ppc-card ppc-card-then">
+              <div className="ppc-card">
                 <p className="ppc-card-label">Then</p>
                 <p className="ppc-row-label">BTC Price</p>
                 <p className="ppc-value">${formatNumber(results.historicalPrice)}</p>
@@ -405,7 +375,7 @@ export default function PurchasingPowerComparison({
                 <p className="ppc-value-sats">{formatInteger(results.satsThen)} sats</p>
               </div>
 
-              <div className="ppc-card ppc-card-now">
+              <div className="ppc-card">
                 <p className="ppc-card-label">Now</p>
                 <p className="ppc-row-label">BTC Price</p>
                 <p className="ppc-value">${formatNumber(currentPrice)}</p>

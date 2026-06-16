@@ -193,8 +193,8 @@ export default function SearchModal() {
         }
 
         .search-modal.light-mode {
-          background: #f5f3f0;
-          border-color: #c8c4bc;
+          background: #f7f7f8;
+          border-color: #c0c0c1;
         }
 
         .search-input-wrapper {
@@ -206,7 +206,7 @@ export default function SearchModal() {
         }
 
         .search-modal.light-mode .search-input-wrapper {
-          border-bottom-color: #c8c4bc;
+          border-bottom-color: #c0c0c1;
         }
 
         .search-icon {
@@ -253,7 +253,7 @@ export default function SearchModal() {
 
         .search-modal.light-mode .search-hint {
           background: #e8e4dc;
-          border-color: #c8c4bc;
+          border-color: #c0c0c1;
           color: #999;
         }
 
@@ -358,7 +358,7 @@ export default function SearchModal() {
         }
 
         .search-modal.light-mode .search-footer {
-          border-top-color: #c8c4bc;
+          border-top-color: #c0c0c1;
         }
 
         .search-footer-key {
@@ -372,7 +372,7 @@ export default function SearchModal() {
 
         .search-modal.light-mode .search-footer-key {
           background: #e8e4dc;
-          border-color: #c8c4bc;
+          border-color: #c0c0c1;
         }
 
         .search-footer-group {
