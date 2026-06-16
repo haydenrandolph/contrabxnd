@@ -1,972 +1,949 @@
 'use client';
 
-import Link from 'next/link';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
-import SiteFooter from '@/components/SiteFooter';
 import ThemeToggle from '@/components/ThemeToggle';
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  Marker,
-  Line,
-} from '@vnedyalk0v/react19-simple-maps';
-import worldAtlas from 'world-atlas/countries-110m.json';
+import { PriceAlertModal, NewsTicker, NewsModal } from '@/components/dashboard';
+import type { NewsItem } from '@/lib/news/types';
 
-// Bitcoin hub cities for the hero map
-const HERO_NODES = [
-  { id: 1, coordinates: [-74.01, 40.71] as [number, number], major: true },
-  { id: 2, coordinates: [-122.42, 37.77] as [number, number], major: true },
-  { id: 3, coordinates: [-0.13, 51.51] as [number, number], major: true },
-  { id: 4, coordinates: [139.69, 35.68] as [number, number], major: true },
-  { id: 5, coordinates: [103.82, 1.35] as [number, number], major: true },
-  { id: 6, coordinates: [151.21, -33.87] as [number, number], major: false },
-  { id: 7, coordinates: [8.68, 50.11] as [number, number], major: false },
-  { id: 8, coordinates: [-46.63, -23.55] as [number, number], major: false },
-  { id: 9, coordinates: [55.27, 25.20] as [number, number], major: false },
-  { id: 10, coordinates: [114.17, 22.32] as [number, number], major: false },
+// Node cities for transaction route labels in the feed
+const CITIES = [
+  'New York', 'San Francisco', 'Los Angeles', 'Austin', 'Chicago', 'Miami',
+  'Toronto', 'Vancouver', 'London', 'Paris', 'Amsterdam', 'Frankfurt',
+  'Zurich', 'Berlin', 'Stockholm', 'Moscow', 'Tel Aviv', 'Dubai',
+  'Johannesburg', 'Mumbai', 'Singapore', 'Hong Kong', 'Seoul', 'Tokyo',
+  'Sydney', 'Melbourne', 'São Paulo', 'Buenos Aires',
 ];
 
-interface HeroArc {
+const CHART_PAIRS = [
+  { id: 'usd', label: 'BTC / USD', symbol: 'BITSTAMP:BTCUSD' },
+  { id: 'gold', label: 'BTC / GOLD', symbol: 'BITSTAMP:BTCUSD/OANDA:XAUUSD' },
+  { id: 'spx', label: 'BTC / SPX', symbol: 'BITSTAMP:BTCUSD/SP:SPX' },
+  { id: 'dxy', label: 'BTC / DXY', symbol: 'BITSTAMP:BTCUSD/TVC:DXY' },
+];
+
+interface Transaction {
   id: string;
-  from: [number, number];
-  to: [number, number];
+  hash: string;
+  amount: number;
+  fromCity: string;
+  toCity: string;
+  timestamp: number;
   type: 'normal' | 'large' | 'whale';
 }
 
-export default function HomePage() {
-  const [email, setEmail] = useState('');
-  const [subscribeStatus, setSubscribeStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [subscribeMessage, setSubscribeMessage] = useState('');
-  const [heroArcs, setHeroArcs] = useState<HeroArc[]>([]);
-  const [heroView, setHeroView] = useState<'map' | 'chart'>('map');
-  const chartContainerRef = useRef<HTMLDivElement>(null);
+interface Block {
+  height: number;
+  txCount: number;
+  timestamp: number;
+  hash: string;
+}
+
+interface NetworkData {
+  price: number;
+  change24h: number;
+  marketCap: number;
+  volume24h: number;
+  blockHeight: number;
+  hashRate: number;
+  mempoolCount: number;
+  priorityFee: number;
+}
+
+interface FearGreedData {
+  value: number | null;
+  label: string | null;
+}
+
+interface EtfFlowData {
+  source: string;
+  date: string | null;
+  funds: Array<{ ticker: string; name: string; flow: number | null }>;
+  netFlow: number | null;
+}
+
+export default function TerminalPage() {
+  const [networkData, setNetworkData] = useState<NetworkData>({
+    price: 0, change24h: 0, marketCap: 0, volume24h: 0,
+    blockHeight: 0, hashRate: 0, mempoolCount: 0, priorityFee: 0,
+  });
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [recentBlocks, setRecentBlocks] = useState<Block[]>([]);
+  const [wsConnected, setWsConnected] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
+  const [chartPair, setChartPair] = useState('usd');
+  const [fearGreed, setFearGreed] = useState<FearGreedData>({ value: null, label: null });
+  const [etfFlows, setEtfFlows] = useState<EtfFlowData | null>(null);
   const { isLightMode } = useTheme();
+  const wsRef = useRef<WebSocket | null>(null);
+  const seenTxIds = useRef<Set<string>>(new Set());
+  const chartRef = useRef<HTMLDivElement>(null);
 
-  // Generate random transaction arcs for the hero map
-  const createHeroArc = useCallback(() => {
-    const fromIndex = Math.floor(Math.random() * HERO_NODES.length);
-    let toIndex = Math.floor(Math.random() * HERO_NODES.length);
-    while (toIndex === fromIndex) {
-      toIndex = Math.floor(Math.random() * HERO_NODES.length);
-    }
+  const feedItems = useMemo(() => {
+    const items: Array<{
+      id: string;
+      kind: 'tx' | 'block';
+      timestamp: number;
+      tx?: Transaction;
+      block?: Block;
+    }> = [];
+    transactions.forEach(tx => items.push({ id: tx.id, kind: 'tx', timestamp: tx.timestamp, tx }));
+    recentBlocks.forEach(block => items.push({ id: `blk-${block.height}`, kind: 'block', timestamp: block.timestamp * 1000, block }));
+    return items.sort((a, b) => b.timestamp - a.timestamp).slice(0, 40);
+  }, [transactions, recentBlocks]);
 
-    const types: Array<'normal' | 'large' | 'whale'> = ['normal', 'normal', 'normal', 'large', 'whale'];
-    const type = types[Math.floor(Math.random() * types.length)];
+  // ── Data fetching ──
 
-    const arc: HeroArc = {
-      id: `arc-${Date.now()}-${Math.random()}`,
-      from: HERO_NODES[fromIndex].coordinates,
-      to: HERO_NODES[toIndex].coordinates,
-      type,
-    };
-
-    setHeroArcs(prev => [...prev.slice(-8), arc]);
-
-    // Remove arc after animation
-    setTimeout(() => {
-      setHeroArcs(prev => prev.filter(a => a.id !== arc.id));
-    }, 2500);
+  const fetchPriceData = useCallback(async () => {
+    try {
+      const res = await fetch('/api/price');
+      if (!res.ok) throw new Error('fail');
+      const data = await res.json();
+      if (data.price) {
+        setNetworkData(prev => ({
+          ...prev, price: data.price, change24h: data.change24h ?? 0,
+          marketCap: data.marketCap ?? 0, volume24h: data.volume24h ?? 0,
+        }));
+      }
+    } catch { /* retry next interval */ }
   }, []);
 
-  // Animate arcs on the hero map
+  const fetchNetworkData = useCallback(async () => {
+    try {
+      const [blocksRes, mempoolRes, feesRes, hashRateRes] = await Promise.all([
+        fetch('https://mempool.space/api/v1/blocks').catch(() => null),
+        fetch('https://mempool.space/api/mempool').catch(() => null),
+        fetch('https://mempool.space/api/v1/fees/recommended').catch(() => null),
+        fetch('https://mempool.space/api/v1/mining/hashrate/3d').catch(() => null),
+      ]);
+      if (blocksRes) {
+        const blocks = await blocksRes.json();
+        if (blocks?.length > 0) {
+          setNetworkData(prev => ({ ...prev, blockHeight: blocks[0].height }));
+          setRecentBlocks(blocks.slice(0, 6).map((b: { height: number; tx_count: number; timestamp: number; id: string }) => ({
+            height: b.height, txCount: b.tx_count, timestamp: b.timestamp, hash: b.id,
+          })));
+        }
+      }
+      if (mempoolRes) { const m = await mempoolRes.json(); if (m) setNetworkData(prev => ({ ...prev, mempoolCount: m.count || 0 })); }
+      if (feesRes) { const f = await feesRes.json(); if (f) setNetworkData(prev => ({ ...prev, priorityFee: f.fastestFee || 0 })); }
+      if (hashRateRes) { const h = await hashRateRes.json(); if (h?.currentHashrate) setNetworkData(prev => ({ ...prev, hashRate: h.currentHashrate / 1e18 })); }
+    } catch { /* retry next interval */ }
+  }, []);
+
+  const processTransaction = useCallback((txData: { txid: string; value: number }) => {
+    const fromIdx = Math.floor(Math.random() * CITIES.length);
+    let toIdx = Math.floor(Math.random() * CITIES.length);
+    while (toIdx === fromIdx) toIdx = Math.floor(Math.random() * CITIES.length);
+    const amount = txData.value / 100000000;
+    let type: 'normal' | 'large' | 'whale';
+    if (amount < 1) type = 'normal'; else if (amount < 10) type = 'large'; else type = 'whale';
+    const txId = txData.txid.slice(0, 9);
+    setTransactions(prev => [{
+      id: txId, hash: txData.txid, amount,
+      fromCity: CITIES[fromIdx], toCity: CITIES[toIdx],
+      timestamp: Date.now(), type,
+    }, ...prev.slice(0, 29)]);
+  }, []);
+
+  const fetchRecentTransactions = useCallback(async () => {
+    try {
+      const res = await fetch('https://mempool.space/api/mempool/recent');
+      if (!res.ok) return;
+      const txs: Array<{ txid: string; value: number }> = await res.json();
+      let count = 0;
+      for (const tx of txs) {
+        if (!seenTxIds.current.has(tx.txid) && count < 5) {
+          seenTxIds.current.add(tx.txid);
+          setTimeout(() => processTransaction(tx), count * 400);
+          count++;
+        }
+      }
+      if (seenTxIds.current.size > 500) {
+        seenTxIds.current = new Set(Array.from(seenTxIds.current).slice(-250));
+      }
+    } catch { /* retry */ }
+  }, [processTransaction]);
+
+  // ── Effects ──
+
+  useEffect(() => { fetchPriceData(); fetchNetworkData(); }, [fetchPriceData, fetchNetworkData]);
+  useEffect(() => { const i = setInterval(fetchPriceData, 30000); return () => clearInterval(i); }, [fetchPriceData]);
+  useEffect(() => { const i = setInterval(fetchNetworkData, 15000); return () => clearInterval(i); }, [fetchNetworkData]);
+
   useEffect(() => {
-    // Create initial arcs
-    createHeroArc();
-    setTimeout(createHeroArc, 400);
-    setTimeout(createHeroArc, 800);
-
-    // Continue creating arcs
-    const interval = setInterval(() => {
-      createHeroArc();
-    }, 1200);
-
-    return () => clearInterval(interval);
-  }, [createHeroArc]);
-
-  const [chartLoaded, setChartLoaded] = useState(false);
+    const fetchFG = async () => {
+      try {
+        const res = await fetch('/api/fear-greed');
+        if (res.ok) { const d = await res.json(); if (d.value !== null) setFearGreed(d); }
+      } catch { /* silent */ }
+    };
+    fetchFG();
+    const i = setInterval(fetchFG, 5 * 60 * 1000);
+    return () => clearInterval(i);
+  }, []);
 
   useEffect(() => {
-    if (heroView !== 'chart') return;
-    if (!chartContainerRef.current) return;
-    const container = chartContainerRef.current;
+    const fetchETF = async () => {
+      try {
+        const res = await fetch('/api/etf-flows');
+        if (res.ok) setEtfFlows(await res.json());
+      } catch { /* silent */ }
+    };
+    fetchETF();
+    const i = setInterval(fetchETF, 5 * 60 * 1000);
+    return () => clearInterval(i);
+  }, []);
+
+  // WebSocket
+  useEffect(() => {
+    let txPoll: NodeJS.Timeout;
+    const connect = () => {
+      try {
+        const ws = new WebSocket('wss://mempool.space/api/v1/ws');
+        wsRef.current = ws;
+        ws.onopen = () => {
+          setWsConnected(true);
+          ws.send(JSON.stringify({ action: 'want', data: ['blocks', 'stats', 'mempool-blocks'] }));
+          fetchRecentTransactions();
+          txPoll = setInterval(fetchRecentTransactions, 2000);
+        };
+        ws.onmessage = (e) => {
+          try {
+            const d = JSON.parse(e.data);
+            if (d.block) { setNetworkData(prev => ({ ...prev, blockHeight: d.block.height || prev.blockHeight })); fetchRecentTransactions(); }
+            if (d.mempoolInfo) setNetworkData(prev => ({ ...prev, mempoolCount: d.mempoolInfo.size || prev.mempoolCount }));
+            if (d.fees) setNetworkData(prev => ({ ...prev, priorityFee: d.fees.fastestFee || prev.priorityFee }));
+          } catch { /* ignore */ }
+        };
+        ws.onclose = () => { setWsConnected(false); clearInterval(txPoll); setTimeout(connect, 3000); };
+        ws.onerror = () => ws.close();
+      } catch {
+        setWsConnected(false);
+        fetchRecentTransactions();
+        txPoll = setInterval(fetchRecentTransactions, 2000);
+      }
+    };
+    connect();
+    return () => { clearInterval(txPoll); wsRef.current?.close(); };
+  }, [fetchRecentTransactions]);
+
+  // TradingView chart — reloads when pair changes
+  const activeSymbol = CHART_PAIRS.find(p => p.id === chartPair)?.symbol ?? CHART_PAIRS[0].symbol;
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const container = chartRef.current;
     container.innerHTML = '';
-    setChartLoaded(false);
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'tradingview-widget-container__widget';
-    wrapper.style.width = '100%';
-    wrapper.style.height = '100%';
-    container.appendChild(wrapper);
+    const widgetDiv = document.createElement('div');
+    widgetDiv.className = 'tradingview-widget-container__widget';
+    widgetDiv.style.width = '100%';
+    widgetDiv.style.height = '100%';
+    container.appendChild(widgetDiv);
 
     const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js';
+    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
     script.type = 'text/javascript';
     script.async = true;
     script.innerHTML = JSON.stringify({
-      symbols: [['Bitcoin', 'BITSTAMP:BTCUSD|12M']],
-      chartOnly: true,
-      width: '100%',
-      height: '100%',
-      locale: 'en',
-      colorTheme: isLightMode ? 'light' : 'dark',
       autosize: true,
-      showVolume: false,
-      showMA: false,
-      hideDateRanges: true,
-      hideMarketStatus: true,
-      hideSymbolLogo: true,
-      scalePosition: 'right',
-      scaleMode: 'Normal',
-      fontFamily: 'Space Mono, monospace',
-      fontSize: '10',
-      noTimeScale: false,
-      valuesTracking: '1',
-      changeMode: 'price-and-percent',
-      chartType: 'candlesticks',
-      upColor: '#F7931A',
-      downColor: isLightMode ? '#c8c4bc' : '#3a3a3a',
-      borderUpColor: '#F7931A',
-      borderDownColor: isLightMode ? '#a09a90' : '#5a5a5a',
-      wickUpColor: '#F7931A',
-      wickDownColor: isLightMode ? '#a09a90' : '#5a5a5a',
+      symbol: activeSymbol,
+      interval: 'D',
+      timezone: 'Etc/UTC',
+      theme: isLightMode ? 'light' : 'dark',
+      style: '1',
+      locale: 'en',
+      hide_legend: false,
+      allow_symbol_change: false,
+      save_image: false,
       backgroundColor: isLightMode ? '#f5f3f0' : '#0a0a0a',
-      gridLineColor: isLightMode ? '#e0dcd4' : '#1a1a1a',
+      gridColor: isLightMode ? '#e0dcd4' : '#1a1a1a',
+      withdateranges: true,
+      support_host: 'https://www.tradingview.com',
     });
-    script.onload = () => setChartLoaded(true);
     container.appendChild(script);
 
-    return () => {
-      container.innerHTML = '';
-    };
-  }, [heroView, isLightMode]);
+    return () => { container.innerHTML = ''; };
+  }, [activeSymbol, isLightMode]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (subscribeStatus === 'loading') return;
+  // ── Helpers ──
 
-    setSubscribeStatus('loading');
-    setSubscribeMessage('');
-
-    try {
-      const res = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        setSubscribeStatus('error');
-        setSubscribeMessage(data.error || 'Something went wrong. Please try again.');
-        return;
-      }
-
-      setSubscribeStatus('success');
-      setSubscribeMessage("You're on the list. Welcome aboard.");
-      setEmail('');
-    } catch {
-      setSubscribeStatus('error');
-      setSubscribeMessage('Network error. Please try again.');
-    }
+  const fmtNum = (n: number, d = 2) => {
+    if (n >= 1e12) return (n / 1e12).toFixed(d) + 'T';
+    if (n >= 1e9) return (n / 1e9).toFixed(d) + 'B';
+    if (n >= 1e6) return (n / 1e6).toFixed(d) + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(d) + 'K';
+    return n.toFixed(d);
   };
+
+  const fmtPrice = (p: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(p);
+
+  const fmtAgo = (ms: number) => {
+    const s = Math.floor((Date.now() - ms) / 1000);
+    if (s < 60) return `${s}s`;
+    const m = Math.floor(s / 60);
+    if (m < 60) return `${m}m`;
+    return `${Math.floor(m / 60)}h`;
+  };
+
+  const fmtFlow = (flow: number) => {
+    const abs = Math.abs(flow);
+    const v = abs >= 1e9 ? `$${(abs / 1e9).toFixed(1)}B` : abs >= 1e6 ? `$${(abs / 1e6).toFixed(1)}M` : `$${abs.toFixed(0)}`;
+    return flow >= 0 ? `+${v}` : `-${v}`;
+  };
+
+  const skel = (w: string) => <span className="skeleton" style={{ width: w, height: '1em', display: 'inline-block' }} />;
 
   return (
     <>
       <style jsx global>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
 
-        :root {
-          --contraband-black: #0a0a0a;
-          --contraband-off-black: #141414;
-          --contraband-dark-gray: #1a1a1a;
-          --contraband-mid-gray: #3a3a3a;
-          --contraband-light-gray: #8a8a8a;
-          --contraband-cream: #e8e4dc;
-          --contraband-rust: #F7931A;
-          --contraband-rust-light: #ff6600;
-          --contraband-white: #f5f3f0;
-          --contraband-font-display: 'Cormorant Garamond', serif;
-          --contraband-font-mono: 'Space Mono', monospace;
-        }
-
-        .contraband-page {
+        .terminal {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: var(--cb-font-mono);
+          font-family: 'Space Mono', monospace;
           font-size: 13px;
-          line-height: 1.6;
-          overflow-x: hidden;
-          min-height: 100vh;
-        }
-
-        .contraband-page.light-mode {
-          background: var(--cb-bg);
-          color: var(--cb-text);
-        }
-
-        .contraband-page.light-mode .contraband-content-card {
-          background: var(--cb-surface);
-          border-color: var(--cb-border);
-        }
-
-        .contraband-page.light-mode .contraband-featured-content {
-          background: var(--cb-surface);
-        }
-
-        .contraband-page.light-mode .contraband-subscribe-section {
-          background: var(--cb-surface);
-          border-color: var(--cb-border);
-        }
-
-        .contraband-page.light-mode .contraband-subscribe-title {
-          color: var(--cb-text);
-        }
-
-        .contraband-page.light-mode .contraband-subscribe-text {
-          color: var(--cb-text-muted);
-        }
-
-        .contraband-page.light-mode .contraband-subscribe-form input {
-          background: var(--cb-bg);
-          border-color: var(--cb-border);
-          color: var(--cb-text);
-        }
-
-        .contraband-page.light-mode .contraband-subscribe-form input::placeholder {
-          color: var(--cb-text-muted);
-        }
-
-        .contraband-page.light-mode .contraband-section-header {
-          border-color: var(--cb-border);
-        }
-
-        .contraband-page.light-mode .contraband-featured {
-          border-color: var(--cb-border);
-        }
-
-        .contraband-page.light-mode .contraband-featured-content {
-          background: var(--cb-surface);
-        }
-
-        .contraband-page.light-mode .contraband-featured-image {
-          background: rgba(0, 0, 0, 0.04);
-        }
-
-        .contraband-page.light-mode .contraband-featured-excerpt {
-          color: var(--cb-text-muted);
-        }
-
-        .contraband-page.light-mode .contraband-btn {
-          border-color: var(--cb-text);
-          color: var(--cb-text);
-        }
-
-        .contraband-page.light-mode .contraband-btn:hover {
-          background: var(--cb-text);
-          color: var(--cb-bg);
-        }
-
-        .contraband-page.light-mode .contraband-card-excerpt {
-          color: var(--cb-text-muted);
-        }
-
-        .contraband-page.light-mode .contraband-card-meta {
-          color: var(--cb-text-muted);
-        }
-
-        .contraband-hero {
-          min-height: 100vh;
+          height: 100vh;
           display: flex;
           flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          position: relative;
-          padding: 64px 48px 48px;
-        }
-
-        .hero-map-container {
-          position: relative;
-          width: 100%;
-          max-width: 900px;
-          aspect-ratio: 16/8;
-          margin-bottom: 32px;
-          cursor: pointer;
-          opacity: 0;
-          animation: fadeIn 0.6s ease 0.2s forwards;
-          border-radius: 2px;
           overflow: hidden;
-          border: 1px solid var(--cb-border);
         }
 
-        .hero-map-container:hover {
-          border-color: rgba(247, 147, 26, 0.3);
+        .terminal-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          padding-top: 48px;
+          min-height: 0;
         }
 
-        .hero-map-container svg {
+        .terminal-body {
+          flex: 1;
+          display: flex;
+          min-height: 0;
+        }
+
+        /* ── Chart ── */
+
+        .chart-panel {
+          flex: 1;
+          position: relative;
+          min-width: 0;
+          overflow: hidden;
+        }
+
+        .chart-pairs {
           position: absolute;
-          inset: 0;
-          z-index: 1;
-        }
-
-        .hero-map-node {
-          animation: heroNodePulse 3s ease-in-out infinite;
-        }
-
-        @keyframes heroNodePulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-
-        .hero-sonar-overlay { display: none; }
-
-        .hero-map-cta {
-          position: absolute;
-          bottom: 16px;
-          right: 16px;
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--cb-text-muted);
-          opacity: 0;
-          transition: opacity 0.15s ease;
-          z-index: 10;
-        }
-
-        .hero-map-container:hover .hero-map-cta {
-          opacity: 1;
-          color: #F7931A;
-        }
-
-        .hero-tx-arc {
-          fill: none;
-          stroke-linecap: round;
-          animation: heroArcPulse 2.5s ease-out forwards;
-        }
-
-        .hero-tx-arc.normal { stroke: #F7931A; stroke-width: 1; opacity: 0.4; }
-        .hero-tx-arc.large { stroke: #F7931A; stroke-width: 1.5; opacity: 0.6; }
-        .hero-tx-arc.whale { stroke: #F7931A; stroke-width: 2; opacity: 0.8; }
-
-        @keyframes heroArcPulse {
-          0% { stroke-dashoffset: 1000; opacity: 0.6; }
-          60% { stroke-dashoffset: 0; opacity: 0.8; }
-          100% { stroke-dashoffset: 0; opacity: 0; }
-        }
-
-        .hero-arc-endpoint { fill: #F7931A; animation: heroEndpointPulse 2.5s ease-out forwards; }
-
-        @keyframes heroEndpointPulse {
-          0% { r: 0; opacity: 0; }
-          20% { r: 3; opacity: 0.8; }
-          60% { r: 3; opacity: 0.8; }
-          100% { r: 4; opacity: 0; }
-        }
-
-        .contraband-hero-title {
-          font-family: var(--cb-font-display);
-          font-size: clamp(3.5rem, 10vw, 7rem);
-          font-weight: 400;
-          letter-spacing: -0.02em;
-          text-transform: uppercase;
-          text-align: center;
-          opacity: 0;
-          animation: fadeIn 0.6s ease 0.4s forwards;
-        }
-
-        .contraband-hero-subtitle {
-          font-size: 10px;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: var(--cb-text-muted);
-          margin-top: 16px;
-          text-align: center;
-          opacity: 0;
-          animation: fadeIn 0.6s ease 0.7s forwards;
-        }
-
-        .contraband-hero-tagline {
-          font-family: var(--cb-font-display);
-          font-size: clamp(1.1rem, 2vw, 1.4rem);
-          font-style: italic;
-          color: var(--cb-text-muted);
-          margin-top: 24px;
-          opacity: 0;
-          animation: fadeIn 0.6s ease 0.6s forwards;
-        }
-
-        .contraband-scroll-indicator {
-          position: absolute;
-          bottom: 48px;
+          top: 0;
           left: 0;
           right: 0;
+          z-index: 10;
           display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-          opacity: 0;
-          animation: fadeIn 0.6s ease 1s forwards;
-        }
-
-        .contraband-scroll-indicator span {
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--cb-text-muted);
-        }
-
-        .contraband-scroll-line {
-          width: 1px;
-          height: 32px;
-          background: var(--cb-border);
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .contraband-section {
-          padding: 96px 48px;
-          max-width: 1400px;
-          margin: 0 auto;
-        }
-
-        .contraband-section-header {
-          display: flex;
-          align-items: baseline;
-          gap: 24px;
-          margin-bottom: 48px;
-          border-bottom: 1px solid var(--cb-border);
-          padding-bottom: 16px;
-        }
-
-        .contraband-section-number {
-          font-family: var(--cb-font-display);
-          font-size: 2.5rem;
-          color: #F7931A;
-          line-height: 1;
-        }
-
-        .contraband-section-title {
-          font-family: var(--cb-font-display);
-          font-size: 2.5rem;
-          font-weight: 400;
-          letter-spacing: -0.02em;
-          text-transform: uppercase;
-        }
-
-        .contraband-content-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-          gap: 1px;
-          background: var(--cb-border);
-        }
-
-        .contraband-content-card {
-          background: var(--cb-surface);
-          padding: 32px;
-          position: relative;
-          cursor: pointer;
-          text-decoration: none;
-          color: inherit;
-          transition: background 0.15s ease;
-        }
-
-        .contraband-content-card:hover {
-          background: rgba(247, 147, 26, 0.03);
-        }
-
-        .contraband-card-type {
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--cb-text-muted);
-          margin-bottom: 16px;
-        }
-
-        .contraband-card-title {
-          font-family: var(--cb-font-display);
-          font-size: 1.5rem;
-          font-weight: 400;
-          line-height: 1.3;
-          letter-spacing: -0.01em;
-          margin-bottom: 12px;
-        }
-
-        .contraband-card-excerpt {
-          color: var(--cb-text-muted);
-          font-size: 13px;
-          line-height: 1.6;
-          margin-bottom: 24px;
-        }
-
-        .contraband-card-meta {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 10px;
-          color: var(--cb-text-muted);
-        }
-
-        .contraband-card-arrow {
-          font-size: 16px;
-          color: var(--cb-text-muted);
-          transition: color 0.15s ease;
-        }
-
-        .contraband-content-card:hover .contraband-card-arrow {
-          color: #F7931A;
-        }
-
-        .contraband-featured {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
           gap: 0;
-          margin-bottom: 48px;
-          border: 1px solid var(--cb-border);
-          border-radius: 2px;
-        }
-
-        .contraband-featured-image {
-          background: var(--cb-surface);
-          min-height: 400px;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .contraband-featured-content {
-          padding: 48px;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          background: var(--cb-surface);
-          border-left: 1px solid var(--cb-border);
-        }
-
-        .contraband-featured-label {
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--cb-text-muted);
-          margin-bottom: 24px;
-        }
-
-        .contraband-featured-title {
-          font-family: var(--cb-font-display);
-          font-size: 2rem;
-          font-weight: 400;
-          line-height: 1.3;
-          letter-spacing: -0.01em;
-          margin-bottom: 16px;
-        }
-
-        .contraband-featured-excerpt {
-          color: var(--cb-text-muted);
-          font-size: 13px;
-          line-height: 1.6;
-          margin-bottom: 32px;
-        }
-
-        .contraband-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          padding: 12px 24px;
-          background: transparent;
-          border: 1px solid var(--cb-border);
-          color: var(--cb-text);
-          font-family: var(--cb-font-mono);
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          text-decoration: none;
-          cursor: pointer;
-          border-radius: 2px;
-          transition: border-color 0.15s ease, color 0.15s ease;
-        }
-
-        .contraband-btn:hover {
-          border-color: #F7931A;
-          color: #F7931A;
-        }
-
-        .contraband-btn svg {
-          width: 14px;
-          height: 14px;
-        }
-
-        .contraband-subscribe-section {
-          background: var(--cb-surface);
-          border: 1px solid var(--cb-border);
-          border-radius: 2px;
-          padding: 64px;
-          text-align: center;
-        }
-
-        .contraband-subscribe-title {
-          font-family: var(--cb-font-display);
-          font-size: 2.5rem;
-          font-weight: 400;
-          letter-spacing: -0.02em;
-          margin-bottom: 16px;
-        }
-
-        .contraband-subscribe-text {
-          color: var(--cb-text-muted);
-          margin-bottom: 32px;
-          max-width: 480px;
-          margin-left: auto;
-          margin-right: auto;
-        }
-
-        .contraband-subscribe-form {
-          display: flex;
-          justify-content: center;
-          gap: 0;
-          max-width: 480px;
-          margin: 0 auto;
-        }
-
-        .contraband-subscribe-form input {
-          flex: 1;
-          padding: 12px 16px;
           background: var(--cb-bg);
-          border: 1px solid var(--cb-border);
-          border-right: none;
-          border-radius: 2px 0 0 2px;
-          color: var(--cb-text);
-          font-family: var(--cb-font-mono);
-          font-size: 13px;
+          border-bottom: 1px solid var(--cb-border);
         }
 
-        .contraband-subscribe-form input::placeholder {
-          color: var(--cb-text-muted);
-        }
-
-        .contraband-subscribe-form input:focus {
-          outline: none;
-          border-color: #F7931A;
-        }
-
-        .contraband-subscribe-form button {
-          padding: 12px 24px;
-          background: #F7931A;
-          border: 1px solid #F7931A;
-          border-radius: 0 2px 2px 0;
-          color: #ffffff;
-          font-family: var(--cb-font-mono);
+        .chart-pair-btn {
+          font-family: 'Space Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          cursor: pointer;
-          transition: opacity 0.15s ease;
-        }
-
-        .contraband-subscribe-form button:hover {
-          opacity: 0.85;
-        }
-
-        .hero-view-toggle {
-          display: inline-flex;
-          align-items: center;
-          gap: 0;
-          margin-bottom: 24px;
-          opacity: 0;
-          animation: fadeIn 0.6s ease 0.1s forwards;
-          position: relative;
-          z-index: 1001;
-          pointer-events: auto;
-          background: var(--cb-surface);
-          border: 1px solid var(--cb-border);
-          border-radius: 2px;
-          overflow: hidden;
-        }
-
-        .hero-view-label {
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--cb-text-muted);
-          transition: color 0.15s ease, background 0.15s ease;
-          cursor: pointer;
-          pointer-events: auto;
-          user-select: none;
-          padding: 8px 20px;
+          padding: 10px 20px;
           background: transparent;
           border: none;
-          font-family: var(--cb-font-mono);
+          border-right: 1px solid var(--cb-border);
+          color: var(--cb-text-muted);
+          cursor: pointer;
+          transition: color 0.15s ease, background 0.15s ease;
         }
 
-        .hero-view-label:hover {
+        .chart-pair-btn:hover {
           color: var(--cb-text);
         }
 
-        .hero-view-label.active {
-          color: #ffffff;
-          background: #F7931A;
+        .chart-pair-btn.active {
+          color: var(--cb-accent);
+          background: var(--cb-surface);
         }
 
-        .hero-chart-container {
-          position: relative;
-          width: 100%;
-          max-width: 900px;
-          aspect-ratio: 16/8;
-          margin-bottom: 32px;
-          border-radius: 2px;
-          overflow: hidden;
-          border: 1px solid var(--cb-border);
-          opacity: 0;
-          animation: fadeIn 0.6s ease forwards;
+        .chart-embed {
+          position: absolute;
+          top: 37px;
+          left: 0;
+          right: 0;
+          bottom: 0;
         }
 
-        .hero-chart-container .tradingview-widget-container {
+        .chart-embed .tradingview-widget-container__widget {
           width: 100%;
           height: 100%;
         }
 
+        /* ── Sidebar ── */
+
+        .terminal-sidebar {
+          width: 360px;
+          border-left: 1px solid var(--cb-border);
+          display: flex;
+          flex-direction: column;
+          overflow-y: auto;
+          background: var(--cb-bg);
+        }
+
+        .terminal-sidebar::-webkit-scrollbar { width: 4px; }
+        .terminal-sidebar::-webkit-scrollbar-track { background: transparent; }
+        .terminal-sidebar::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
+
+        .sidebar-section {
+          border-bottom: 1px solid var(--cb-border);
+        }
+
+        .sidebar-section-title {
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          padding: 12px 24px;
+          border-bottom: 1px solid var(--cb-border);
+        }
+
+        /* Price */
+
+        .sidebar-price { padding: 24px; }
+
+        .price-pair {
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          margin-bottom: 8px;
+        }
+
+        .price-row {
+          display: flex;
+          align-items: baseline;
+          gap: 12px;
+        }
+
+        .price-value {
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: var(--cb-text);
+          line-height: 1;
+        }
+
+        .price-change { font-size: 13px; font-weight: 600; }
+        .price-change.positive { color: #22c55e; }
+        .price-change.negative { color: #ef4444; }
+
+        .alert-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 16px;
+          padding: 8px 16px;
+          background: transparent;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          color: var(--cb-text-muted);
+          font-family: 'Space Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .alert-btn:hover { border-color: var(--cb-accent); color: var(--cb-accent); }
+        .alert-btn svg { width: 12px; height: 12px; }
+
+        /* Metrics */
+
+        .metrics-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1px;
+          background: var(--cb-border);
+        }
+
+        .metric-cell {
+          background: var(--cb-bg);
+          padding: 12px 16px;
+        }
+
+        .metric-label {
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          margin-bottom: 4px;
+        }
+
+        .metric-value {
+          font-size: 14px;
+          font-weight: 700;
+          color: var(--cb-text);
+          font-variant-numeric: tabular-nums;
+        }
+
+        /* Sentiment */
+
+        .sentiment-content { padding: 16px 24px; }
+
+        .fg-row {
+          display: flex;
+          align-items: baseline;
+          gap: 12px;
+          margin-bottom: 10px;
+        }
+
+        .fg-value { font-size: 1.5rem; font-weight: 700; color: var(--cb-accent); line-height: 1; }
+        .fg-label { font-size: 12px; color: var(--cb-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+        .fg-bar { width: 100%; height: 4px; background: var(--cb-surface); border-radius: 2px; overflow: hidden; }
+        .fg-bar-fill { height: 100%; background: var(--cb-accent); border-radius: 2px; transition: width 0.6s ease; }
+        .fg-unavailable { font-size: 11px; color: var(--cb-text-muted); font-style: italic; }
+
+        /* ETF Flows */
+
+        .etf-content { padding: 0; }
+
+        .etf-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 10px 24px;
+          border-bottom: 1px solid var(--cb-border);
+        }
+
+        .etf-row:last-child { border-bottom: none; }
+        .etf-row.net-row { background: var(--cb-surface); }
+
+        .etf-ticker { font-size: 12px; font-weight: 700; color: var(--cb-text); min-width: 50px; }
+        .etf-name { flex: 1; font-size: 10px; color: var(--cb-text-muted); margin-left: 12px; }
+        .etf-flow { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .etf-flow.positive { color: #22c55e; }
+        .etf-flow.negative { color: #ef4444; }
+        .etf-flow.unavailable { color: var(--cb-text-muted); font-weight: 400; font-style: italic; }
+
+        .etf-setup-note {
+          padding: 16px 24px;
+          font-size: 10px;
+          color: var(--cb-text-muted);
+          line-height: 1.6;
+        }
+
+        /* Feed */
+
+        .sidebar-feed {
+          flex: 1;
+          overflow-y: auto;
+          min-height: 0;
+        }
+
+        .sidebar-feed::-webkit-scrollbar { width: 4px; }
+        .sidebar-feed::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-feed::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
+
+        .feed-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          padding: 10px 24px;
+          border-bottom: 1px solid var(--cb-border);
+          cursor: pointer;
+          transition: background 0.1s ease;
+        }
+
+        .feed-item:hover { background: var(--cb-surface); }
+
+        .feed-badge {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          min-width: 28px;
+          padding: 2px 0;
+          color: var(--cb-text-muted);
+        }
+
+        .feed-badge.block { color: var(--cb-accent); }
+        .feed-badge.whale { color: var(--cb-accent); }
+
+        .feed-body { flex: 1; min-width: 0; }
+        .feed-primary { font-size: 12px; color: var(--cb-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .feed-secondary { font-size: 10px; color: var(--cb-text-muted); margin-top: 2px; }
+        .feed-time { font-size: 10px; color: var(--cb-text-muted); white-space: nowrap; padding-top: 2px; }
+
+        .feed-empty {
+          padding: 24px;
+          text-align: center;
+          color: var(--cb-text-muted);
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+
+        /* ── Status bar ── */
+
+        .terminal-status {
+          height: 32px;
+          border-top: 1px solid var(--cb-border);
+          display: flex;
+          align-items: center;
+          padding: 0 24px;
+          gap: 24px;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          background: var(--cb-surface);
+          flex-shrink: 0;
+        }
+
+        .status-live { display: flex; align-items: center; gap: 6px; }
+
+        .status-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          animation: livePulse 2s ease infinite;
+        }
+
+        @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        .status-sep { color: var(--cb-border); }
+
+        /* ── Modals ── */
+
+        .modal-overlay {
+          position: fixed; inset: 0;
+          background: rgba(0, 0, 0, 0.7);
+          z-index: 200;
+          display: flex; align-items: center; justify-content: center;
+          padding: 24px;
+        }
+
+        .modal {
+          background: var(--cb-bg);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          width: 100%; max-width: 480px;
+          overflow: hidden;
+        }
+
+        .modal-header {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 20px 24px;
+          border-bottom: 1px solid var(--cb-border);
+        }
+
+        .modal-title { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cb-text-muted); }
+
+        .modal-close {
+          background: none; border: none; color: var(--cb-text-muted);
+          cursor: pointer; padding: 4px; display: flex;
+          transition: color 0.15s ease;
+        }
+
+        .modal-close:hover { color: var(--cb-text); }
+        .modal-close svg { width: 16px; height: 16px; }
+
+        .modal-row {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 14px 24px; border-bottom: 1px solid var(--cb-border);
+        }
+        .modal-row:last-child { border-bottom: none; }
+
+        .modal-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--cb-text-muted); }
+        .modal-value { font-size: 13px; color: var(--cb-text); text-align: right; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+        .modal-value.highlight { color: var(--cb-accent); font-weight: 700; font-size: 18px; }
+        .modal-value.hash { font-size: 11px; word-break: break-all; }
+
+        .modal-route { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--cb-text); }
+        .modal-route svg { width: 14px; height: 14px; stroke: var(--cb-accent); }
+
+        .modal-footer { padding: 20px 24px; border-top: 1px solid var(--cb-border); }
+
+        .modal-link {
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+          width: 100%; padding: 12px 24px;
+          background: transparent; border: 1px solid var(--cb-border); border-radius: 2px;
+          color: var(--cb-text); font-family: 'Space Mono', monospace;
+          font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+          text-decoration: none; cursor: pointer; transition: all 0.15s ease;
+        }
+
+        .modal-link:hover { background: var(--cb-accent); border-color: var(--cb-accent); color: #fff; }
+
+        /* ── Util ── */
+
+        .skeleton { background: var(--cb-surface); border-radius: 2px; animation: shimmer 1.5s ease-in-out infinite; }
+        @keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+        /* ── Mobile ── */
+
+        @media (max-width: 1024px) {
+          .terminal-body { flex-direction: column; }
+          .chart-panel { height: 40vh; min-height: 250px; }
+          .terminal-sidebar { width: 100%; border-left: none; border-top: 1px solid var(--cb-border); flex: 1; }
+        }
+
         @media (max-width: 768px) {
-          .contraband-section {
-            padding: 64px 24px;
-          }
-
-          .contraband-content-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .contraband-featured {
-            grid-template-columns: 1fr;
-          }
-
-          .contraband-featured-image {
-            min-height: 200px;
-          }
-
-          .contraband-featured-content {
-            border-left: none;
-            border-top: 1px solid var(--cb-border);
-          }
-
-          .contraband-subscribe-section {
-            padding: 48px 24px;
-          }
-
-          .contraband-subscribe-form {
-            flex-direction: column;
-          }
-
-          .contraband-subscribe-form input {
-            border-right: 1px solid var(--cb-border);
-            border-bottom: none;
-            border-radius: 2px 2px 0 0;
-          }
-
-          .contraband-subscribe-form button {
-            border-radius: 0 0 2px 2px;
-          }
-
-          .contraband-hero {
-            padding: 64px 24px 32px;
-          }
-
-          .hero-map-container,
-          .hero-chart-container {
-            max-width: 100%;
-            aspect-ratio: 16/10;
-          }
+          .terminal-status { padding: 0 16px; gap: 16px; font-size: 9px; overflow-x: auto; }
+          .sidebar-price { padding: 16px; }
+          .price-value { font-size: 1.5rem; }
+          .feed-item { padding: 10px 16px; }
+          .metric-cell { padding: 10px 12px; }
+          .chart-pair-btn { padding: 8px 12px; font-size: 9px; }
         }
       `}</style>
 
-      <div className={`contraband-page ${isLightMode ? 'light-mode' : ''}`}>
+      <div className="terminal">
         <ThemeToggle />
-        <SiteNav blendMode />
+        <SiteNav activePath="/" liveIndicator={{ connected: wsConnected }} />
 
-        <section className="contraband-hero">
-          <div className="hero-view-toggle">
-            <button
-              className={`hero-view-label ${heroView === 'map' ? 'active' : ''}`}
-              onClick={() => setHeroView('map')}
-            >
-              Network
-            </button>
-            <button
-              className={`hero-view-label ${heroView === 'chart' ? 'active' : ''}`}
-              onClick={() => setHeroView('chart')}
-            >
-              Price
-            </button>
-          </div>
+        <div className="terminal-content">
+          <NewsTicker onItemClick={(item) => setSelectedNews(item)} isLightMode={isLightMode} />
 
-          <div className="hero-chart-container" style={{ display: heroView === 'chart' ? 'block' : 'none' }}>
-            <div className="tradingview-widget-container" ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
-          </div>
-
-          <Link href="/dashboard" className="hero-map-container" style={{ display: heroView === 'map' ? 'block' : 'none' }}>
-            <ComposableMap
-              projection="geoMercator"
-              projectionConfig={{
-                scale: 100,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                center: [10, 20] as any,
-              }}
-              style={{
-                width: '100%',
-                height: '100%',
-              }}
-            >
-              <Geographies geography={worldAtlas}>
-                {({ geographies }) =>
-                  geographies.map((geo, index) => (
-                    <Geography
-                      key={`geo-${index}`}
-                      geography={geo}
-                      fill={isLightMode ? '#d8d4cc' : '#1a1a1a'}
-                      stroke={isLightMode ? '#b5946e' : '#b5673a'}
-                      strokeWidth={0.3}
-                      style={{
-                        default: { outline: 'none' },
-                        hover: { outline: 'none' },
-                        pressed: { outline: 'none' },
-                      }}
-                    />
-                  ))
-                }
-              </Geographies>
-              {HERO_NODES.map((node) => (
-                <Marker
-                  key={node.id}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  coordinates={node.coordinates as any}
-                >
-                  <circle
-                    r={node.major ? 4 : 2.5}
-                    fill="#F7931A"
-                    className={`hero-map-node ${node.major ? 'major' : ''}`}
-                  />
-                </Marker>
-              ))}
-              {/* Transaction arcs */}
-              {heroArcs.map((arc) => (
-                <Line
-                  key={arc.id}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  from={arc.from as any}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  to={arc.to as any}
-                  stroke={arc.type === 'whale' ? '#a855f7' : arc.type === 'large' ? '#f59e0b' : '#22c55e'}
-                  strokeWidth={arc.type === 'whale' ? 2 : arc.type === 'large' ? 1.5 : 1}
-                  strokeLinecap="round"
-                  className={`hero-tx-arc ${arc.type}`}
-                  style={{
-                    strokeDasharray: 1000,
-                  }}
-                />
-              ))}
-              {/* Arc endpoints */}
-              {heroArcs.map((arc) => (
-                <Marker
-                  key={`${arc.id}-end`}
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  coordinates={arc.to as any}
-                >
-                  <circle
-                    className={`hero-arc-endpoint ${arc.type}`}
-                    r={3}
-                  />
-                </Marker>
-              ))}
-            </ComposableMap>
-            <span className="hero-map-cta">View Dashboard ↗</span>
-          </Link>
-          <h1 className="contraband-hero-title">Contra₿and</h1>
-          <p className="contraband-hero-tagline">Ideas that refuse to stay buried</p>
-          <p className="contraband-hero-subtitle">Stu₿y · Writings · Podcasts · Videos · Merch</p>
-
-          <div className="contraband-scroll-indicator">
-            <span>Explore</span>
-            <div className="contraband-scroll-line"></div>
-          </div>
-        </section>
-
-        <section id="writings" className="contraband-section">
-          <div className="contraband-section-header">
-            <span className="contraband-section-number">01</span>
-            <h2 className="contraband-section-title">Writings</h2>
-          </div>
-
-          <Link href="/writings/why-trump-1m-btc" className="contraband-featured">
-            <div className="contraband-featured-image"></div>
-            <div className="contraband-featured-content">
-              <span className="contraband-featured-label">Featured Essay</span>
-              <h3 className="contraband-featured-title">Letters of Marque for the Digital Age</h3>
-              <p className="contraband-featured-excerpt">When states embrace what they once called piracy.</p>
-              <span className="contraband-btn">Read Now ↗</span>
+          <div className="terminal-body">
+            {/* ── Chart ── */}
+            <div className="chart-panel">
+              <div className="chart-pairs">
+                {CHART_PAIRS.map(p => (
+                  <button
+                    key={p.id}
+                    className={`chart-pair-btn ${chartPair === p.id ? 'active' : ''}`}
+                    onClick={() => setChartPair(p.id)}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+              <div ref={chartRef} className="chart-embed tradingview-widget-container" />
             </div>
-          </Link>
 
-          <div className="contraband-content-grid">
-            <Link href="/writings/bankmore" className="contraband-content-card">
-              <span className="contraband-card-type">Essay</span>
-              <h3 className="contraband-card-title">The Pirate's Guide to Banking</h3>
-              <p className="contraband-card-excerpt">Why leaving the harbor means carrying more treasure.</p>
-              <div className="contraband-card-meta">
-                <span>15 min read</span>
-                <span className="contraband-card-arrow">↗</span>
+            {/* ── Sidebar ── */}
+            <div className="terminal-sidebar">
+              <div className="sidebar-section">
+                <div className="sidebar-price">
+                  <div className="price-pair">BTC / USD</div>
+                  <div className="price-row">
+                    {networkData.price === 0 ? skel('160px') : (
+                      <>
+                        <span className="price-value">{fmtPrice(networkData.price)}</span>
+                        <span className={`price-change ${networkData.change24h >= 0 ? 'positive' : 'negative'}`}>
+                          {networkData.change24h >= 0 ? '+' : ''}{networkData.change24h.toFixed(2)}%
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <button className="alert-btn" onClick={() => setShowAlertModal(true)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    Set Alert
+                  </button>
+                </div>
               </div>
-            </Link>
-            <Link href="/writings/nation-or-network" className="contraband-content-card">
-              <span className="contraband-card-type">Analysis</span>
-              <h3 className="contraband-card-title">The Network Eats the Nation</h3>
-              <p className="contraband-card-excerpt">Borders are lines on maps. Networks are lines of code.</p>
-              <div className="contraband-card-meta">
-                <span>10 min read</span>
-                <span className="contraband-card-arrow">↗</span>
+
+              <div className="sidebar-section">
+                <div className="sidebar-section-title">Network</div>
+                <div className="metrics-grid">
+                  <div className="metric-cell">
+                    <div className="metric-label">Block</div>
+                    <div className="metric-value">{networkData.blockHeight === 0 ? skel('70px') : networkData.blockHeight.toLocaleString()}</div>
+                  </div>
+                  <div className="metric-cell">
+                    <div className="metric-label">Hash Rate</div>
+                    <div className="metric-value">{networkData.hashRate === 0 ? skel('60px') : `${networkData.hashRate.toFixed(1)} EH/s`}</div>
+                  </div>
+                  <div className="metric-cell">
+                    <div className="metric-label">Mempool</div>
+                    <div className="metric-value">{networkData.mempoolCount === 0 ? skel('50px') : fmtNum(networkData.mempoolCount, 0)}</div>
+                  </div>
+                  <div className="metric-cell">
+                    <div className="metric-label">Fee</div>
+                    <div className="metric-value">{networkData.priorityFee === 0 ? skel('50px') : `${networkData.priorityFee} sat/vB`}</div>
+                  </div>
+                  <div className="metric-cell">
+                    <div className="metric-label">Mkt Cap</div>
+                    <div className="metric-value">{networkData.marketCap === 0 ? skel('60px') : `$${fmtNum(networkData.marketCap)}`}</div>
+                  </div>
+                  <div className="metric-cell">
+                    <div className="metric-label">24h Vol</div>
+                    <div className="metric-value">{networkData.volume24h === 0 ? skel('60px') : `$${fmtNum(networkData.volume24h)}`}</div>
+                  </div>
+                </div>
               </div>
-            </Link>
-            <Link href="/writings/when-did-i-sign" className="contraband-content-card">
-              <span className="contraband-card-type">Essay</span>
-              <h3 className="contraband-card-title">The Contract You Never Signed</h3>
-              <p className="contraband-card-excerpt">You can't breach an agreement you never made.</p>
-              <div className="contraband-card-meta">
-                <span>7 min read</span>
-                <span className="contraband-card-arrow">↗</span>
+
+              <div className="sidebar-section">
+                <div className="sidebar-section-title">Sentiment</div>
+                <div className="sentiment-content">
+                  {fearGreed.value !== null ? (
+                    <>
+                      <div className="fg-row">
+                        <span className="fg-value">{fearGreed.value}</span>
+                        <span className="fg-label">{fearGreed.label}</span>
+                      </div>
+                      <div className="fg-bar">
+                        <div className="fg-bar-fill" style={{ width: `${fearGreed.value}%` }} />
+                      </div>
+                    </>
+                  ) : <span className="fg-unavailable">Loading...</span>}
+                </div>
               </div>
-            </Link>
+
+              <div className="sidebar-section">
+                <div className="sidebar-section-title">ETF Flows{etfFlows?.date ? ` · ${etfFlows.date}` : ''}</div>
+                <div className="etf-content">
+                  {etfFlows && etfFlows.source !== 'unavailable' ? (
+                    <>
+                      {etfFlows.funds.map((fund) => (
+                        <div key={fund.ticker} className="etf-row">
+                          <span className="etf-ticker">{fund.ticker}</span>
+                          <span className="etf-name">{fund.name}</span>
+                          <span className={`etf-flow ${fund.flow === null ? 'unavailable' : fund.flow >= 0 ? 'positive' : 'negative'}`}>
+                            {fund.flow !== null ? fmtFlow(fund.flow) : '—'}
+                          </span>
+                        </div>
+                      ))}
+                      {etfFlows.netFlow !== null && (
+                        <div className="etf-row net-row">
+                          <span className="etf-ticker">NET</span>
+                          <span className="etf-name">All Funds</span>
+                          <span className={`etf-flow ${etfFlows.netFlow >= 0 ? 'positive' : 'negative'}`}>{fmtFlow(etfFlows.netFlow)}</span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="etf-setup-note">
+                      Add SOSOVALUE_API_KEY to .env.local to enable ETF flow data.
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="sidebar-section" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', borderBottom: 'none' }}>
+                <div className="sidebar-section-title">Feed</div>
+                <div className="sidebar-feed">
+                  {feedItems.length === 0 ? (
+                    <div className="feed-empty">Awaiting data...</div>
+                  ) : feedItems.map((item) => {
+                    if (item.kind === 'tx' && item.tx) {
+                      const tx = item.tx;
+                      return (
+                        <div key={item.id} className="feed-item" onClick={() => setSelectedTx(tx)}>
+                          <span className={`feed-badge ${tx.type === 'whale' ? 'whale' : ''}`}>TX</span>
+                          <div className="feed-body">
+                            <div className="feed-primary">{tx.amount < 1 ? tx.amount.toFixed(4) : tx.amount.toFixed(2)} BTC</div>
+                            <div className="feed-secondary">{tx.fromCity} → {tx.toCity}</div>
+                          </div>
+                          <span className="feed-time">{fmtAgo(tx.timestamp)}</span>
+                        </div>
+                      );
+                    }
+                    if (item.kind === 'block' && item.block) {
+                      const block = item.block;
+                      return (
+                        <div key={item.id} className="feed-item" onClick={() => setSelectedBlock(block)}>
+                          <span className="feed-badge block">BLK</span>
+                          <div className="feed-body">
+                            <div className="feed-primary">#{block.height.toLocaleString()}</div>
+                            <div className="feed-secondary">{block.txCount.toLocaleString()} transactions</div>
+                          </div>
+                          <span className="feed-time">{fmtAgo(block.timestamp * 1000)}</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })}
+                </div>
+              </div>
+            </div>
           </div>
-        </section>
+        </div>
 
-        <section className="contraband-section">
-          <div className="contraband-subscribe-section">
-            <h2 className="contraband-subscribe-title">Join the Crew</h2>
-            <p className="contraband-subscribe-text">Get contraband delivered straight to your inbox. No spam, just ideas worth smuggling.</p>
-            <form className="contraband-subscribe-form" onSubmit={handleSubmit}>
-              <input
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={subscribeStatus === 'loading' || subscribeStatus === 'success'}
-                required
-              />
-              <button type="submit" disabled={subscribeStatus === 'loading' || subscribeStatus === 'success'}>
-                {subscribeStatus === 'loading' ? 'Joining...' : subscribeStatus === 'success' ? 'Joined' : 'Subscribe'}
-              </button>
-            </form>
-            {subscribeMessage && (
-              <p
-                className="contraband-subscribe-message"
-                role="status"
-                style={{ color: subscribeStatus === 'error' ? '#ef4444' : '#22c55e' }}
-              >
-                {subscribeMessage}
-              </p>
-            )}
+        {/* ── Status Bar ── */}
+        <div className="terminal-status">
+          <div className="status-live">
+            <span className="status-dot" style={{ background: wsConnected ? '#22c55e' : '#f59e0b' }} />
+            <span>{wsConnected ? 'Live' : 'Connecting'}</span>
           </div>
-        </section>
+          <span className="status-sep">│</span>
+          <span>BLK {networkData.blockHeight > 0 ? networkData.blockHeight.toLocaleString() : '—'}</span>
+          <span className="status-sep">│</span>
+          <span>MEMPOOL {networkData.mempoolCount > 0 ? fmtNum(networkData.mempoolCount, 0) : '—'}</span>
+          <span className="status-sep">│</span>
+          <span>FEE {networkData.priorityFee > 0 ? `${networkData.priorityFee} sat/vB` : '—'}</span>
+          {fearGreed.value !== null && (
+            <><span className="status-sep">│</span><span>F&G {fearGreed.value} {fearGreed.label?.toUpperCase()}</span></>
+          )}
+        </div>
 
-        <SiteFooter />
+        {/* ── Modals ── */}
+        {selectedTx && (
+          <div className="modal-overlay" onClick={() => setSelectedTx(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <span className="modal-title">Transaction</span>
+                <button className="modal-close" onClick={() => setSelectedTx(null)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="modal-row"><span className="modal-label">Amount</span><span className="modal-value highlight">{selectedTx.amount < 1 ? selectedTx.amount.toFixed(6) : selectedTx.amount.toFixed(4)} BTC</span></div>
+                <div className="modal-row"><span className="modal-label">USD Value</span><span className="modal-value">{new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(selectedTx.amount * networkData.price)}</span></div>
+                <div className="modal-row">
+                  <span className="modal-label">Route</span>
+                  <div className="modal-route">
+                    <span>{selectedTx.fromCity}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    <span>{selectedTx.toCity}</span>
+                  </div>
+                </div>
+                <div className="modal-row"><span className="modal-label">Type</span><span className="modal-value">{selectedTx.type === 'whale' ? 'Whale' : selectedTx.type === 'large' ? 'Large' : 'Standard'}</span></div>
+                <div className="modal-row"><span className="modal-label">Hash</span><span className="modal-value hash">{selectedTx.hash}</span></div>
+              </div>
+              <div className="modal-footer">
+                <a href={`https://mempool.space/tx/${selectedTx.hash}`} target="_blank" rel="noopener noreferrer" className="modal-link">View on Mempool.space ↗</a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {selectedBlock && (
+          <div className="modal-overlay" onClick={() => setSelectedBlock(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <span className="modal-title">Block</span>
+                <button className="modal-close" onClick={() => setSelectedBlock(null)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="modal-row"><span className="modal-label">Height</span><span className="modal-value highlight">#{selectedBlock.height.toLocaleString()}</span></div>
+                <div className="modal-row"><span className="modal-label">Transactions</span><span className="modal-value">{selectedBlock.txCount.toLocaleString()}</span></div>
+                <div className="modal-row"><span className="modal-label">Mined</span><span className="modal-value">{fmtAgo(selectedBlock.timestamp * 1000)} ago</span></div>
+                <div className="modal-row"><span className="modal-label">Timestamp</span><span className="modal-value">{new Date(selectedBlock.timestamp * 1000).toLocaleString()}</span></div>
+                <div className="modal-row"><span className="modal-label">Hash</span><span className="modal-value hash">{selectedBlock.hash}</span></div>
+              </div>
+              <div className="modal-footer">
+                <a href={`https://mempool.space/block/${selectedBlock.hash}`} target="_blank" rel="noopener noreferrer" className="modal-link">View on Mempool.space ↗</a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <PriceAlertModal isOpen={showAlertModal} onClose={() => setShowAlertModal(false)} currentPrice={networkData.price} />
+        <NewsModal item={selectedNews} onClose={() => setSelectedNews(null)} isLightMode={isLightMode} />
       </div>
     </>
   );

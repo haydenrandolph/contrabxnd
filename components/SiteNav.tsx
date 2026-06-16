@@ -18,7 +18,6 @@ interface SiteNavProps {
 type NavLink = { href: string; label: string; comingSoon?: false } | { label: string; comingSoon: true; href?: undefined };
 
 const NAV_LINKS: NavLink[] = [
-  { href: '/dashboard', label: 'Dashboard' },
   { href: '/toolkit', label: 'Toolkit' },
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
