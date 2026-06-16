@@ -8,6 +8,10 @@ const anthropic = new Anthropic({
 
 const FREE_LIMIT = 5;
 const AUTH_LIMIT = 25;
+const MAX_MSG_LENGTH = 500;
+const THROTTLE_MS = 3_000;
+
+const lastRequestByIp = new Map<string, number>();
 
 interface SignalContext {
   score: { value: number | null; label: string; components: Record<string, unknown> } | null;
@@ -125,20 +129,44 @@ async function checkRateLimit(
   return { allowed: true, remaining: limit, isAuth, userId };
 }
 
+function jsonErr(msg: string, status: number) {
+  return new Response(JSON.stringify({ error: msg }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 export async function POST(request: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
-    return new Response(
-      JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return jsonErr('ANTHROPIC_API_KEY not configured', 500);
   }
 
-  const { messages } = await request.json();
+  const origin = request.headers.get('origin') || '';
+  const allowedOrigins = ['https://contrabxnd.io', 'https://www.contrabxnd.io', 'http://localhost:3000'];
+  if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
+    return jsonErr('Forbidden', 403);
+  }
+
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const now = Date.now();
+  const lastReq = lastRequestByIp.get(ip) || 0;
+  if (now - lastReq < THROTTLE_MS) {
+    return jsonErr('Too fast. Wait a moment.', 429);
+  }
+  lastRequestByIp.set(ip, now);
+
+  const body = await request.json();
+  const { messages, _hp } = body;
+
+  if (_hp) return jsonErr('Bad request', 400);
+
   if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return new Response(
-      JSON.stringify({ error: 'messages array required' }),
-      { status: 400, headers: { 'Content-Type': 'application/json' } }
-    );
+    return jsonErr('messages array required', 400);
+  }
+
+  const lastMsg = messages[messages.length - 1];
+  if (typeof lastMsg?.content === 'string' && lastMsg.content.length > MAX_MSG_LENGTH) {
+    return jsonErr(`Message too long (max ${MAX_MSG_LENGTH} chars)`, 400);
   }
 
   const rateCheck = await checkRateLimit(request);
@@ -146,10 +174,7 @@ export async function POST(request: NextRequest) {
     const msg = rateCheck.isAuth
       ? `Daily limit reached (${AUTH_LIMIT}/day). Resets at midnight UTC.`
       : `Free tier limit reached (${FREE_LIMIT}/day). Sign in for ${AUTH_LIMIT} daily messages.`;
-    return new Response(
-      JSON.stringify({ error: msg }),
-      { status: 429, headers: { 'Content-Type': 'application/json' } }
-    );
+    return jsonErr(msg, 429);
   }
 
   const baseUrl = request.nextUrl.origin;
