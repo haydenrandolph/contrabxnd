@@ -113,6 +113,7 @@ export default function TerminalPage() {
   const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [aiInput, setAiInput] = useState('');
   const [aiStreaming, setAiStreaming] = useState(false);
+  const [aiRemaining, setAiRemaining] = useState<number | null>(null);
   const aiScrollRef = useRef<HTMLDivElement>(null);
   const { isLightMode } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
@@ -392,6 +393,7 @@ export default function TerminalPage() {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Request failed' }));
+        if (res.status === 429) setAiRemaining(0);
         setAiMessages([...history, { role: 'assistant', content: err.error || 'Something went wrong.' }]);
         setAiStreaming(false);
         return;
@@ -422,6 +424,9 @@ export default function TerminalPage() {
                 updated[updated.length - 1] = { role: 'assistant', content: accumulated };
                 return updated;
               });
+            }
+            if (parsed.remaining !== undefined) {
+              setAiRemaining(parsed.remaining);
             }
           } catch { /* skip malformed lines */ }
         }
@@ -980,6 +985,16 @@ export default function TerminalPage() {
           50% { opacity: 0; }
         }
 
+        .ai-remaining {
+          padding: 6px 16px;
+          font-size: 9px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          text-align: center;
+          border-top: 1px solid var(--cb-border);
+        }
+
         .ai-input-bar {
           display: flex;
           gap: 0;
@@ -1440,20 +1455,27 @@ export default function TerminalPage() {
                         </div>
                       ))}
                     </div>
+                    {aiRemaining !== null && (
+                      <div className="ai-remaining">
+                        {aiRemaining === 0
+                          ? 'Daily limit reached'
+                          : `${aiRemaining} message${aiRemaining === 1 ? '' : 's'} remaining today`}
+                      </div>
+                    )}
                     <div className="ai-input-bar">
                       <input
                         className="ai-input"
                         type="text"
-                        placeholder="Ask the analyst..."
+                        placeholder={aiRemaining === 0 ? 'Limit reached — sign in for more' : 'Ask the analyst...'}
                         value={aiInput}
                         onChange={(e) => setAiInput(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter') sendAiMessage(); }}
-                        disabled={aiStreaming}
+                        disabled={aiStreaming || aiRemaining === 0}
                       />
                       <button
                         className="ai-send-btn"
                         onClick={sendAiMessage}
-                        disabled={aiStreaming || !aiInput.trim()}
+                        disabled={aiStreaming || !aiInput.trim() || aiRemaining === 0}
                       >
                         {aiStreaming ? '...' : '->'}
                       </button>
