@@ -105,11 +105,15 @@ export default function TerminalPage() {
   const [chartPair, setChartPair] = useState('usd');
   const [fearGreed, setFearGreed] = useState<FearGreedData>({ value: null, label: null });
   const [etfFlows, setEtfFlows] = useState<EtfFlowData | null>(null);
-  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'network'>('macro');
+  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'network' | 'ai'>('macro');
   const [signalData, setSignalData] = useState<SignalData | null>(null);
   const [fedwatchData, setFedwatchData] = useState<FedWatchData | null>(null);
   const [liquidityData, setLiquidityData] = useState<LiquidityData | null>(null);
   const [slrData, setSlrData] = useState<SlrData | null>(null);
+  const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiStreaming, setAiStreaming] = useState(false);
+  const aiScrollRef = useRef<HTMLDivElement>(null);
   const { isLightMode } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
@@ -369,6 +373,66 @@ export default function TerminalPage() {
   };
 
   const scoreBarWidth = (score: number): number => ((score + 100) / 200) * 100;
+
+  const sendAiMessage = useCallback(async () => {
+    const text = aiInput.trim();
+    if (!text || aiStreaming) return;
+    const userMsg = { role: 'user' as const, content: text };
+    const history = [...aiMessages, userMsg];
+    setAiMessages(history);
+    setAiInput('');
+    setAiStreaming(true);
+
+    try {
+      const res = await fetch('/api/ai/analyst', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: history }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Request failed' }));
+        setAiMessages([...history, { role: 'assistant', content: err.error || 'Something went wrong.' }]);
+        setAiStreaming(false);
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) { setAiStreaming(false); return; }
+      const decoder = new TextDecoder();
+      let accumulated = '';
+
+      setAiMessages([...history, { role: 'assistant', content: '' }]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6);
+          if (payload === '[DONE]') break;
+          try {
+            const parsed = JSON.parse(payload);
+            if (parsed.text) {
+              accumulated += parsed.text;
+              setAiMessages(prev => {
+                const updated = [...prev];
+                updated[updated.length - 1] = { role: 'assistant', content: accumulated };
+                return updated;
+              });
+            }
+          } catch { /* skip malformed lines */ }
+        }
+      }
+      setTimeout(() => aiScrollRef.current?.scrollTo({ top: aiScrollRef.current.scrollHeight, behavior: 'smooth' }), 50);
+    } catch {
+      setAiMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Try again.' }]);
+    } finally {
+      setAiStreaming(false);
+    }
+  }, [aiInput, aiMessages, aiStreaming]);
 
   return (
     <>
@@ -705,6 +769,9 @@ export default function TerminalPage() {
 
         .tab-content {
           min-height: 0;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
         }
 
         /* Macro rows */
@@ -797,6 +864,164 @@ export default function TerminalPage() {
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
+        }
+
+        /* ── AI Chat ── */
+
+        .ai-chat {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          min-height: 0;
+        }
+
+        .ai-messages {
+          flex: 1;
+          overflow-y: auto;
+          padding: 16px 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .ai-messages::-webkit-scrollbar { width: 4px; }
+        .ai-messages::-webkit-scrollbar-track { background: transparent; }
+        .ai-messages::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
+
+        .ai-welcome {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding: 24px 0;
+          gap: 12px;
+        }
+
+        .ai-welcome-title {
+          font-family: var(--cb-font-display);
+          font-size: 1.3rem;
+          color: var(--cb-text);
+        }
+
+        .ai-welcome-desc {
+          font-size: 11px;
+          color: var(--cb-text-muted);
+          line-height: 1.5;
+          max-width: 280px;
+        }
+
+        .ai-suggestions {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          width: 100%;
+          margin-top: 8px;
+        }
+
+        .ai-suggestion {
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 8px 12px;
+          font-family: var(--cb-font-mono);
+          font-size: 10px;
+          color: var(--cb-text-muted);
+          text-align: left;
+          cursor: pointer;
+          transition: border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .ai-suggestion:hover {
+          border-color: var(--cb-accent);
+          color: var(--cb-text);
+        }
+
+        .ai-msg {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .ai-msg-label {
+          font-size: 9px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+        }
+
+        .ai-msg-user .ai-msg-label {
+          color: var(--cb-accent);
+        }
+
+        .ai-msg-content {
+          font-size: 12px;
+          line-height: 1.6;
+          color: var(--cb-text);
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+
+        .ai-msg-user .ai-msg-content {
+          color: var(--cb-text-muted);
+        }
+
+        .ai-cursor {
+          display: inline-block;
+          width: 6px;
+          height: 12px;
+          background: var(--cb-accent);
+          margin-left: 2px;
+          animation: aiCursorBlink 0.8s step-end infinite;
+          vertical-align: text-bottom;
+        }
+
+        @keyframes aiCursorBlink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+
+        .ai-input-bar {
+          display: flex;
+          gap: 0;
+          border-top: 1px solid var(--cb-border);
+          flex-shrink: 0;
+        }
+
+        .ai-input {
+          flex: 1;
+          background: var(--cb-bg);
+          border: none;
+          padding: 12px 16px;
+          font-family: var(--cb-font-mono);
+          font-size: 12px;
+          color: var(--cb-text);
+          outline: none;
+        }
+
+        .ai-input::placeholder {
+          color: var(--cb-text-muted);
+        }
+
+        .ai-send-btn {
+          background: var(--cb-accent);
+          border: none;
+          color: #fff;
+          padding: 12px 16px;
+          font-family: var(--cb-font-mono);
+          font-size: 12px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: opacity 0.15s ease;
+          letter-spacing: 0.05em;
+        }
+
+        .ai-send-btn:hover:not(:disabled) {
+          opacity: 0.88;
+        }
+
+        .ai-send-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
         }
 
         /* ── Status bar ── */
@@ -1004,6 +1229,12 @@ export default function TerminalPage() {
                 >
                   Network
                 </button>
+                <button
+                  className={`sidebar-tab-btn ${sidebarTab === 'ai' ? 'active' : ''}`}
+                  onClick={() => setSidebarTab('ai')}
+                >
+                  AI
+                </button>
               </div>
 
               {/* 4. Tab content */}
@@ -1176,9 +1407,60 @@ export default function TerminalPage() {
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Feed moved into FLOWS tab */}
+                {sidebarTab === 'ai' && (
+                  <div className="ai-chat">
+                    <div className="ai-messages" ref={aiScrollRef}>
+                      {aiMessages.length === 0 && (
+                        <div className="ai-welcome">
+                          <div className="ai-welcome-title">Contrabxnd Analyst</div>
+                          <div className="ai-welcome-desc">Ask about market signals, macro conditions, ETF flows, or on-chain data.</div>
+                          <div className="ai-suggestions">
+                            {[
+                              'What is the current market signal?',
+                              'Break down the Contrabxnd Score',
+                              'What are ETF flows telling us?',
+                              'How is net liquidity trending?',
+                            ].map((q) => (
+                              <button
+                                key={q}
+                                className="ai-suggestion"
+                                onClick={() => { setAiInput(q); }}
+                              >
+                                {q}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {aiMessages.map((msg, i) => (
+                        <div key={i} className={`ai-msg ai-msg-${msg.role}`}>
+                          <div className="ai-msg-label">{msg.role === 'user' ? 'YOU' : 'ANALYST'}</div>
+                          <div className="ai-msg-content">{msg.content}{aiStreaming && i === aiMessages.length - 1 && msg.role === 'assistant' ? <span className="ai-cursor" /> : null}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="ai-input-bar">
+                      <input
+                        className="ai-input"
+                        type="text"
+                        placeholder="Ask the analyst..."
+                        value={aiInput}
+                        onChange={(e) => setAiInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') sendAiMessage(); }}
+                        disabled={aiStreaming}
+                      />
+                      <button
+                        className="ai-send-btn"
+                        onClick={sendAiMessage}
+                        disabled={aiStreaming || !aiInput.trim()}
+                      >
+                        {aiStreaming ? '...' : '->'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
