@@ -30,13 +30,13 @@ const TOOLS: ToolCard[] = [
     href: '/toolkit/time-machine',
   },
   {
-    title: ‘Indexer’,
-    description: ‘Query and analyze the blockchain through Contrabxnd’s Bitcoin node.’,
+    title: "Indexer",
+    description: "Query and analyze the blockchain through the Contrabxnd Bitcoin node.",
     comingSoon: true,
   },
   {
-    title: ‘Lightning Channel’,
-    description: ‘Open a Lightning channel with Contrabxnd’s node for instant payments.’,
+    title: "Lightning Channel",
+    description: "Open a Lightning channel with the Contrabxnd node for instant payments.",
     comingSoon: true,
   },
 ];
