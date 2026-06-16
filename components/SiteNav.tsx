@@ -18,7 +18,6 @@ interface SiteNavProps {
 type NavLink = { href: string; label: string; comingSoon?: false } | { label: string; comingSoon: true; href?: undefined };
 
 const NAV_LINKS: NavLink[] = [
-  { href: '/dashboard', label: 'Dashboard' },
   { href: '/toolkit', label: 'Toolkit' },
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
@@ -48,68 +47,57 @@ export default function SiteNav({
           top: 0;
           left: 0;
           right: 0;
-          padding: 1.25rem 3rem;
+          height: 48px;
+          padding: 0 48px;
           display: flex;
           justify-content: space-between;
           align-items: center;
           z-index: 100;
-          background: rgba(10, 10, 10, 0.85);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(58, 58, 58, 0.3);
+          background: #0a0a0a;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
           font-family: 'Space Mono', monospace;
-          font-size: 11px;
-          line-height: 1.4;
+          font-size: 10px;
+          line-height: 1;
         }
         .site-nav.light {
-          background: rgba(245, 243, 240, 0.85);
-          border-bottom-color: rgba(200, 196, 188, 0.5);
+          background: #f5f3f0;
+          border-bottom-color: rgba(0, 0, 0, 0.08);
         }
         .site-nav.blend {
-          border-bottom-color: transparent;
-        }
-        .site-nav.blend:not(.light) {
-          background: rgba(10, 10, 10, 0.6);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          background: rgba(10, 10, 10, 0.95);
         }
         .site-nav.blend.light {
-          background: rgba(245, 243, 240, 0.8);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
+          background: rgba(245, 243, 240, 0.95);
         }
 
         .logo-link {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 10px;
           text-decoration: none;
-          color: #f5f3f0;
+          color: #e8e4dc;
         }
         .site-nav.light .logo-link,
         .site-nav.light .back-link {
           color: #0a0a0a;
         }
-        .site-nav.blend:not(.light) .logo-link {
-          color: #f5f3f0;
-        }
         .logo-text {
           font-family: 'Space Mono', monospace;
-          font-size: 11px;
-          letter-spacing: 0.3em;
+          font-size: 10px;
+          letter-spacing: 0.2em;
           text-transform: uppercase;
         }
 
         .back-link {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 8px;
           text-decoration: none;
-          color: #f5f3f0;
-          font-size: 11px;
-          letter-spacing: 0.1em;
+          color: #e8e4dc;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          transition: color 0.2s ease;
+          transition: color 0.15s ease;
         }
         .back-link:hover {
           color: #F7931A;
@@ -120,69 +108,58 @@ export default function SiteNav({
           left: 50%;
           transform: translateX(-50%);
           display: flex;
-          gap: 2.5rem;
+          gap: 32px;
         }
         .nav-links a,
         .nav-links span {
-          color: #f5f3f0;
+          color: #6a6a6a;
           text-decoration: none;
-          font-size: 11px;
-          letter-spacing: 0.15em;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          position: relative;
-          padding: 0.25rem 0;
+          padding: 16px 0;
+          transition: color 0.15s ease;
+        }
+        .nav-links a:hover {
+          color: #e8e4dc;
+        }
+        .nav-links a.active {
+          color: #F7931A;
         }
         .site-nav.light .nav-links a,
         .site-nav.light .nav-links span {
+          color: #6a6a6a;
+        }
+        .site-nav.light .nav-links a:hover {
           color: #0a0a0a;
         }
-        .site-nav.blend:not(.light) .nav-links a,
-        .site-nav.blend:not(.light) .nav-links span {
-          color: #f5f3f0;
+        .site-nav.light .nav-links a.active {
+          color: #F7931A;
         }
-        .nav-links a::after {
-          content: '';
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          width: 0;
-          height: 1px;
-          background: #F7931A;
-          transition: width 0.3s ease;
-        }
-        .nav-links a:hover::after,
-        .nav-links a.active::after {
-          width: 100%;
-        }
-        .nav-links span.coming-soon,
-        .nav-links a.coming-soon {
-          text-decoration: line-through;
-          opacity: 0.5;
+        .nav-links span.coming-soon {
+          opacity: 0.3;
           cursor: not-allowed;
-        }
-        .nav-links span.coming-soon:hover::after,
-        .nav-links a.coming-soon:hover::after {
-          width: 0;
+          text-decoration: line-through;
         }
 
         .nav-right {
           display: flex;
           align-items: center;
-          gap: 1.5rem;
+          gap: 24px;
         }
 
         .live-indicator {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 6px;
           font-size: 10px;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #8a8a8a;
+          color: #6a6a6a;
         }
         .live-dot {
-          width: 8px;
-          height: 8px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
           animation: livePulse 2s ease infinite;
         }
@@ -196,8 +173,8 @@ export default function SiteNav({
           flex-direction: column;
           justify-content: center;
           align-items: center;
-          width: 44px;
-          height: 44px;
+          width: 40px;
+          height: 40px;
           background: transparent;
           border: none;
           cursor: pointer;
@@ -206,23 +183,23 @@ export default function SiteNav({
         }
         .mobile-menu-btn span {
           display: block;
-          width: 24px;
-          height: 2px;
-          background: #f5f3f0;
-          transition: all 0.3s ease;
+          width: 20px;
+          height: 1px;
+          background: #e8e4dc;
+          transition: all 0.2s ease;
           margin: 3px 0;
         }
         .site-nav.light .mobile-menu-btn span {
           background: #0a0a0a;
         }
         .mobile-menu-btn.open span:nth-child(1) {
-          transform: rotate(45deg) translate(5px, 5px);
+          transform: rotate(45deg) translate(4px, 4px);
         }
         .mobile-menu-btn.open span:nth-child(2) {
           opacity: 0;
         }
         .mobile-menu-btn.open span:nth-child(3) {
-          transform: rotate(-45deg) translate(6px, -6px);
+          transform: rotate(-45deg) translate(5px, -5px);
         }
 
         .mobile-overlay {
@@ -239,10 +216,10 @@ export default function SiteNav({
           align-items: center;
           opacity: 0;
           visibility: hidden;
-          transition: opacity 0.3s ease, visibility 0.3s ease;
+          transition: opacity 0.2s ease, visibility 0.2s ease;
         }
         .mobile-overlay.light {
-          background: #e8e4dc;
+          background: #f5f3f0;
         }
         .mobile-overlay.open {
           opacity: 1;
@@ -252,7 +229,7 @@ export default function SiteNav({
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 2rem;
+          gap: 32px;
         }
         .mobile-nav a {
           font-family: 'Cormorant Garamond', serif;
@@ -260,8 +237,8 @@ export default function SiteNav({
           color: #e8e4dc;
           text-decoration: none;
           text-transform: uppercase;
-          letter-spacing: 0.1em;
-          transition: color 0.3s ease;
+          letter-spacing: 0.08em;
+          transition: color 0.15s ease;
         }
         .mobile-overlay.light .mobile-nav a {
           color: #0a0a0a;
@@ -271,12 +248,12 @@ export default function SiteNav({
         }
         .mobile-nav a.coming-soon {
           text-decoration: line-through;
-          opacity: 0.5;
+          opacity: 0.3;
         }
 
         @media (max-width: 768px) {
           .site-nav {
-            padding: 1rem 1.5rem;
+            padding: 0 24px;
           }
           .nav-links {
             display: none;
@@ -290,14 +267,14 @@ export default function SiteNav({
       <nav className={`site-nav${light}${blendMode ? ' blend' : ''}`}>
         {backLink ? (
           <Link href={backLink.href} className="back-link">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             {backLink.label}
           </Link>
         ) : (
           <Link href="/" className="logo-link">
-            <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={40} height={40} />
+            <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={28} height={28} />
             <span className="logo-text">Contra₿and</span>
           </Link>
         )}

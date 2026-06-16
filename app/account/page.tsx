@@ -164,80 +164,60 @@ export default function AccountPage() {
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
 
         .account-page {
-          background: #0a0a0a;
-          color: #e8e4dc;
+          background: var(--cb-bg);
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
+          font-size: 13px;
           min-height: 100vh;
         }
 
-        .account-page.light-mode {
-          background: #e8e4dc;
-          color: #0a0a0a;
-        }
-
-        .account-page::before {
-          content: '';
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-          opacity: 0.03;
-          pointer-events: none;
-          z-index: 1000;
-        }
-
         .account-container {
-          padding: 10rem 3rem 4rem;
+          padding: 10rem 48px 64px;
           max-width: 900px;
           margin: 0 auto;
         }
 
         .account-header {
-          margin-bottom: 3rem;
+          margin-bottom: 48px;
         }
 
         .account-label {
           font-size: 10px;
-          letter-spacing: 0.4em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           color: #F7931A;
-          margin-bottom: 1rem;
+          margin-bottom: 16px;
         }
 
         .account-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2.5rem;
           font-weight: 400;
-          margin-bottom: 0.5rem;
+          letter-spacing: -0.02em;
+          margin-bottom: 8px;
         }
 
         .account-email {
-          color: #8a8a8a;
-          font-size: 14px;
+          color: var(--cb-text-muted);
+          font-size: 13px;
         }
 
         .account-section {
-          background: #141414;
-          border: 1px solid #1a1a1a;
-          padding: 2rem;
-          margin-bottom: 2rem;
-        }
-
-        .account-page.light-mode .account-section {
-          background: #f5f3f0;
-          border-color: #d8d4cc;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          padding: 32px;
+          margin-bottom: 32px;
         }
 
         .section-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.5rem;
           font-weight: 400;
-          margin-bottom: 1.5rem;
+          margin-bottom: 24px;
           display: flex;
           align-items: center;
-          gap: 1rem;
+          gap: 16px;
         }
 
         .section-icon {
@@ -247,12 +227,8 @@ export default function AccountPage() {
         }
 
         .course-progress-item {
-          padding: 1.5rem 0;
-          border-bottom: 1px solid #1a1a1a;
-        }
-
-        .account-page.light-mode .course-progress-item {
-          border-bottom-color: #d8d4cc;
+          padding: 24px 0;
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .course-progress-item:last-child {
@@ -265,7 +241,7 @@ export default function AccountPage() {
         }
 
         .course-title {
-          font-size: 14px;
+          font-size: 13px;
           margin-bottom: 0.75rem;
           font-weight: 700;
         }
@@ -273,12 +249,12 @@ export default function AccountPage() {
         .course-link {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-          margin-top: 1rem;
+          gap: 8px;
+          margin-top: 16px;
           font-size: 12px;
           color: #F7931A;
           text-decoration: none;
-          transition: opacity 0.2s ease;
+          transition: opacity 0.15s ease;
         }
 
         .course-link:hover {
@@ -292,34 +268,35 @@ export default function AccountPage() {
 
         .not-logged-in {
           text-align: center;
-          padding: 4rem 2rem;
+          padding: 64px 32px;
         }
 
         .not-logged-in h2 {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 2rem;
-          margin-bottom: 1rem;
+          margin-bottom: 16px;
         }
 
         .not-logged-in p {
-          color: #8a8a8a;
-          margin-bottom: 2rem;
+          color: var(--cb-text-muted);
+          margin-bottom: 32px;
         }
 
         .sign-in-btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 1rem 2rem;
+          gap: 8px;
+          padding: 16px 32px;
           background: #F7931A;
           border: none;
+          border-radius: 2px;
           color: #fff;
           font-family: 'Space Mono', monospace;
           font-size: 12px;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          transition: background 0.2s ease;
+          transition: background 0.15s ease;
         }
 
         .sign-in-btn:hover {
@@ -328,28 +305,29 @@ export default function AccountPage() {
 
         .empty-state {
           text-align: center;
-          padding: 2rem;
-          color: #8a8a8a;
+          padding: 32px;
+          color: var(--cb-text-muted);
         }
 
         .empty-state p {
-          margin-bottom: 1rem;
+          margin-bottom: 16px;
         }
 
         .start-learning-btn {
           display: inline-flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0.75rem 1.5rem;
+          gap: 8px;
+          padding: 12px 24px;
           background: transparent;
           border: 1px solid #F7931A;
+          border-radius: 2px;
           color: #F7931A;
           font-family: 'Space Mono', monospace;
           font-size: 11px;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
           text-decoration: none;
-          transition: all 0.2s ease;
+          transition: background 0.15s ease, color 0.15s ease;
         }
 
         .start-learning-btn:hover {
@@ -366,13 +344,9 @@ export default function AccountPage() {
         .bookmark-item {
           display: flex;
           align-items: center;
-          gap: 1rem;
-          padding: 1rem 0;
-          border-bottom: 1px solid #1a1a1a;
-        }
-
-        .account-page.light-mode .bookmark-item {
-          border-bottom-color: #d8d4cc;
+          gap: 16px;
+          padding: 16px 0;
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .bookmark-item:last-child {
@@ -386,24 +360,21 @@ export default function AccountPage() {
 
         .bookmark-badge {
           font-size: 9px;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          padding: 0.25rem 0.5rem;
+          padding: 4px 8px;
           border: 1px solid #F7931A;
+          border-radius: 2px;
           color: #F7931A;
           flex-shrink: 0;
         }
 
         .bookmark-link {
-          color: #e8e4dc;
+          color: var(--cb-text);
           text-decoration: none;
-          font-size: 14px;
-          transition: color 0.2s ease;
+          font-size: 13px;
+          transition: color 0.15s ease;
           flex: 1;
-        }
-
-        .account-page.light-mode .bookmark-link {
-          color: #0a0a0a;
         }
 
         .bookmark-link:hover {
@@ -412,7 +383,7 @@ export default function AccountPage() {
 
         .bookmark-date {
           font-size: 11px;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           flex-shrink: 0;
         }
 
@@ -423,12 +394,8 @@ export default function AccountPage() {
         }
 
         .highlight-item {
-          padding: 1.25rem 0;
-          border-bottom: 1px solid #1a1a1a;
-        }
-
-        .account-page.light-mode .highlight-item {
-          border-bottom-color: #d8d4cc;
+          padding: 20px 0;
+          border-bottom: 1px solid var(--cb-border);
         }
 
         .highlight-item:last-child {
@@ -441,33 +408,29 @@ export default function AccountPage() {
         }
 
         .highlight-text {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
           font-size: 1.1rem;
           font-style: italic;
           line-height: 1.6;
-          color: #e8e4dc;
+          color: var(--cb-text);
           border-left: 3px solid #F7931A;
-          padding-left: 1rem;
-          margin: 0 0 0.75rem;
-        }
-
-        .account-page.light-mode .highlight-text {
-          color: #0a0a0a;
+          padding-left: 16px;
+          margin: 0 0 12px;
         }
 
         .highlight-source {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
+          gap: 8px;
           font-size: 11px;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
         }
 
         .highlight-source-link {
           color: #F7931A;
           text-decoration: none;
           font-size: 11px;
-          transition: opacity 0.2s ease;
+          transition: opacity 0.15s ease;
         }
 
         .highlight-source-link:hover {
@@ -476,24 +439,21 @@ export default function AccountPage() {
 
         .highlight-source-badge {
           font-size: 9px;
-          letter-spacing: 0.2em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          padding: 0.15rem 0.4rem;
-          border: 1px solid #3a3a3a;
-          color: #8a8a8a;
-        }
-
-        .account-page.light-mode .highlight-source-badge {
-          border-color: #c8c4bc;
+          padding: 2px 6px;
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          color: var(--cb-text-muted);
         }
 
         @media (max-width: 768px) {
           .account-container {
-            padding: 8rem 2rem 4rem;
+            padding: 8rem 32px 64px;
           }
 
           .account-section {
-            padding: 1.5rem;
+            padding: 24px;
           }
         }
       `}</style>

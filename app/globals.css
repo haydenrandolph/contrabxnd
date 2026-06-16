@@ -10,6 +10,25 @@
   --contraband-rust: #F7931A;
   --contraband-rust-light: #ff6600;
   --contraband-white: #f5f3f0;
+
+  /* Design system — Anduril/Palantir inspired */
+  --cb-bg: #0a0a0a;
+  --cb-surface: #111111;
+  --cb-border: rgba(255, 255, 255, 0.08);
+  --cb-text: #e8e4dc;
+  --cb-text-muted: #6a6a6a;
+  --cb-accent: #F7931A;
+  --cb-radius: 2px;
+  --cb-font-display: 'Cormorant Garamond', serif;
+  --cb-font-mono: 'Space Mono', monospace;
+}
+
+html.light-mode {
+  --cb-bg: #f5f3f0;
+  --cb-surface: #ffffff;
+  --cb-border: rgba(0, 0, 0, 0.08);
+  --cb-text: #0a0a0a;
+  --cb-text-muted: #6a6a6a;
 }
 
 @theme inline {
@@ -22,12 +41,13 @@
 }
 
 body {
-  background: var(--contraband-black);
-  color: var(--contraband-cream);
-  font-family: 'Space Mono', monospace;
-  font-size: 14px;
-  line-height: 1.7;
+  background: var(--cb-bg);
+  color: var(--cb-text);
+  font-family: var(--cb-font-mono);
+  font-size: 13px;
+  line-height: 1.6;
   transition: opacity 0.4s ease, background 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
 }
 
 body.ready {
@@ -39,8 +59,8 @@ body.ready {
    Keep the body in sync so light mode doesn't leak the dark background at
    page edges / iOS overscroll. */
 html.light-mode body {
-  background: var(--contraband-white);
-  color: var(--contraband-black);
+  background: var(--cb-bg);
+  color: var(--cb-text);
 }
 
 .contraband-page,

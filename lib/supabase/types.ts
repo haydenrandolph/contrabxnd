@@ -96,6 +96,85 @@ export interface Database {
           created_at?: string;
         };
       };
+      etf_snapshots: {
+        Row: {
+          id: string;
+          ticker: string;
+          date: string;
+          fund_name: string;
+          nav_per_share: number;
+          shares_outstanding: number;
+          total_net_assets: number;
+          market_price: number | null;
+          volume: number | null;
+          premium_discount: number | null;
+          source: string;
+          raw_data: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ticker: string;
+          date: string;
+          fund_name: string;
+          nav_per_share: number;
+          shares_outstanding: number;
+          total_net_assets: number;
+          market_price?: number | null;
+          volume?: number | null;
+          premium_discount?: number | null;
+          source: string;
+          raw_data?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          ticker?: string;
+          date?: string;
+          fund_name?: string;
+          nav_per_share?: number;
+          shares_outstanding?: number;
+          total_net_assets?: number;
+          market_price?: number | null;
+          volume?: number | null;
+          premium_discount?: number | null;
+          source?: string;
+          raw_data?: Json;
+          created_at?: string;
+        };
+      };
+      fedwatch_snapshots: {
+        Row: {
+          id: string;
+          date: string;
+          current_rate: number;
+          target_lower: number;
+          target_upper: number;
+          meetings: Json;
+          sources: string[];
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          date: string;
+          current_rate: number;
+          target_lower: number;
+          target_upper: number;
+          meetings: Json;
+          sources: string[];
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          date?: string;
+          current_rate?: number;
+          target_lower?: number;
+          target_upper?: number;
+          meetings?: Json;
+          sources?: string[];
+          created_at?: string;
+        };
+      };
       push_subscriptions: {
         Row: {
           id: string;
@@ -130,3 +209,5 @@ export type Profile = Database['public']['Tables']['profiles']['Row'];
 export type LessonProgress = Database['public']['Tables']['lesson_progress']['Row'];
 export type PriceAlert = Database['public']['Tables']['price_alerts']['Row'];
 export type PushSubscription = Database['public']['Tables']['push_subscriptions']['Row'];
+export type EtfSnapshot = Database['public']['Tables']['etf_snapshots']['Row'];
+export type FedWatchSnapshot = Database['public']['Tables']['fedwatch_snapshots']['Row'];

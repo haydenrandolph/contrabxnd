@@ -91,12 +91,12 @@ export default function PurchasingPowerComparison({
     }
   };
 
-  const cardBg = isLightMode ? '#ffffff' : '#141414';
-  const textPrimary = isLightMode ? '#0a0a0a' : '#e5e5e5';
-  const textSecondary = isLightMode ? '#555555' : '#8a8a8a';
-  const inputBg = isLightMode ? '#f5f5f5' : '#1a1a1a';
-  const inputBorder = isLightMode ? '#d0d0d0' : '#333333';
-  const containerBg = isLightMode ? '#f0f0f0' : '#0a0a0a';
+  const cardBg = 'var(--cb-surface)';
+  const textPrimary = 'var(--cb-text)';
+  const textSecondary = 'var(--cb-text-muted)';
+  const inputBg = 'var(--cb-bg)';
+  const inputBorder = 'var(--cb-border)';
+  const containerBg = 'var(--cb-bg)';
 
   return (
     <>
@@ -106,12 +106,12 @@ export default function PurchasingPowerComparison({
           max-width: 640px;
           margin: 0 auto;
           background: ${containerBg};
-          border-radius: 12px;
+          border-radius: 2px;
           padding: 2rem;
         }
 
         .ppc-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.5rem;
           color: ${textPrimary};
           margin: 0 0 1.5rem;
@@ -133,28 +133,29 @@ export default function PurchasingPowerComparison({
         }
 
         .ppc-label {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.08em;
           color: ${textSecondary};
         }
 
         .ppc-input {
-          font-family: 'Space Mono', monospace;
-          font-size: 14px;
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
           padding: 0.5rem 0.75rem;
           border: 1px solid ${inputBorder};
-          border-radius: 6px;
+          border-radius: 2px;
           background: ${inputBg};
           color: ${textPrimary};
           outline: none;
           width: 100%;
           box-sizing: border-box;
+          transition: border-color 0.15s ease;
         }
 
         .ppc-input:focus {
-          border-color: #F7931A;
+          border-color: var(--cb-accent);
         }
 
         .ppc-amount-wrapper {
@@ -166,8 +167,8 @@ export default function PurchasingPowerComparison({
           left: 0.75rem;
           top: 50%;
           transform: translateY(-50%);
-          font-family: 'Space Mono', monospace;
-          font-size: 14px;
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
           color: ${textSecondary};
           pointer-events: none;
         }
@@ -177,18 +178,18 @@ export default function PurchasingPowerComparison({
         }
 
         .ppc-btn {
-          font-family: 'Space Mono', monospace;
-          font-size: 13px;
+          font-family: var(--cb-font-mono);
+          font-size: 10px;
           font-weight: 700;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.08em;
           padding: 0.5rem 1.5rem;
-          background: #F7931A;
+          background: var(--cb-accent);
           color: #ffffff;
-          border: none;
-          border-radius: 6px;
+          border: 1px solid var(--cb-accent);
+          border-radius: 2px;
           cursor: pointer;
-          transition: opacity 0.15s;
+          transition: opacity 0.15s ease;
           white-space: nowrap;
         }
 
@@ -202,7 +203,7 @@ export default function PurchasingPowerComparison({
         }
 
         .ppc-results-header {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-style: italic;
           font-size: 1.25rem;
           color: ${textPrimary};
@@ -227,32 +228,32 @@ export default function PurchasingPowerComparison({
         .ppc-card {
           flex: 1;
           background: ${cardBg};
-          border-radius: 8px;
+          border-radius: 2px;
           padding: 1.25rem;
         }
 
         .ppc-card-then {
-          border-left: 3px solid #8a8a8a;
+          border-left: 3px solid var(--cb-text-muted);
         }
 
         .ppc-card-now {
-          border-left: 3px solid #F7931A;
+          border-left: 3px solid var(--cb-accent);
         }
 
         .ppc-card-label {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.08em;
           color: ${textSecondary};
           margin: 0 0 1rem;
         }
 
         .ppc-row-label {
-          font-family: 'Space Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.08em;
           color: ${textSecondary};
           margin: 0.75rem 0 0.125rem;
         }
@@ -262,7 +263,7 @@ export default function PurchasingPowerComparison({
         }
 
         .ppc-value {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.5rem;
           color: ${textPrimary};
           margin: 0;
@@ -270,23 +271,23 @@ export default function PurchasingPowerComparison({
         }
 
         .ppc-value-sats {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.5rem;
-          color: #F7931A;
+          color: var(--cb-accent);
           margin: 0;
           line-height: 1.2;
         }
 
         .ppc-banner {
           margin-top: 1rem;
-          background: #F7931A;
-          border-radius: 8px;
+          background: var(--cb-accent);
+          border-radius: 2px;
           padding: 1.25rem;
           text-align: center;
         }
 
         .ppc-banner-multiplier {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: var(--cb-font-display);
           font-size: 2.5rem;
           font-weight: 700;
           color: #ffffff;
@@ -295,40 +296,26 @@ export default function PurchasingPowerComparison({
         }
 
         .ppc-banner-desc {
-          font-family: 'Space Mono', monospace;
-          font-size: 12px;
+          font-family: var(--cb-font-mono);
+          font-size: 13px;
           color: #ffffff;
           margin: 0.375rem 0 0;
           opacity: 0.92;
         }
 
-        /* Skeleton shimmer */
+        /* Skeleton */
         .ppc-skeleton {
           position: relative;
           overflow: hidden;
-          border-radius: 8px;
+          border-radius: 2px;
           background: ${cardBg};
-        }
-
-        .ppc-skeleton::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(
-            90deg,
-            transparent 0%,
-            ${isLightMode ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)'} 50%,
-            transparent 100%
-          );
-          animation: ppc-shimmer 1.5s infinite;
+          animation: ppc-shimmer 1.5s ease-in-out infinite;
         }
 
         @keyframes ppc-shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+          0% { opacity: 0.5; }
+          50% { opacity: 1; }
+          100% { opacity: 0.5; }
         }
 
         .ppc-skeleton-cards {

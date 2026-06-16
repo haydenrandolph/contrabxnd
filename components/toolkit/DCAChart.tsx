@@ -128,11 +128,11 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
 
   const handlePointerLeave = useCallback(() => setHoverIndex(null), []);
 
-  const gridColor = isLightMode ? '#e0dcd4' : '#1a1a1a';
-  const axisColor = isLightMode ? '#5a5a5a' : '#5a5a5a';
-  const tooltipBg = isLightMode ? '#ffffff' : '#141414';
-  const tooltipBorder = isLightMode ? '#d0ccc4' : '#3a3a3a';
-  const tooltipText = isLightMode ? '#0a0a0a' : '#e8e4dc';
+  const gridColor = 'var(--cb-border)';
+  const axisColor = 'var(--cb-text-muted)';
+  const tooltipBg = 'var(--cb-surface)';
+  const tooltipBorder = 'var(--cb-border)';
+  const tooltipText = 'var(--cb-text)';
 
   const gradientId = 'dca-value-gradient';
 
@@ -147,8 +147,8 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="rgba(247,147,26,0.2)" />
-            <stop offset="100%" stopColor="rgba(247,147,26,0)" />
+            <stop offset="0%" stopColor="rgba(247,147,26,0.08)" />
+            <stop offset="100%" stopColor="rgba(247,147,26,0.08)" />
           </linearGradient>
         </defs>
 
@@ -200,12 +200,12 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
 
         {/* Invested line */}
         {investedPath && (
-          <path d={investedPath} fill="none" stroke="#8a8a8a" strokeWidth={1.5} />
+          <path d={investedPath} fill="none" stroke="var(--cb-text-muted)" strokeWidth={1.5} />
         )}
 
         {/* Value line */}
         {valuePath && (
-          <path d={valuePath} fill="none" stroke="#F7931A" strokeWidth={2} />
+          <path d={valuePath} fill="none" stroke="var(--cb-accent)" strokeWidth={2} />
         )}
 
         {/* Hover crosshair + tooltip */}
@@ -225,12 +225,12 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
                 y1={PT}
                 x2={cx}
                 y2={H - PB}
-                stroke={isLightMode ? '#b0ada6' : '#3a3a3a'}
+                stroke="var(--cb-border)"
                 strokeWidth={1}
                 strokeDasharray="4 3"
               />
-              <circle cx={cx} cy={toY(pt.value)} r={4} fill="#F7931A" />
-              <circle cx={cx} cy={toY(pt.invested)} r={3} fill="#8a8a8a" />
+              <circle cx={cx} cy={toY(pt.value)} r={4} fill="var(--cb-accent)" />
+              <circle cx={cx} cy={toY(pt.invested)} r={3} fill="var(--cb-text-muted)" />
 
               {/* Tooltip */}
               <rect
@@ -238,7 +238,7 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
                 y={ty}
                 width={tooltipW}
                 height={tooltipH}
-                rx={4}
+                rx={2}
                 fill={tooltipBg}
                 stroke={tooltipBorder}
                 strokeWidth={1}
@@ -254,7 +254,7 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
               <text
                 x={tx + 10}
                 y={ty + 34}
-                fill="#8a8a8a"
+                fill="var(--cb-text-muted)"
                 style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px' }}
               >
                 Invested: {formatUSD(pt.invested)}
@@ -262,7 +262,7 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
               <text
                 x={tx + 10}
                 y={ty + 52}
-                fill="#F7931A"
+                fill="var(--cb-accent)"
                 style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px' }}
               >
                 Value: {formatUSD(pt.value)}

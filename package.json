@@ -17,6 +17,7 @@
     "@types/leaflet": "^1.9.21",
     "@types/mdx": "^2.0.13",
     "@vnedyalk0v/react19-simple-maps": "^1.2.1",
+    "cheerio": "^1.2.0",
     "framer-motion": "^12.23.24",
     "gray-matter": "^4.0.3",
     "leaflet": "^1.9.4",

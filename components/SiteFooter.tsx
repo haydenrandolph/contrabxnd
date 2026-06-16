@@ -25,15 +25,12 @@ export default function SiteFooter({ variant = 'standard', className }: SiteFoot
 
   return (
     <>
-      <style jsx>{`
+      <style jsx global>{`
         .site-footer {
-          padding: 4rem 3rem;
-          border-top: 1px solid #1a1a1a;
+          padding: 48px;
+          border-top: 1px solid var(--cb-border);
           max-width: 1400px;
           margin: 0 auto;
-        }
-        .site-footer.light {
-          border-top-color: #d0ccc4;
         }
         .footer-content {
           display: flex;
@@ -43,32 +40,36 @@ export default function SiteFooter({ variant = 'standard', className }: SiteFoot
         .footer-left {
           display: flex;
           align-items: center;
-          gap: 2rem;
+          gap: 16px;
         }
         .footer-copy {
-          font-size: 12px;
-          color: #8a8a8a;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          color: var(--cb-text-muted);
         }
         .footer-links {
           display: flex;
-          gap: 2rem;
+          gap: 24px;
         }
         .footer-links a {
-          font-size: 11px;
-          letter-spacing: 0.15em;
+          font-size: 10px;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #8a8a8a;
+          color: var(--cb-text-muted);
           text-decoration: none;
-          transition: color 0.3s ease;
+          transition: color 0.15s ease;
         }
         .footer-links a:hover {
           color: #F7931A;
         }
 
         @media (max-width: 768px) {
+          .site-footer {
+            padding: 32px 24px;
+          }
           .footer-content {
             flex-direction: column;
-            gap: 2rem;
+            gap: 24px;
             text-align: center;
           }
           .footer-left {
@@ -77,17 +78,17 @@ export default function SiteFooter({ variant = 'standard', className }: SiteFoot
         }
       `}</style>
 
-      <footer className={`site-footer${isLightMode ? ' light' : ''}${className ? ` ${className}` : ''}`}>
+      <footer className={`site-footer${className ? ` ${className}` : ''}`}>
         <div className="footer-content">
           <div className="footer-left">
-            <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={32} height={32} />
-            <span className="footer-copy">© 2025–2026 Contraband. All rights reserved.</span>
+            <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={24} height={24} />
+            <span className="footer-copy">© 2025–2026 Contraband</span>
           </div>
           <div className="footer-links">
             {links.map((link) => (
-              <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer">{link.label}</a>
+              <a key={link.label} href={link.href} target="_blank" rel="noopener noreferrer">{link.label} ↗</a>
             ))}
-            <a style={{ textDecoration: 'line-through', opacity: 0.5, cursor: 'not-allowed' }} aria-disabled="true" aria-label="RSS — coming soon">RSS</a>
+            <a style={{ textDecoration: 'line-through', opacity: 0.3, cursor: 'not-allowed' }} aria-disabled="true" aria-label="RSS — coming soon">RSS</a>
           </div>
         </div>
       </footer>
