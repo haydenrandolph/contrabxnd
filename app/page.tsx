@@ -356,13 +356,12 @@ export default function TerminalPage() {
 
   const skel = (w: string) => <span className="skeleton" style={{ width: w, height: '1em', display: 'inline-block' }} />;
 
-  const fmtTrillion = (n: number | null | undefined) => {
-    if (n == null) return '—';
-    const abs = Math.abs(n);
-    if (abs >= 1e12) return `$${(n / 1e12).toFixed(1)}T`;
-    if (abs >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
-    if (abs >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
-    return `$${n.toFixed(0)}`;
+  const fmtTrillion = (millions: number | null | undefined) => {
+    if (millions == null) return '—';
+    const abs = Math.abs(millions);
+    if (abs >= 1e6) return `$${(millions / 1e6).toFixed(1)}T`;
+    if (abs >= 1e3) return `$${(millions / 1e3).toFixed(0)}B`;
+    return `$${millions.toFixed(0)}M`;
   };
 
   const scoreLabel = (score: number): string => {
