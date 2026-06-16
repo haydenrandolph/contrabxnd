@@ -240,87 +240,83 @@ export default function NetworkPage() {
           -webkit-font-smoothing: antialiased;
         }
 
-        .network-hero {
-          padding: 12rem 48px 64px;
-          max-width: 1000px;
+        .page-header {
+          max-width: 1100px;
           margin: 0 auto;
-          text-align: center;
+          padding: 80px 48px 0;
         }
 
-        .hero-label {
+        .page-label {
+          font-family: 'Space Mono', monospace;
           font-size: 10px;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
           color: var(--cb-accent);
-          margin-bottom: 32px;
-          opacity: 0;
-          animation: fadeUp 1s ease 0.2s forwards;
+          margin-bottom: 16px;
         }
 
-        .hero-title {
+        .page-title {
           font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
-          font-size: clamp(2.5rem, 6vw, 4rem);
+          font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
-          line-height: 1.2;
           letter-spacing: -0.02em;
-          margin-bottom: 24px;
-          opacity: 0;
-          animation: fadeUp 1s ease 0.3s forwards;
+          line-height: 1.15;
+          color: var(--cb-text);
+          margin-bottom: 12px;
         }
 
-        .hero-subtitle {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
-          font-size: 1.4rem;
+        .page-subtitle {
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
           color: var(--cb-text-muted);
           max-width: 600px;
-          margin: 0 auto 32px;
-          line-height: 1.7;
-          opacity: 0;
-          animation: fadeUp 1s ease 0.4s forwards;
+          line-height: 1.6;
         }
 
-        .hero-cta {
+        .page-divider {
+          width: 100%;
+          height: 1px;
+          background: var(--cb-border);
+          margin-top: 32px;
+        }
+
+        .page-content {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 48px 48px 96px;
+        }
+
+        .join-btn {
           display: inline-flex;
           align-items: center;
-          gap: 12px;
-          padding: 16px 32px;
-          background: var(--cb-accent);
-          border: none;
+          gap: 8px;
+          padding: 10px 20px;
+          background: transparent;
+          border: 1px solid var(--cb-border);
           border-radius: 2px;
-          color: #fff;
+          color: var(--cb-text);
           font-family: 'Space Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
           cursor: pointer;
-          transition: background 0.15s ease;
-          opacity: 0;
-          animation: fadeUp 1s ease 0.5s forwards;
+          transition: border-color 0.15s ease, color 0.15s ease;
+          margin-bottom: 32px;
         }
 
-        .hero-cta:hover {
-          background: #e8850f;
+        .join-btn:hover {
+          border-color: var(--cb-accent);
+          color: var(--cb-accent);
         }
 
-        .hero-cta svg {
-          width: 16px;
-          height: 16px;
-        }
-
-        @keyframes fadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        .join-btn svg {
+          width: 14px;
+          height: 14px;
         }
 
         .network-controls {
           padding: 0 48px 32px;
-          max-width: 1200px;
+          max-width: 1100px;
           margin: 0 auto;
         }
 
@@ -656,9 +652,8 @@ export default function NetworkPage() {
         }
 
         @media (max-width: 768px) {
-          .network-hero {
-            padding: 10rem 32px 48px;
-          }
+          .page-header { padding: 72px 24px 0; }
+          .page-content { padding: 32px 24px 64px; }
 
           .network-controls {
             padding: 0 32px 32px;
@@ -705,20 +700,20 @@ export default function NetworkPage() {
 
         <SiteNav activePath="/network" />
 
-        <section className="network-hero">
-          <p className="hero-label">Contrabxnd Network</p>
-          <h1 className="hero-title">Businesses that accept Bitcoin</h1>
-          <p className="hero-subtitle">
-            Discover merchants, services, and products you can buy with Bitcoin.
-            Want to be listed? Join the network.
-          </p>
-          <button className="hero-cta" onClick={() => setShowJoinModal(true)}>
+        <div className="page-header">
+          <div className="page-label">NETWORK</div>
+          <h1 className="page-title">Bitcoin Merchants</h1>
+          <p className="page-subtitle">Businesses that accept Bitcoin.</p>
+          <div className="page-divider" />
+        </div>
+        <div className="page-content" style={{ paddingBottom: 0 }}>
+          <button className="join-btn" onClick={() => setShowJoinModal(true)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 5v14M5 12h14"/>
             </svg>
             Join the Network
           </button>
-        </section>
+        </div>
 
         <section className="network-controls">
           <div className="controls-row">

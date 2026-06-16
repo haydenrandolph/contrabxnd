@@ -67,7 +67,7 @@ export default function SiteNav({
           background: rgba(10, 10, 10, 0.95);
         }
         .site-nav.blend.light {
-          background: rgba(245, 243, 240, 0.95);
+          background: rgba(247, 247, 248, 0.95);
         }
 
         .logo-link {
@@ -80,6 +80,17 @@ export default function SiteNav({
         .site-nav.light .logo-link,
         .site-nav.light .back-link {
           color: #0a0a0a;
+        }
+        .logo-badge {
+          font-family: 'Space Mono', monospace;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          padding: 2px 6px;
+          border: 1px solid var(--cb-accent);
+          color: var(--cb-accent);
+          border-radius: 2px;
+          line-height: 1;
         }
         .logo-text {
           font-family: 'Space Mono', monospace;
@@ -275,6 +286,7 @@ export default function SiteNav({
         ) : (
           <Link href="/" className="logo-link">
             <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={28} height={28} />
+            <span className="logo-badge">BIP</span>
             <span className="logo-text">Contra₿and</span>
           </Link>
         )}

@@ -49,48 +49,56 @@ export default function ToolkitPage() {
           overflow-x: hidden;
         }
 
-        .toolkit-header {
-          max-width: 1200px;
+        .page-header {
+          max-width: 1100px;
           margin: 0 auto;
-          padding: 8rem 3rem 0;
+          padding: 80px 48px 0;
         }
 
-        .toolkit-header-top {
-          display: flex;
-          align-items: baseline;
-          gap: 2rem;
-          margin-bottom: 1rem;
-          border-bottom: 1px solid var(--cb-border);
-          padding-bottom: 1.5rem;
-        }
-
-        .toolkit-section-number {
-          font-family: var(--cb-font-display);
-          font-size: 3rem;
-          color: var(--cb-accent);
-          line-height: 1;
-        }
-
-        .toolkit-title {
-          font-family: var(--cb-font-display);
-          font-size: 2.5rem;
-          font-weight: 400;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-        }
-
-        .toolkit-subtitle {
+        .page-label {
+          font-family: 'Space Mono', monospace;
           font-size: 10px;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
+          color: var(--cb-accent);
+          margin-bottom: 16px;
+        }
+
+        .page-title {
+          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-size: clamp(2rem, 4vw, 3rem);
+          font-weight: 400;
+          letter-spacing: -0.02em;
+          line-height: 1.15;
+          color: var(--cb-text);
+          margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+          font-family: 'Space Mono', monospace;
+          font-size: 13px;
           color: var(--cb-text-muted);
-          margin-top: 0.5rem;
+          max-width: 600px;
+          line-height: 1.6;
+        }
+
+        .page-divider {
+          width: 100%;
+          height: 1px;
+          background: var(--cb-border);
+          margin-top: 32px;
+        }
+
+        .page-content {
+          max-width: 1100px;
+          margin: 0 auto;
+          padding: 48px 48px 96px;
         }
 
         .toolkit-price-bar {
-          max-width: 1200px;
+          max-width: 1100px;
           margin: 2rem auto 0;
-          padding: 0 3rem;
+          padding: 0 48px;
           display: flex;
           align-items: center;
           gap: 2rem;
@@ -121,9 +129,9 @@ export default function ToolkitPage() {
         }
 
         .toolkit-tabs {
-          max-width: 1200px;
+          max-width: 1100px;
           margin: 2.5rem auto 0;
-          padding: 0 3rem;
+          padding: 0 48px;
         }
 
         .toolkit-tab-bar {
@@ -160,33 +168,23 @@ export default function ToolkitPage() {
         }
 
         .toolkit-content {
-          max-width: 1200px;
+          max-width: 1100px;
           margin: 3rem auto;
-          padding: 0 3rem 6rem;
+          padding: 0 48px 6rem;
         }
 
         @media (max-width: 768px) {
-          .toolkit-header {
-            padding: 6rem 2rem 0;
-          }
-
-          .toolkit-header-top {
-            flex-direction: column;
-            gap: 0.5rem;
-          }
-
-          .toolkit-title {
-            font-size: 1.8rem;
-          }
+          .page-header { padding: 72px 24px 0; }
+          .page-content { padding: 32px 24px 64px; }
 
           .toolkit-price-bar {
-            padding: 0 2rem;
+            padding: 0 24px;
             flex-wrap: wrap;
             gap: 1rem;
           }
 
           .toolkit-tabs {
-            padding: 0 2rem;
+            padding: 0 24px;
           }
 
           .toolkit-tab-bar {
@@ -202,7 +200,7 @@ export default function ToolkitPage() {
           }
 
           .toolkit-content {
-            padding: 0 2rem 4rem;
+            padding: 0 24px 4rem;
           }
         }
       `}</style>
@@ -211,12 +209,11 @@ export default function ToolkitPage() {
         <ThemeToggle />
         <SiteNav activePath="/toolkit" />
 
-        <div className="toolkit-header">
-          <div className="toolkit-header-top">
-            <span className="toolkit-section-number">₿</span>
-            <h1 className="toolkit-title">Toolkit</h1>
-          </div>
-          <p className="toolkit-subtitle">Calculate · Convert · Compare</p>
+        <div className="page-header">
+          <div className="page-label">TOOLKIT</div>
+          <h1 className="page-title">Toolkit</h1>
+          <p className="page-subtitle">Calculate · Convert · Compare</p>
+          <div className="page-divider" />
         </div>
 
         <div className="toolkit-price-bar">
