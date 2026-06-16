@@ -90,6 +90,12 @@ interface SlrData {
   leverage_subindex: number | null;
 }
 
+interface PolymarketData {
+  markets: Array<{ question: string; slug: string; yes: number; volume: number }>;
+  avg_bull_prob: number | null;
+  count: number;
+}
+
 export default function TerminalPage() {
   const [networkData, setNetworkData] = useState<NetworkData>({
     price: 0, change24h: 0, marketCap: 0, volume24h: 0,
@@ -110,6 +116,7 @@ export default function TerminalPage() {
   const [fedwatchData, setFedwatchData] = useState<FedWatchData | null>(null);
   const [liquidityData, setLiquidityData] = useState<LiquidityData | null>(null);
   const [slrData, setSlrData] = useState<SlrData | null>(null);
+  const [polymarketData, setPolymarketData] = useState<PolymarketData | null>(null);
   const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [aiInput, setAiInput] = useState('');
   const [aiStreaming, setAiStreaming] = useState(false);
@@ -243,12 +250,14 @@ export default function TerminalPage() {
         fetch('/api/fedwatch').then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/liquidity').then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/slr').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/polymarket').then(r => r.ok ? r.json() : null).catch(() => null),
       ];
-      const [sig, fed, liq, slr] = await Promise.all(fetches);
+      const [sig, fed, liq, slr, poly] = await Promise.all(fetches);
       if (sig && sig.score !== undefined) setSignalData(sig);
       if (fed) setFedwatchData(fed);
       if (liq) setLiquidityData(liq);
       if (slr) setSlrData(slr);
+      if (poly) setPolymarketData(poly);
     };
     fetchMacro();
     const i = setInterval(fetchMacro, 5 * 60 * 1000);
@@ -649,6 +658,12 @@ export default function TerminalPage() {
         .fg-bar { width: 100%; height: 4px; background: var(--cb-surface); border-radius: 2px; overflow: hidden; }
         .fg-bar-fill { height: 100%; background: var(--cb-accent); border-radius: 2px; transition: width 0.6s ease; }
         .fg-unavailable { font-size: 11px; color: var(--cb-text-muted); font-style: italic; }
+
+        /* Polymarket */
+        .poly-markets { display: flex; flex-direction: column; gap: 0; width: 100%; }
+        .poly-market-row { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; }
+        .poly-q { font-size: 10px; color: var(--cb-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; margin-right: 8px; }
+        .poly-yes { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--cb-text); }
 
         /* ETF Flows */
 
@@ -1295,6 +1310,33 @@ export default function TerminalPage() {
                           {slrData?.policy_label != null ? slrData.policy_label.toUpperCase() : '—'}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Polymarket */}
+                    <div className="macro-row" style={{ flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', width: '100%' }}>
+                        <span className="macro-label">Polymarket</span>
+                        <div className="macro-value-group">
+                          {polymarketData?.avg_bull_prob != null ? (
+                            <>
+                              <span className="macro-value">{(polymarketData.avg_bull_prob * 100).toFixed(0)}%</span>
+                              <span className="macro-detail">avg bull</span>
+                            </>
+                          ) : (
+                            <span className="macro-value">—</span>
+                          )}
+                        </div>
+                      </div>
+                      {polymarketData?.markets && polymarketData.markets.length > 0 && (
+                        <div className="poly-markets">
+                          {polymarketData.markets.slice(0, 3).map((m) => (
+                            <div key={m.slug} className="poly-market-row">
+                              <span className="poly-q">{m.question.replace(/Will Bitcoin |Will |by |\?/g, '').replace(/before /g, 'pre-').trim()}</span>
+                              <span className="poly-yes">{(m.yes * 100).toFixed(1)}%</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Fear & Greed (moved from Sentiment section) */}
