@@ -3,7 +3,6 @@
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 
 export default function AboutPage() {
   const { isLightMode } = useTheme();
@@ -116,7 +115,6 @@ export default function AboutPage() {
       `}</style>
 
       <div className={`contraband-about-page ${isLightMode ? 'light-mode' : ''}`}>
-        <ThemeToggle />
 
         <SiteNav activePath="/about" />
 

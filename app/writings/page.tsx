@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 
 const articles = [
   {
@@ -388,7 +387,6 @@ export default function WritingsPage() {
 
       <div className={`writings-page ${isLightMode ? 'light-mode' : ''}`}>
         <SiteNav activePath="/writings" />
-        <ThemeToggle />
 
         <div className="page-header">
           <div className="page-label">WRITINGS</div>

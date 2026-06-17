@@ -5,7 +5,6 @@ import dynamic from 'next/dynamic';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 import JoinNetworkModal from '@/components/network/JoinNetworkModal';
 import type { NetworkBusiness } from '@/lib/network/types';
 import { BUSINESS_CATEGORIES } from '@/lib/network/types';
@@ -696,7 +695,6 @@ export default function NetworkPage() {
       `}</style>
 
       <div className={`network-page ${isLightMode ? 'light-mode' : ''}`}>
-        <ThemeToggle />
 
         <SiteNav activePath="/network" />
 

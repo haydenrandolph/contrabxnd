@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 import DCACalculator from '@/components/toolkit/DCACalculator';
 
 export default function DCAPage() {
@@ -102,7 +101,6 @@ export default function DCAPage() {
       `}</style>
 
       <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
-        <ThemeToggle />
         <SiteNav activePath="/toolkit" />
 
         <div className="page-header">

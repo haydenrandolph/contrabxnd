@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getLessonNav } from '@/lib/lessons';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 import BookmarkButton from '@/components/BookmarkButton';
 import HighlightPopover from '@/components/HighlightPopover';
 
@@ -777,7 +776,6 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           <div className="progress-bar" style={{ width: `${progress}%` }}></div>
         </div>
 
-        <ThemeToggle />
         <SiteNav activePath="/learn" />
 
         <header className="lesson-header">

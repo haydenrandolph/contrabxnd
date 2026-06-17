@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 
 interface ToolCard {
   title: string;
@@ -208,7 +207,6 @@ export default function ToolboxPage() {
       `}</style>
 
       <div className={`toolbox-page ${isLightMode ? 'light-mode' : ''}`}>
-        <ThemeToggle />
         <SiteNav activePath="/toolkit" />
 
         <div className="page-header">

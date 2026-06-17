@@ -5,7 +5,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 
 export default function LearnPage() {
   const { isLightMode } = useTheme();
@@ -454,7 +453,6 @@ export default function LearnPage() {
       `}</style>
 
       <div className={`learn-page ${isLightMode ? 'light-mode' : ''}`}>
-        <ThemeToggle />
         <SiteNav activePath="/learn" />
 
         <div className="page-header">

@@ -5,7 +5,6 @@ import { ReactNode, useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 import BookmarkButton from '@/components/BookmarkButton';
 import HighlightPopover from '@/components/HighlightPopover';
 
@@ -373,7 +372,6 @@ export default function ArticleLayout({
 
         <SiteNav activePath="/writings" />
 
-        <ThemeToggle />
 
         <div className="article-container">
           <Link href="/writings" className="back-link">

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
-import ThemeToggle from '@/components/ThemeToggle';
 import { PriceAlertModal, NewsTicker, NewsModal } from '@/components/dashboard';
 import type { NewsItem } from '@/lib/news/types';
 
@@ -1312,7 +1311,6 @@ export default function TerminalPage() {
       `}</style>
 
       <div className="terminal">
-        <ThemeToggle />
         <SiteNav activePath="/" liveIndicator={{ connected: wsConnected }} />
 
         <div className="terminal-content">

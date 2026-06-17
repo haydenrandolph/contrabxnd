@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ProgressBar } from '@/components/courses';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 import ShareProgressButton from '@/components/ShareProgressButton';
 
 interface LessonProgress {
@@ -459,7 +458,6 @@ export default function AccountPage() {
       `}</style>
 
       <div className={`account-page ${isLightMode ? 'light-mode' : ''}`}>
-        <ThemeToggle />
 
         <SiteNav activePath="/account" />
 

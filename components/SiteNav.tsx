@@ -7,6 +7,26 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { UserMenu } from '@/components/auth';
 import StreakBadge from '@/components/StreakBadge';
 
+function ThemeToggleBtn({ isLight, onToggle }: { isLight: boolean; onToggle: () => void }) {
+  return (
+    <button className="nav-theme-btn" onClick={onToggle} aria-label="Toggle theme">
+      {isLight ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 interface SiteNavProps {
   activePath?: string;
   blendMode?: boolean;
@@ -54,7 +74,7 @@ export default function SiteNav({
   liveIndicator,
 }: SiteNavProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isLightMode } = useTheme();
+  const { isLightMode, toggleTheme } = useTheme();
   const light = isLightMode ? ' light' : '';
 
   return (
@@ -244,7 +264,32 @@ export default function SiteNav({
         .nav-right {
           display: flex;
           align-items: center;
-          gap: 24px;
+          gap: 16px;
+        }
+
+        .nav-theme-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 2px;
+          cursor: pointer;
+          color: #6a6a6a;
+          transition: color 0.15s ease, border-color 0.15s ease;
+        }
+        .nav-theme-btn:hover {
+          color: #e8e4dc;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+        .site-nav.light .nav-theme-btn {
+          border-color: rgba(0, 0, 0, 0.08);
+        }
+        .site-nav.light .nav-theme-btn:hover {
+          color: #0a0a0a;
+          border-color: rgba(0, 0, 0, 0.2);
         }
 
         .live-indicator {
@@ -485,6 +530,7 @@ export default function SiteNav({
               <span>{liveIndicator.connected ? 'Live' : 'Connecting...'}</span>
             </div>
           )}
+          <ThemeToggleBtn isLight={isLightMode} onToggle={toggleTheme} />
           <StreakBadge />
           {showUserMenu && <UserMenu />}
           <button
@@ -525,8 +571,11 @@ export default function SiteNav({
           ))}
         </nav>
         <div className="mobile-footer">
-          <div className="mobile-footer-badge">
-            <span>BIP</span> Bitcoin Intelligence Platform
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="mobile-footer-badge">
+              <span>BIP</span> Bitcoin Intelligence Platform
+            </div>
+            <ThemeToggleBtn isLight={isLightMode} onToggle={toggleTheme} />
           </div>
         </div>
       </div>

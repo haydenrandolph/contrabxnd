@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { COURSE, WEEKS } from '@/lib/lessons';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import ThemeToggle from '@/components/ThemeToggle';
 import ShareProgressButton from '@/components/ShareProgressButton';
 
 export default function BoardingPassCoursePage() {
@@ -622,7 +621,6 @@ export default function BoardingPassCoursePage() {
       `}</style>
 
       <div className={`course-page ${isLightMode ? 'light-mode' : ''}`}>
-        <ThemeToggle />
         <SiteNav activePath="/learn" />
 
         <header className="course-header">
