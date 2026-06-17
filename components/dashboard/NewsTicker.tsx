@@ -87,7 +87,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
   if (news.length === 0) return null;
 
   const tickerItems = [...news, ...news];
-  const speed = Math.max(60, news.length * 5);
+  const speed = Math.max(80, news.length * 7);
 
   return (
     <>
