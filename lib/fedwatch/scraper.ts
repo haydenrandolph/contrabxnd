@@ -42,14 +42,14 @@ const MONTH_CODES: Record<number, string> = {
 };
 
 /**
- * Build the Yahoo Finance ticker for a ZQ contract.
- * Format: ZQ{MonthCode}{2-digit year}.CBT
- * Example: ZQN26.CBT = July 2026
+ * Build the Barchart symbol for a ZQ contract.
+ * Format: ZQ{MonthCode}{2-digit year}
+ * Example: ZQN26 = July 2026
  */
-function zqTicker(year: number, month: number): string {
+function zqSymbol(year: number, month: number): string {
   const code = MONTH_CODES[month];
   const yy = String(year).slice(-2);
-  return `ZQ${code}${yy}.CBT`;
+  return `ZQ${code}${yy}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -114,11 +114,11 @@ async function fetchCurrentRate(): Promise<{
 }
 
 // ---------------------------------------------------------------------------
-// 4. Fetch ZQ futures prices from Yahoo Finance
+// 4. Fetch ZQ futures prices from Barchart OnDemand
 // ---------------------------------------------------------------------------
 
 interface FuturesPrice {
-  ticker: string;
+  symbol: string;
   year: number;
   month: number;
   price: number;
@@ -129,56 +129,59 @@ async function fetchFuturesPrices(
   months: Array<{ year: number; month: number }>,
 ): Promise<Map<string, FuturesPrice>> {
   const results = new Map<string, FuturesPrice>();
+  const apiKey = process.env.BARCHART_API_KEY;
 
-  // Fetch in small batches to avoid rate limits
-  const batchSize = 4;
-  for (let i = 0; i < months.length; i += batchSize) {
-    const batch = months.slice(i, i + batchSize);
-    const fetches = batch.map(async ({ year, month }) => {
-      const ticker = zqTicker(year, month);
-      const key = `${year}-${String(month).padStart(2, '0')}`;
-      try {
-        // Yahoo Finance v8 quote endpoint
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
-        const res = await fetch(url, {
-          headers: {
-            'User-Agent': BROWSER_UA,
-            Accept: 'application/json',
-          },
-          cache: 'no-store',
-        });
+  if (!apiKey) {
+    console.warn('BARCHART_API_KEY not set — cannot fetch ZQ futures');
+    return results;
+  }
 
-        if (!res.ok) {
-          console.warn(`Yahoo Finance ${ticker}: HTTP ${res.status}`);
-          return;
-        }
+  // Build symbol list and a lookup map
+  const symbolMap = new Map<string, { year: number; month: number; key: string }>();
+  for (const { year, month } of months) {
+    const sym = zqSymbol(year, month);
+    const key = `${year}-${String(month).padStart(2, '0')}`;
+    symbolMap.set(sym, { year, month, key });
+  }
 
-        const data = await res.json();
-        const meta = data?.chart?.result?.[0]?.meta;
-        // Use regularMarketPrice (most recent) or previousClose as fallback
-        const price =
-          meta?.regularMarketPrice ?? meta?.previousClose ?? null;
+  const symbols = Array.from(symbolMap.keys()).join(',');
 
-        if (price && typeof price === 'number') {
-          results.set(key, {
-            ticker,
-            year,
-            month,
-            price,
-            impliedRate: 100 - price,
-          });
-        }
-      } catch (err) {
-        console.warn(`Failed to fetch ${ticker}:`, err);
-      }
-    });
+  try {
+    const url = `https://ondemand.websol.barchart.com/getQuote.json?apikey=${apiKey}&symbols=${symbols}&fields=lastPrice,previousClose,settlement`;
+    const res = await fetch(url, { cache: 'no-store' });
 
-    await Promise.all(fetches);
-
-    // Small delay between batches
-    if (i + batchSize < months.length) {
-      await new Promise(r => setTimeout(r, 500));
+    if (!res.ok) {
+      console.warn(`Barchart API: HTTP ${res.status}`);
+      return results;
     }
+
+    const data = await res.json();
+
+    if (data.status?.code !== 200 || !Array.isArray(data.results)) {
+      console.warn('Barchart API unexpected response:', data.status);
+      return results;
+    }
+
+    for (const quote of data.results) {
+      const sym = quote.symbol;
+      const meta = symbolMap.get(sym);
+      if (!meta) continue;
+
+      // Prefer settlement price (EOD), fall back to lastPrice, then previousClose
+      const price = quote.settlement ?? quote.lastPrice ?? quote.previousClose ?? null;
+
+      if (price && typeof price === 'number') {
+        results.set(meta.key, {
+          symbol: sym,
+          year: meta.year,
+          month: meta.month,
+          price,
+          impliedRate: 100 - price,
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('Barchart fetch failed:', err);
   }
 
   return results;
@@ -338,7 +341,7 @@ export async function scrapeFedWatch(): Promise<FedWatchSnapshot> {
 
   // 3. Fetch futures prices
   const prices = await fetchFuturesPrices(monthsToFetch);
-  const sources: string[] = ['yahoo-finance'];
+  const sources: string[] = ['barchart'];
 
   if (process.env.FRED_API_KEY) {
     sources.push('fred');
