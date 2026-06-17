@@ -4,29 +4,29 @@ import Image from 'next/image';
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
     h1: ({ children }) => (
-      <h1 className="font-['Cormorant_Garamond'] text-[2.5rem] md:text-[3rem] font-normal leading-[1.2] text-[#e8e4dc] mb-8 mt-12">
+      <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 400, lineHeight: 1.2, color: 'var(--cb-text)', marginBottom: '2rem', marginTop: '3rem' }}>
         {children}
       </h1>
     ),
     h2: ({ children }) => (
-      <h2 className="font-['Cormorant_Garamond'] text-[2rem] md:text-[2.5rem] font-normal leading-[1.2] text-[#e8e4dc] mb-6 mt-12">
+      <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(1.5rem, 3vw, 2.5rem)', fontWeight: 400, lineHeight: 1.2, color: 'var(--cb-text)', marginBottom: '1.5rem', marginTop: '3rem' }}>
         {children}
       </h2>
     ),
     h3: ({ children }) => (
-      <h3 className="font-['Cormorant_Garamond'] text-[1.5rem] md:text-[2rem] font-normal leading-[1.2] text-[#e8e4dc] mb-4 mt-8">
+      <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(1.25rem, 2vw, 2rem)', fontWeight: 400, lineHeight: 1.2, color: 'var(--cb-text)', marginBottom: '1rem', marginTop: '2rem' }}>
         {children}
       </h3>
     ),
     p: ({ children }) => (
-      <p className="font-['Cormorant_Garamond'] text-[1.125rem] md:text-[1.25rem] leading-[1.9] text-[#e8e4dc] mb-8">
+      <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(1.05rem, 1.5vw, 1.25rem)', lineHeight: 1.9, color: 'var(--cb-text)', marginBottom: '2rem' }}>
         {children}
       </p>
     ),
     a: ({ href, children }) => (
       <a
         href={href}
-        className="text-[#F7931A] hover:underline transition-all duration-200"
+        style={{ color: '#F7931A', textDecoration: 'none', transition: 'opacity 0.15s ease' }}
         target={href?.startsWith('http') ? '_blank' : undefined}
         rel={href?.startsWith('http') ? 'noopener noreferrer' : undefined}
       >
@@ -34,17 +34,22 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
       </a>
     ),
     ul: ({ children }) => (
-      <ul className="font-['Cormorant_Garamond'] text-[1.125rem] md:text-[1.25rem] leading-[1.9] text-[#e8e4dc] mb-8 ml-6 list-disc space-y-3">
+      <ul style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(1.05rem, 1.5vw, 1.25rem)', lineHeight: 1.9, color: 'var(--cb-text)', marginBottom: '2rem', marginLeft: '1.5rem', listStyleType: 'disc' }}>
         {children}
       </ul>
     ),
     ol: ({ children }) => (
-      <ol className="font-['Cormorant_Garamond'] text-[1.125rem] md:text-[1.25rem] leading-[1.9] text-[#e8e4dc] mb-8 ml-6 list-decimal space-y-3">
+      <ol style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(1.05rem, 1.5vw, 1.25rem)', lineHeight: 1.9, color: 'var(--cb-text)', marginBottom: '2rem', marginLeft: '1.5rem', listStyleType: 'decimal' }}>
         {children}
       </ol>
     ),
+    li: ({ children }) => (
+      <li style={{ marginBottom: '0.75rem' }}>
+        {children}
+      </li>
+    ),
     blockquote: ({ children }) => (
-      <blockquote className="border-l-4 border-[#F7931A] pl-8 my-12 italic font-['Cormorant_Garamond'] text-[1.25rem] md:text-[1.5rem] leading-[1.8] text-[#8a8a8a]">
+      <blockquote style={{ borderLeft: '4px solid #F7931A', paddingLeft: '2rem', margin: '3rem 0', fontStyle: 'italic', fontFamily: "'Cormorant Garamond', serif", fontSize: 'clamp(1.15rem, 2vw, 1.5rem)', lineHeight: 1.8, color: 'var(--cb-text-muted)' }}>
         {children}
       </blockquote>
     ),
@@ -54,19 +59,19 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
         alt={props.alt || ''}
         width={1200}
         height={600}
-        className="rounded-sm my-12 w-full h-auto"
+        style={{ borderRadius: '2px', margin: '3rem 0', width: '100%', height: 'auto' }}
       />
     ),
     hr: () => (
-      <hr className="border-t border-[#3a3a3a] my-12" />
+      <hr style={{ borderTop: '1px solid var(--cb-border)', borderBottom: 'none', margin: '3rem 0' }} />
     ),
     code: ({ children }) => (
-      <code className="font-['Space_Mono'] text-[0.9rem] bg-[#1a1a1a] px-2 py-1 rounded text-[#F7931A]">
+      <code style={{ fontFamily: "'Space Mono', monospace", fontSize: '0.9rem', background: 'var(--cb-surface)', padding: '0.15rem 0.4rem', borderRadius: '2px', color: '#F7931A', border: '1px solid var(--cb-border)' }}>
         {children}
       </code>
     ),
     pre: ({ children }) => (
-      <pre className="font-['Space_Mono'] text-[0.9rem] bg-[#1a1a1a] p-6 rounded my-8 overflow-x-auto text-[#e8e4dc]">
+      <pre style={{ fontFamily: "'Space Mono', monospace", fontSize: '0.9rem', background: 'var(--cb-surface)', padding: '1.5rem', borderRadius: '2px', margin: '2rem 0', overflowX: 'auto', color: 'var(--cb-text)', border: '1px solid var(--cb-border)' }}>
         {children}
       </pre>
     ),

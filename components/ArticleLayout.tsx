@@ -60,8 +60,8 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode {
-          background: #e8e4dc;
-          color: #070713;
+          background: #f7f7f8;
+          color: #0a0a0a;
         }
 
         .article-page::before {
@@ -74,7 +74,7 @@ export default function ArticleLayout({
           background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
           opacity: 0.03;
           pointer-events: none;
-          z-index: 1000;
+          z-index: 1;
         }
 
         .article-progress-container {
@@ -162,7 +162,7 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode .article-title {
-          color: #070713;
+          color: #0a0a0a;
         }
 
         .article-subtitle {
@@ -181,26 +181,6 @@ export default function ArticleLayout({
           font-size: 11px;
           color: #8a8a8a;
           letter-spacing: 0.1em;
-        }
-
-        .article-hero {
-          width: 100%;
-          height: 400px;
-          background: #1a1a1a;
-          margin-bottom: 4rem;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .article-hero::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(135deg, #F7931A 0%, #0a0a0a 100%);
-          opacity: 0.3;
         }
 
         .article-content {
@@ -262,7 +242,7 @@ export default function ArticleLayout({
         .article-page.light-mode .share-button {
           background: #f7f7f8;
           border-color: #c0c0c1;
-          color: #070713;
+          color: #0a0a0a;
         }
 
         .share-button:hover {
@@ -291,7 +271,7 @@ export default function ArticleLayout({
         }
 
         .article-page.light-mode .related-title {
-          color: #070713;
+          color: #0a0a0a;
         }
 
         .related-grid {
@@ -316,7 +296,6 @@ export default function ArticleLayout({
 
         .related-card:hover {
           border-color: #F7931A;
-          transform: translateY(-4px);
         }
 
         .related-card-type {
@@ -353,10 +332,6 @@ export default function ArticleLayout({
         @media (max-width: 768px) {
           .article-container {
             padding: 10rem 2rem 4rem;
-          }
-
-          .article-hero {
-            height: 250px;
           }
 
           .related-articles {
@@ -400,8 +375,6 @@ export default function ArticleLayout({
               <span>{article.type}</span>
             </div>
           </header>
-
-          <div className="article-hero"></div>
 
           <div className="article-content">
             {children}

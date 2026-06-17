@@ -520,7 +520,7 @@ export default function LearnPage() {
 
         <section className="philosophy-section">
           <p className="philosophy-quote">"The best time to learn about Bitcoin was 2009. The second best time is now."</p>
-          <p className="philosophy-source">— Contraband</p>
+          <p className="philosophy-source">— Contrabxnd</p>
         </section>
 
         <SiteFooter />
