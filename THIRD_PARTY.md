@@ -15,6 +15,7 @@ All external services Contrabxnd relies on. Keep this updated as new integration
 | Service | Purpose | Env Vars | Tier | Cost |
 |---|---|---|---|---|
 | **FRED API** | Federal Reserve economic data (net liquidity, SLR) | `FRED_API_KEY` | Free | $0 |
+| **Coinbase Exchange API** | BTC/USD OHLC candles for Lightweight Charts | None | Public | $0 |
 | **CryptoPanic** | Crypto news aggregation for terminal feed | `CRYPTOPANIC_API_KEY` | Free | $0 |
 | **X/Twitter API** | Social sentiment, tweet embeds | `X_BEARER_TOKEN` | Basic | $100/mo |
 | **Barchart** | FedWatch / futures data (pending approval) | `BARCHART_API_KEY` | TBD | TBD |

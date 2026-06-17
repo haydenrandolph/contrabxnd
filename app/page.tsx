@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
-import { PriceAlertModal, NewsTicker, NewsModal } from '@/components/dashboard';
+import { PriceAlertModal, NewsTicker, NewsModal, BTCChart } from '@/components/dashboard';
 import type { NewsItem } from '@/lib/news/types';
 
 // Node cities for transaction route labels in the feed
@@ -15,12 +15,6 @@ const CITIES = [
   'Sydney', 'Melbourne', 'São Paulo', 'Buenos Aires',
 ];
 
-const CHART_PAIRS = [
-  { id: 'usd', label: 'BTC / USD', symbol: 'BITSTAMP:BTCUSD' },
-  { id: 'gold', label: 'BTC / GOLD', symbol: 'BITSTAMP:BTCUSD/OANDA:XAUUSD' },
-  { id: 'spx', label: 'BTC / SPX', symbol: 'BITSTAMP:BTCUSD/SP:SPX' },
-  { id: 'dxy', label: 'BTC / DXY', symbol: 'BITSTAMP:BTCUSD/TVC:DXY' },
-];
 
 interface Transaction {
   id: string;
@@ -107,7 +101,7 @@ export default function TerminalPage() {
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
   const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null);
-  const [chartPair, setChartPair] = useState('usd');
+
   const [fearGreed, setFearGreed] = useState<FearGreedData>({ value: null, label: null });
   const [etfFlows, setEtfFlows] = useState<EtfFlowData | null>(null);
   const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'network' | 'ai'>('macro');
@@ -126,7 +120,7 @@ export default function TerminalPage() {
   const { isLightMode } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
-  const chartRef = useRef<HTMLDivElement>(null);
+
 
   const feedItems = useMemo(() => {
     const items: Array<{
@@ -300,45 +294,6 @@ export default function TerminalPage() {
     return () => { clearInterval(txPoll); wsRef.current?.close(); };
   }, [fetchRecentTransactions]);
 
-  // TradingView chart — reloads when pair changes
-  const activeSymbol = CHART_PAIRS.find(p => p.id === chartPair)?.symbol ?? CHART_PAIRS[0].symbol;
-
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const container = chartRef.current;
-    container.innerHTML = '';
-
-    const widgetDiv = document.createElement('div');
-    widgetDiv.className = 'tradingview-widget-container__widget';
-    widgetDiv.style.width = '100%';
-    widgetDiv.style.height = '100%';
-    container.appendChild(widgetDiv);
-
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
-    script.type = 'text/javascript';
-    script.async = true;
-    script.innerHTML = JSON.stringify({
-      autosize: true,
-      symbol: activeSymbol,
-      interval: 'D',
-      timezone: 'Etc/UTC',
-      theme: isLightMode ? 'light' : 'dark',
-      style: '1',
-      locale: 'en',
-      hide_legend: false,
-      allow_symbol_change: false,
-      save_image: false,
-      backgroundColor: isLightMode ? '#f7f7f8' : '#0a0a0a',
-      gridColor: isLightMode ? '#e5e5e6' : '#1a1a1a',
-      withdateranges: true,
-      support_host: 'https://www.tradingview.com',
-    });
-    container.appendChild(script);
-
-    return () => { container.innerHTML = ''; };
-  }, [activeSymbol, isLightMode]);
-
   // ── Helpers ──
 
   const fmtNum = (n: number, d = 2) => {
@@ -489,53 +444,6 @@ export default function TerminalPage() {
           overflow: hidden;
         }
 
-        .chart-pairs {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          z-index: 10;
-          display: flex;
-          gap: 0;
-          background: var(--cb-bg);
-          border-bottom: 1px solid var(--cb-border);
-        }
-
-        .chart-pair-btn {
-          font-family: 'Space Mono', monospace;
-          font-size: 10px;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          padding: 10px 20px;
-          background: transparent;
-          border: none;
-          border-right: 1px solid var(--cb-border);
-          color: var(--cb-text-muted);
-          cursor: pointer;
-          transition: color 0.15s ease, background 0.15s ease;
-        }
-
-        .chart-pair-btn:hover {
-          color: var(--cb-text);
-        }
-
-        .chart-pair-btn.active {
-          color: var(--cb-accent);
-          background: var(--cb-surface);
-        }
-
-        .chart-embed {
-          position: absolute;
-          top: 37px;
-          left: 0;
-          right: 0;
-          bottom: 0;
-        }
-
-        .chart-embed .tradingview-widget-container__widget {
-          width: 100%;
-          height: 100%;
-        }
 
         /* ── Sidebar ── */
 
@@ -910,6 +818,64 @@ export default function TerminalPage() {
           text-transform: uppercase;
           color: var(--cb-text-muted);
           flex-shrink: 0;
+        }
+
+        .tip-wrap {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          cursor: help;
+        }
+
+        .tip-icon {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          border: 1px solid var(--cb-border);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 8px;
+          color: var(--cb-text-muted);
+          flex-shrink: 0;
+          opacity: 0.5;
+          transition: opacity 0.15s ease;
+        }
+
+        .tip-wrap:hover .tip-icon {
+          opacity: 1;
+          border-color: var(--cb-accent);
+          color: var(--cb-accent);
+        }
+
+        .tip-bubble {
+          display: none;
+          position: absolute;
+          top: calc(100% + 8px);
+          left: 0;
+          width: 220px;
+          padding: 10px 12px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
+          border-radius: 2px;
+          font-family: 'Space Mono', monospace;
+          font-size: 10px;
+          line-height: 1.6;
+          letter-spacing: 0;
+          text-transform: none;
+          color: var(--cb-text);
+          z-index: 50;
+          pointer-events: none;
+        }
+
+        .tip-wrap:hover .tip-bubble {
+          display: block;
+        }
+
+        .tip-wrap.tip-up .tip-bubble {
+          top: auto;
+          bottom: calc(100% + 8px);
         }
 
         .macro-value-group {
@@ -1319,18 +1285,7 @@ export default function TerminalPage() {
           <div className="terminal-body">
             {/* ── Chart ── */}
             <div className="chart-panel">
-              <div className="chart-pairs">
-                {CHART_PAIRS.map(p => (
-                  <button
-                    key={p.id}
-                    className={`chart-pair-btn ${chartPair === p.id ? 'active' : ''}`}
-                    onClick={() => setChartPair(p.id)}
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-              <div ref={chartRef} className="chart-embed tradingview-widget-container" />
+              <BTCChart isLightMode={isLightMode} />
             </div>
 
             {/* ── Sidebar ── */}
@@ -1363,7 +1318,7 @@ export default function TerminalPage() {
               <div className="sidebar-section">
                 <div className="score-section">
                   <div className="score-header">
-                    <span className="score-label-title">Contrabxnd Score</span>
+                    <span className="score-label-title tip-wrap">Contrabxnd Score<span className="tip-icon">?</span><span className="tip-bubble">Composite signal combining macro liquidity, ETF flows, on-chain network data, and sentiment into a single directional reading. Positive = bullish bias, negative = bearish.</span></span>
                     {signalData ? (
                       <span className="score-number">{signalData.score > 0 ? '+' : ''}{signalData.score}</span>
                     ) : null}
@@ -1442,7 +1397,7 @@ export default function TerminalPage() {
                   <>
                     {/* Net Liquidity */}
                     <div className="macro-row">
-                      <span className="macro-label">Net Liquidity</span>
+                      <span className="macro-label tip-wrap">Net Liquidity<span className="tip-icon">?</span><span className="tip-bubble">Total money flowing through the financial system: Fed balance sheet minus Treasury General Account and reverse repos. Bitcoin price tends to follow net liquidity over time.</span></span>
                       <div className="macro-value-group">
                         <span className="macro-value">
                           {liquidityData?.net_liquidity != null ? fmtTrillion(liquidityData.net_liquidity) : '—'}
@@ -1457,7 +1412,7 @@ export default function TerminalPage() {
 
                     {/* FedWatch */}
                     <div className="macro-row">
-                      <span className="macro-label">FedWatch</span>
+                      <span className="macro-label tip-wrap">FedWatch<span className="tip-icon">?</span><span className="tip-bubble">Market-implied probability of a Fed interest rate cut at the next FOMC meeting, derived from futures pricing. Higher cut probability is generally bullish for risk assets.</span></span>
                       <div className="macro-value-group">
                         <span className="macro-value">
                           {fedwatchData?.next_meeting?.cut != null
@@ -1474,7 +1429,7 @@ export default function TerminalPage() {
 
                     {/* SLR Regime */}
                     <div className="macro-row">
-                      <span className="macro-label">SLR Regime</span>
+                      <span className="macro-label tip-wrap">SLR Regime<span className="tip-icon">?</span><span className="tip-bubble">Supplementary Leverage Ratio — a bank capital rule. When eased or exempted, banks can hold more Treasuries without extra capital, increasing system liquidity. Bullish for BTC.</span></span>
                       <div className="macro-value-group">
                         <span className="macro-value">
                           {slrData?.policy_label != null ? slrData.policy_label.toUpperCase() : '—'}
@@ -1485,7 +1440,7 @@ export default function TerminalPage() {
                     {/* Polymarket */}
                     <div className="macro-row" style={{ flexDirection: 'column', gap: '6px' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', width: '100%' }}>
-                        <span className="macro-label">Polymarket</span>
+                        <span className="macro-label tip-wrap">Polymarket<span className="tip-icon">?</span><span className="tip-bubble">Prediction market odds for Bitcoin-related events. Real-money bets give a crowd-sourced probability of price targets, regulatory outcomes, and adoption milestones.</span></span>
                         <div className="macro-value-group">
                           {polymarketData?.avg_bull_prob != null ? (
                             <>
@@ -1512,7 +1467,7 @@ export default function TerminalPage() {
                     {/* Fear & Greed (moved from Sentiment section) */}
                     <div className="macro-row" style={{ flexDirection: 'column', gap: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', width: '100%' }}>
-                        <span className="macro-label">Fear &amp; Greed</span>
+                        <span className="macro-label tip-wrap tip-up">Fear &amp; Greed<span className="tip-icon">?</span><span className="tip-bubble">Market sentiment index from 0 (Extreme Fear) to 100 (Extreme Greed). Based on volatility, momentum, social media, and BTC dominance. Contrarian signal — extreme fear can mean opportunity.</span></span>
                         <div className="macro-value-group">
                           {fearGreed.value !== null ? (
                             <>
