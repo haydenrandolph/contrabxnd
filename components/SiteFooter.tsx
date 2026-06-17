@@ -9,6 +9,7 @@ interface SiteFooterProps {
 }
 
 const STANDARD_LINKS = [
+  { label: 'FML', href: 'https://feelinmoody.io' },
   { label: 'Twitter', href: 'https://x.com/contrabxnd' },
   { label: 'YouTube', href: 'https://youtube.com/@contrabxnd' },
 ];
