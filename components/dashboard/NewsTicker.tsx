@@ -87,7 +87,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
   if (news.length === 0) return null;
 
   const tickerItems = [...news, ...news];
-  const speed = Math.max(40, news.length * 6);
+  const speed = Math.max(30, news.length * 3);
 
   return (
     <>
@@ -137,16 +137,25 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
           position: relative;
         }
 
+        .nw-scroll-area::before,
         .nw-scroll-area::after {
           content: '';
           position: absolute;
           top: 0;
-          right: 0;
           bottom: 0;
           width: 40px;
-          background: linear-gradient(to left, ${bg}, transparent);
           z-index: 2;
           pointer-events: none;
+        }
+
+        .nw-scroll-area::before {
+          left: 0;
+          background: linear-gradient(to right, ${bg}, transparent);
+        }
+
+        .nw-scroll-area::after {
+          right: 0;
+          background: linear-gradient(to left, ${bg}, transparent);
         }
 
         .nw-track {
