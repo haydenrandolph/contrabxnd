@@ -408,7 +408,7 @@ export default function TerminalPage() {
   return (
     <>
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
+
 
         .terminal {
           background: var(--cb-bg);

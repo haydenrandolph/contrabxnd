@@ -10,7 +10,6 @@ export default function AboutPage() {
   return (
     <>
       <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
 
         .contraband-about-page {
           background: var(--cb-bg);
