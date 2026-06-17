@@ -397,6 +397,11 @@ export default function McpPage() {
           .mcp-tools-grid { grid-template-columns: 1fr; }
           .mcp-roadmap-tool { flex-direction: column; gap: 2px; }
           .mcp-roadmap-tool-name { min-width: auto; }
+          .mcp-code-block { font-size: 10px; padding: 12px 14px; white-space: pre-wrap; word-break: break-all; }
+          .mcp-new-key-value { font-size: 11px; }
+          .mcp-key-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+          .mcp-auth-box { padding: 16px; }
+          .mcp-roadmap-header { flex-direction: column; align-items: flex-start; gap: 6px; }
         }
       `}</style>
 

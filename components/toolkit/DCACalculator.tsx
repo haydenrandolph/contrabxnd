@@ -542,6 +542,15 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           .dca-metric-value.btc {
             font-size: 1.1rem;
           }
+
+          .dca-input {
+            font-size: 16px;
+          }
+
+          .dca-field-btn button {
+            min-height: 44px;
+            width: 100%;
+          }
         }
 
         @media (max-width: 480px) {

@@ -1151,18 +1151,61 @@ export default function TerminalPage() {
         /* ── Mobile ── */
 
         @media (max-width: 1024px) {
+          .terminal { height: auto; min-height: 100vh; min-height: 100dvh; overflow: visible; }
+          .terminal-content { min-height: 0; }
           .terminal-body { flex-direction: column; }
-          .chart-panel { height: 40vh; min-height: 250px; }
-          .terminal-sidebar { width: 100%; border-left: none; border-top: 1px solid var(--cb-border); flex: 1; }
+          .chart-panel { height: 40vh; min-height: 250px; flex: none; }
+          .terminal-sidebar { width: 100%; border-left: none; border-top: 1px solid var(--cb-border); flex: none; }
+          .tab-content { min-height: auto; }
+          .sidebar-feed { max-height: 300px; }
         }
 
         @media (max-width: 768px) {
-          .terminal-status { padding: 0 16px; gap: 16px; font-size: 9px; overflow-x: auto; }
+          .terminal-status { padding: 0 12px; gap: 8px; font-size: 9px; overflow-x: auto; white-space: nowrap; -webkit-overflow-scrolling: touch; }
+          .terminal-status::-webkit-scrollbar { display: none; }
           .sidebar-price { padding: 16px; }
           .price-value { font-size: 1.5rem; }
           .feed-item { padding: 10px 16px; }
           .metric-cell { padding: 10px 12px; }
-          .chart-pair-btn { padding: 8px 12px; font-size: 9px; }
+          .chart-pair-btn { padding: 10px 12px; font-size: 9px; min-height: 44px; }
+          .alert-btn { min-height: 44px; padding: 10px 16px; }
+          .macro-row { padding: 10px 16px; }
+          .etf-row { padding: 10px 16px; }
+          .score-section { padding: 14px 16px; }
+          .sentiment-content { padding: 14px 16px; }
+          .sidebar-section-title { padding: 10px 16px; }
+          .ai-messages { padding: 12px 16px; }
+          .ai-input { font-size: 16px; padding: 14px 16px; }
+          .ai-send-btn { padding: 14px 16px; min-height: 48px; }
+          .modal-header { padding: 16px; }
+          .modal-row { padding: 12px 16px; }
+          .modal-footer { padding: 16px; }
+        }
+
+        @media (max-width: 480px) {
+          .chart-panel { height: 35vh; min-height: 200px; }
+          .chart-pairs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .chart-pairs::-webkit-scrollbar { display: none; }
+          .chart-pair-btn { white-space: nowrap; flex-shrink: 0; }
+          .price-value { font-size: 1.35rem; }
+          .sidebar-price { padding: 12px 16px; }
+          .macro-label { font-size: 9px; }
+          .macro-value { font-size: 12px; }
+          .macro-detail { font-size: 9px; }
+          .score-number { font-size: 20px; }
+          .metric-label { font-size: 9px; }
+          .metric-value { font-size: 12px; }
+          .etf-ticker { font-size: 11px; }
+          .etf-flow { font-size: 11px; }
+          .etf-name { display: none; }
+          .feed-badge { font-size: 8px; }
+          .feed-primary { font-size: 11px; }
+          .feed-secondary { font-size: 9px; }
+          .feed-time { font-size: 9px; }
+          .ai-welcome-title { font-size: 1.1rem; }
+          .ai-suggestion { padding: 10px 12px; min-height: 44px; display: flex; align-items: center; }
+          .modal { margin: 0 8px; }
+          .modal-overlay { padding: 16px; }
         }
       `}</style>
 

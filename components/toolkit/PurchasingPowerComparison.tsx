@@ -309,6 +309,16 @@ export default function PurchasingPowerComparison({
           .ppc-skeleton-cards {
             grid-template-columns: 1fr;
           }
+          .ppc-input {
+            font-size: 16px;
+          }
+          .ppc-btn {
+            min-height: 44px;
+            width: 100%;
+          }
+          .ppc-card {
+            padding: 1rem;
+          }
         }
       `}</style>
 

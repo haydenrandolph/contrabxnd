@@ -185,6 +185,16 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
           color: ${isLightMode ? '#8a8a8a' : '#3a3a3a'};
           padding: 0 0.5rem;
         }
+
+        @media (max-width: 768px) {
+          .news-ticker-container { padding: 0.5rem 0; }
+          .news-ticker-container::before,
+          .news-ticker-container::after { width: 24px; }
+          .ticker-item { padding: 0 1rem; }
+          .ticker-title { font-size: 11px; }
+          .ticker-time { font-size: 9px; }
+          .ticker-source { font-size: 11px; }
+        }
       `}</style>
 
       <div
