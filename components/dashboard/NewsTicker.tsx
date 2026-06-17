@@ -91,7 +91,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
 
   return (
     <>
-      <style jsx>{`
+      <style jsx global>{`
         .nw-ticker {
           background: ${bg};
           border-bottom: 1px solid ${border};
