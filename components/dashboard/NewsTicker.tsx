@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { NewsItem } from '@/lib/news/types';
 
 interface NewsTickerProps {
@@ -10,218 +10,354 @@ interface NewsTickerProps {
 
 export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps) {
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const tickerRef = useRef<HTMLDivElement>(null);
+  const [lastUpdated, setLastUpdated] = useState<number>(0);
+  const [flashIndex, setFlashIndex] = useState<number | null>(null);
+  const feedRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(0);
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const res = await fetch('/api/news');
-        if (res.ok) {
-          const data = await res.json();
-          setNews(data.news || []);
+  const fetchNews = useCallback(async () => {
+    try {
+      const res = await fetch('/api/news');
+      if (res.ok) {
+        const data = await res.json();
+        const items = data.news || [];
+        if (items.length > prevCountRef.current && prevCountRef.current > 0) {
+          setFlashIndex(0);
+          setTimeout(() => setFlashIndex(null), 2000);
         }
-      } catch (error) {
-        console.error('Failed to fetch news:', error);
-      } finally {
-        setIsLoading(false);
+        prevCountRef.current = items.length;
+        setNews(items);
+        setLastUpdated(Date.now());
       }
-    };
-
-    fetchNews();
-
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchNews, 5 * 60 * 1000);
-    return () => clearInterval(interval);
+    } catch {
+      // silent
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const getSentimentColor = (sentiment?: string) => {
-    switch (sentiment) {
-      case 'bullish':
-        return '#22c55e';
-      case 'bearish':
-        return '#ef4444';
-      default:
-        return '#8a8a8a';
-    }
-  };
+  useEffect(() => {
+    fetchNews();
+    const interval = setInterval(fetchNews, 3 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetchNews]);
 
   const getRelativeTime = (timestamp: number) => {
     const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return 'now';
+    if (seconds < 60) return 'NOW';
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m`;
+    if (minutes < 60) return `${minutes}M AGO`;
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h`;
+    if (hours < 24) return `${hours}H AGO`;
     const days = Math.floor(hours / 24);
-    return `${days}d`;
+    return `${days}D AGO`;
   };
+
+  const getSentimentTag = (sentiment?: string) => {
+    if (sentiment === 'bullish') return { label: 'BULL', color: '#22c55e' };
+    if (sentiment === 'bearish') return { label: 'BEAR', color: '#ef4444' };
+    return null;
+  };
+
+  const getSourceTag = (source: NewsItem['source']) => {
+    if (source.type === 'social') return 'SOCIAL';
+    return 'NEWS';
+  };
+
+  const bg = isLightMode ? '#ffffff' : '#0a0a0a';
+  const bgAlt = isLightMode ? '#f7f7f8' : '#0d0d0d';
+  const border = isLightMode ? '#d0d0d1' : '#1a1a1a';
+  const textPrimary = isLightMode ? '#0a0a0a' : '#e8e4dc';
+  const textMuted = isLightMode ? '#8a8a8a' : '#5a5a5a';
+  const textDim = isLightMode ? '#b0b0b1' : '#3a3a3a';
 
   if (isLoading) {
     return (
-      <div className="news-ticker-container">
+      <>
         <style jsx>{`
-          .news-ticker-container {
-            background: ${isLightMode ? '#d0d0d1' : '#0d0d0d'};
-            border-bottom: 1px solid ${isLightMode ? '#c0c0c1' : '#1a1a1a'};
-            padding: 0.75rem 0;
-            overflow: hidden;
-          }
-          .ticker-loading {
+          .nw-container {
+            background: ${bg};
+            border-bottom: 1px solid ${border};
+            height: 220px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0;
+          }
+          .nw-loading {
+            font-family: 'Space Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: ${textMuted};
+          }
+          .nw-loading::after {
+            content: '';
+            animation: dots 1.5s steps(4) infinite;
+          }
+          @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
           }
         `}</style>
-        <div className="ticker-loading">
-          <span className="skeleton" style={{ width: '120px', height: '12px', display: 'inline-block', marginRight: '2rem' }} />
-          <span className="skeleton" style={{ width: '200px', height: '12px', display: 'inline-block', marginRight: '2rem' }} />
-          <span className="skeleton" style={{ width: '160px', height: '12px', display: 'inline-block', marginRight: '2rem' }} />
-          <span className="skeleton" style={{ width: '180px', height: '12px', display: 'inline-block' }} />
+        <div className="nw-container">
+          <span className="nw-loading">Loading wire</span>
         </div>
-      </div>
+      </>
     );
   }
 
-  if (news.length === 0) {
-    return null;
-  }
-
-  // Duplicate items for seamless loop
-  const tickerItems = [...news, ...news];
+  if (news.length === 0) return null;
 
   return (
     <>
       <style jsx>{`
-        .news-ticker-container {
-          background: ${isLightMode ? '#d0d0d1' : '#0d0d0d'};
-          border-bottom: 1px solid ${isLightMode ? '#c0c0c1' : '#1a1a1a'};
-          padding: 0.75rem 0;
-          overflow: hidden;
-          position: relative;
-        }
-
-        .news-ticker-container::before,
-        .news-ticker-container::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          width: 60px;
-          z-index: 2;
-          pointer-events: none;
-        }
-
-        .news-ticker-container::before {
-          left: 0;
-          background: linear-gradient(to right, ${isLightMode ? '#d0d0d1' : '#0d0d0d'}, transparent);
-        }
-
-        .news-ticker-container::after {
-          right: 0;
-          background: linear-gradient(to left, ${isLightMode ? '#d0d0d1' : '#0d0d0d'}, transparent);
-        }
-
-        .news-ticker-track {
+        .nw-container {
+          background: ${bg};
+          border-bottom: 1px solid ${border};
           display: flex;
-          width: max-content;
-          animation: ticker-scroll 120s linear infinite;
+          flex-direction: column;
+          height: 220px;
+          overflow: hidden;
         }
 
-        .news-ticker-track.paused {
-          animation-play-state: paused;
-        }
-
-        @keyframes ticker-scroll {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-
-        .ticker-item {
+        .nw-header {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          padding: 0 2rem;
-          cursor: pointer;
-          transition: opacity 0.2s ease;
-          white-space: nowrap;
-        }
-
-        .ticker-item:hover {
-          opacity: 0.7;
-        }
-
-        .ticker-sentiment {
-          width: 6px;
-          height: 6px;
-          border-radius: 50%;
+          justify-content: space-between;
+          padding: 8px 16px;
+          border-bottom: 1px solid ${border};
           flex-shrink: 0;
         }
 
-        .ticker-source {
-          font-size: 12px;
-          opacity: 0.6;
+        .nw-header-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
-        .ticker-title {
-          font-size: 12px;
-          color: ${isLightMode ? '#0a0a0a' : '#e8e4dc'};
+        .nw-live-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #22c55e;
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+
+        .nw-label {
           font-family: 'Space Mono', monospace;
+          font-size: 9px;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: ${textMuted};
         }
 
-        .ticker-time {
-          font-size: 10px;
-          color: #5a5a5a;
-          margin-left: 0.25rem;
+        .nw-count {
+          font-family: 'Space Mono', monospace;
+          font-size: 9px;
+          color: ${textDim};
         }
 
-        .ticker-separator {
-          color: ${isLightMode ? '#8a8a8a' : '#3a3a3a'};
-          padding: 0 0.5rem;
+        .nw-feed {
+          flex: 1;
+          overflow-y: auto;
+          scrollbar-width: none;
+        }
+
+        .nw-feed::-webkit-scrollbar {
+          display: none;
+        }
+
+        .nw-item {
+          display: grid;
+          grid-template-columns: 56px 1fr;
+          gap: 0;
+          padding: 0;
+          border-bottom: 1px solid ${border};
+          cursor: pointer;
+          transition: background 0.1s ease;
+        }
+
+        .nw-item:hover {
+          background: ${bgAlt};
+        }
+
+        .nw-item:last-child {
+          border-bottom: none;
+        }
+
+        .nw-item.flash {
+          animation: flash-new 2s ease;
+        }
+
+        @keyframes flash-new {
+          0% { background: rgba(247, 147, 26, 0.15); }
+          100% { background: transparent; }
+        }
+
+        .nw-time-col {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          justify-content: center;
+          padding: 10px 8px 10px 12px;
+          border-right: 1px solid ${border};
+        }
+
+        .nw-time {
+          font-family: 'Space Mono', monospace;
+          font-size: 9px;
+          letter-spacing: 0.05em;
+          color: ${textMuted};
+          white-space: nowrap;
+        }
+
+        .nw-time.recent {
+          color: #F7931A;
+        }
+
+        .nw-content {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+          padding: 10px 12px;
+          min-width: 0;
+        }
+
+        .nw-tags {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .nw-tag {
+          font-family: 'Space Mono', monospace;
+          font-size: 8px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          padding: 1px 5px;
+          border: 1px solid ${textDim};
+          color: ${textMuted};
+          border-radius: 1px;
+          white-space: nowrap;
+        }
+
+        .nw-tag.sentiment {
+          border: none;
+          padding: 1px 5px;
+          font-weight: 700;
+        }
+
+        .nw-source {
+          font-family: 'Space Mono', monospace;
+          font-size: 9px;
+          color: ${textMuted};
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .nw-title {
+          font-family: 'Space Mono', monospace;
+          font-size: 11px;
+          line-height: 1.4;
+          color: ${textPrimary};
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .nw-title:hover {
+          color: #F7931A;
         }
 
         @media (max-width: 768px) {
-          .news-ticker-container { padding: 0.5rem 0; }
-          .news-ticker-container::before,
-          .news-ticker-container::after { width: 24px; }
-          .ticker-item { padding: 0 1rem; }
-          .ticker-title { font-size: 11px; }
-          .ticker-time { font-size: 9px; }
-          .ticker-source { font-size: 11px; }
+          .nw-container {
+            height: 180px;
+          }
+
+          .nw-item {
+            grid-template-columns: 46px 1fr;
+          }
+
+          .nw-time-col {
+            padding: 8px 6px 8px 8px;
+          }
+
+          .nw-time {
+            font-size: 8px;
+          }
+
+          .nw-content {
+            padding: 8px 10px;
+            gap: 2px;
+          }
+
+          .nw-title {
+            font-size: 10px;
+          }
+
+          .nw-tags {
+            gap: 4px;
+          }
+
+          .nw-tag {
+            font-size: 7px;
+            padding: 0px 4px;
+          }
         }
       `}</style>
 
-      <div
-        className="news-ticker-container"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
-        <div
-          ref={tickerRef}
-          className={`news-ticker-track ${isPaused ? 'paused' : ''}`}
-        >
-          {tickerItems.map((item, index) => (
-            <div key={`${item.id}-${index}`} className="ticker-item" onClick={() => onItemClick(item)}>
-              {item.sentiment && item.sentiment !== 'neutral' && (
-                <span
-                  className="ticker-sentiment"
-                  style={{ background: getSentimentColor(item.sentiment) }}
-                />
-              )}
-              <span className="ticker-source">{item.source.icon}</span>
-              <span className="ticker-title">
-                {item.title.length > 80 ? item.title.substring(0, 80) + '...' : item.title}
-              </span>
-              <span className="ticker-time">{getRelativeTime(item.timestamp)}</span>
-              <span className="ticker-separator">•</span>
-            </div>
-          ))}
+      <div className="nw-container">
+        <div className="nw-header">
+          <div className="nw-header-left">
+            <span className="nw-live-dot" />
+            <span className="nw-label">Wire</span>
+          </div>
+          <span className="nw-count">{news.length} items</span>
+        </div>
+
+        <div className="nw-feed" ref={feedRef}>
+          {news.map((item, i) => {
+            const sentiment = getSentimentTag(item.sentiment);
+            const isRecent = Date.now() - item.timestamp < 1000 * 60 * 30;
+
+            return (
+              <div
+                key={item.id}
+                className={`nw-item${i === flashIndex ? ' flash' : ''}`}
+                onClick={() => onItemClick(item)}
+              >
+                <div className="nw-time-col">
+                  <span className={`nw-time${isRecent ? ' recent' : ''}`}>
+                    {getRelativeTime(item.timestamp)}
+                  </span>
+                </div>
+                <div className="nw-content">
+                  <div className="nw-tags">
+                    <span className="nw-tag">{getSourceTag(item.source)}</span>
+                    {sentiment && (
+                      <span
+                        className="nw-tag sentiment"
+                        style={{ color: sentiment.color }}
+                      >
+                        {sentiment.label}
+                      </span>
+                    )}
+                    <span className="nw-source">{item.source.name}</span>
+                  </div>
+                  <span className="nw-title">{item.title}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </>
