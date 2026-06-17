@@ -463,13 +463,22 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           color: #0a0a0a;
         }
 
-        .lesson-content p:first-of-type::first-letter {
+        .lesson-content > p:first-of-type::first-letter {
           font-size: 4rem;
           float: left;
           line-height: 1;
           margin-right: 0.75rem;
           margin-top: 0.25rem;
           color: #F7931A;
+        }
+
+        .key-concept p::first-letter,
+        .highlight-box p::first-letter,
+        .lesson-summary p::first-letter {
+          float: none;
+          font-size: inherit;
+          margin: 0;
+          color: inherit;
         }
 
         .lesson-content h3 {
@@ -531,8 +540,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .key-concept {
-          background: #f7f7f8;
-          border-color: #d0d0d1;
+          background: #ffffff;
+          border-color: #c0c0c1;
         }
 
         .key-concept-label {
@@ -565,8 +574,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .highlight-box {
-          background: #f7f7f8;
-          border-color: #d0d0d1;
+          background: #ffffff;
+          border-color: #c0c0c1;
           border-left-color: #F7931A;
         }
 
@@ -598,8 +607,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .illustration {
-          background: #f7f7f8;
-          border-color: #d0d0d1;
+          background: #ffffff;
+          border-color: #c0c0c1;
         }
 
         .illustration-label {
@@ -632,8 +641,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-page.light-mode .lesson-summary {
-          background: #f7f7f8;
-          border-color: #d0d0d1;
+          background: #ffffff;
+          border-color: #c0c0c1;
         }
 
         .summary-title {
@@ -820,7 +829,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
             margin-bottom: 1.5rem;
           }
 
-          .lesson-content p:first-of-type::first-letter {
+          .lesson-content > p:first-of-type::first-letter {
             font-size: 3.5rem;
             margin-right: 0.6rem;
             margin-top: 0.2rem;

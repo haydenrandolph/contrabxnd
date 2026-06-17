@@ -189,7 +189,7 @@ export default function ArticleLayout({
           z-index: 1;
         }
 
-        .article-content p:first-of-type::first-letter {
+        .article-content > p:first-of-type::first-letter {
           font-family: 'Cormorant Garamond', serif;
           font-size: 4rem;
           float: left;
