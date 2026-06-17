@@ -19,10 +19,6 @@ export const metadata: Metadata = {
   authors: [{ name: 'Contrabxnd' }],
   creator: 'Contrabxnd',
   manifest: '/manifest.json',
-  icons: {
-    icon: '/contraband-logo-v3.png',
-    apple: '/contraband-logo-v3.png',
-  },
   openGraph: {
     type: 'website',
     siteName: 'Contrabxnd',
