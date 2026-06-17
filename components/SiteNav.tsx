@@ -132,6 +132,7 @@ export default function SiteNav({
         .logo-text {
           font-family: 'Space Mono', monospace;
           font-size: 10px;
+          font-weight: 400;
           letter-spacing: 0.2em;
         }
 
@@ -142,6 +143,7 @@ export default function SiteNav({
           text-decoration: none;
           color: #e8e4dc;
           font-size: 10px;
+          font-weight: 400;
           letter-spacing: 0.08em;
           text-transform: uppercase;
           transition: color 0.15s ease;
@@ -168,6 +170,7 @@ export default function SiteNav({
           color: #6a6a6a;
           text-decoration: none;
           font-size: 10px;
+          font-weight: 400;
           letter-spacing: 0.08em;
           text-transform: uppercase;
           padding: 16px 0;
