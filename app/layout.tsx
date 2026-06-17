@@ -6,14 +6,47 @@ import AuthModals from '@/components/auth/AuthModals';
 import SearchModal from '@/components/SearchModal';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
+const SITE_URL = 'https://www.contrabxnd.io';
+
 export const metadata: Metadata = {
-  title: "Contraband - Ideas that refuse to stay buried",
-  description: "Bitcoin education, writings, and ideas worth trading. Exploring the gray markets of thought.",
-  manifest: "/manifest.json",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: 'Contrabxnd — Bitcoin Intelligence Platform',
+    template: '%s | Contrabxnd',
+  },
+  description: 'Live Bitcoin terminal with macro signals, FedWatch probabilities, ETF flows, AI analysis, and sovereign tools. Real-time intelligence for serious Bitcoiners.',
+  keywords: ['Bitcoin', 'BTC', 'Bitcoin terminal', 'Bitcoin intelligence', 'FedWatch', 'ETF flows', 'macro liquidity', 'Bitcoin education', 'DCA calculator', 'MCP server'],
+  authors: [{ name: 'Contrabxnd' }],
+  creator: 'Contrabxnd',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/contraband-logo-v3.png',
+    apple: '/contraband-logo-v3.png',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'Contrabxnd',
+    title: 'Contrabxnd — Bitcoin Intelligence Platform',
+    description: 'Live Bitcoin terminal with macro signals, FedWatch probabilities, ETF flows, AI analysis, and sovereign tools.',
+    url: SITE_URL,
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Contrabxnd — Bitcoin Intelligence Platform' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@contrabxnd',
+    creator: '@contrabxnd',
+    title: 'Contrabxnd — Bitcoin Intelligence Platform',
+    description: 'Live Bitcoin terminal with macro signals, FedWatch probabilities, ETF flows, AI analysis, and sovereign tools.',
+    images: ['/og-image.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Contraband",
+    statusBarStyle: 'black-translucent',
+    title: 'Contrabxnd',
   },
 };
 

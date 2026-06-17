@@ -32,8 +32,18 @@ export async function generateMetadata({ params }: PageProps) {
   }
 
   return {
-    title: `${article.title} | Contraband`,
+    title: article.title,
     description: article.subtitle,
+    openGraph: {
+      title: `${article.title} | Contrabxnd`,
+      description: article.subtitle,
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: article.title,
+      description: article.subtitle,
+    },
   };
 }
 
