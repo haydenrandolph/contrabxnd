@@ -133,7 +133,6 @@ export default function SiteNav({
           font-family: 'Space Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.2em;
-          text-transform: uppercase;
         }
 
         .back-link {
@@ -485,7 +484,7 @@ export default function SiteNav({
         ) : (
           <Link href="/" className="logo-link">
             <Image src="/contraband-logo-v3.png" alt="Contrabxnd logo" width={28} height={28} />
-            <span className="logo-text">Contra₿xnd</span>
+            <span className="logo-text">CONTRA₿XND</span>
             <span className="logo-sep">|</span>
             <span className="logo-badge">BIP</span>
           </Link>
@@ -544,7 +543,7 @@ export default function SiteNav({
         <div className="mobile-header">
           <Link href="/" className="logo-link" onClick={() => setMenuOpen(false)}>
             <Image src="/contraband-logo-v3.png" alt="Contrabxnd logo" width={24} height={24} />
-            <span className="logo-text">Contra₿xnd</span>
+            <span className="logo-text">CONTRA₿XND</span>
           </Link>
           <button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
