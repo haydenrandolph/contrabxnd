@@ -110,10 +110,14 @@ Rules:
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1500,
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'user', content: prompt },
+        { role: 'assistant', content: '{' },
+      ],
     });
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const rawText = response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = ('{' + rawText).replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
     const brief = JSON.parse(text);
 
     const score = signal?.score ?? null;
