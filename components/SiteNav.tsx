@@ -22,6 +22,7 @@ type NavLink =
   | { label: string; href: string; dropdown: DropdownItem[]; comingSoon?: false };
 
 const NAV_LINKS: NavLink[] = [
+  { href: '/', label: 'Terminal' },
   {
     href: '/toolkit',
     label: 'Tool₿ox',
