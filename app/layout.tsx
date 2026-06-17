@@ -11,8 +11,8 @@ const SITE_URL = 'https://www.contrabxnd.io';
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Contrabxnd — Bitcoin Intelligence Platform',
-    template: '%s | Contrabxnd',
+    default: 'CXB',
+    template: '%s | CXB',
   },
   description: 'Live Bitcoin terminal with macro signals, FedWatch probabilities, ETF flows, AI analysis, and sovereign tools. Real-time intelligence for serious Bitcoiners.',
   keywords: ['Bitcoin', 'BTC', 'Bitcoin terminal', 'Bitcoin intelligence', 'FedWatch', 'ETF flows', 'macro liquidity', 'Bitcoin education', 'DCA calculator', 'MCP server'],
