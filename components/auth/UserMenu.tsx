@@ -203,6 +203,30 @@ export default function UserMenu() {
           color: #ef4444;
         }
 
+        :global(html.light-mode) .user-menu-trigger {
+          border-color: rgba(0, 0, 0, 0.12);
+        }
+        :global(html.light-mode) .user-name {
+          color: #0a0a0a;
+        }
+        :global(html.light-mode) .user-menu-chevron {
+          stroke: #8a8a8a;
+        }
+        :global(html.light-mode) .user-menu-dropdown {
+          background: #ffffff;
+          border-color: rgba(0, 0, 0, 0.12);
+        }
+        :global(html.light-mode) .user-menu-item {
+          color: #6a6a6a;
+        }
+        :global(html.light-mode) .user-menu-item:hover {
+          background: #f7f7f8;
+          color: #0a0a0a;
+        }
+        :global(html.light-mode) .user-menu-divider {
+          background: rgba(0, 0, 0, 0.08);
+        }
+
         @media (max-width: 768px) {
           .user-name {
             display: none;
