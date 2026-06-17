@@ -161,14 +161,9 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         .nw-track {
           display: flex;
           width: max-content;
-          animation: ticker-scroll ${speed}s linear infinite;
         }
 
-        .nw-track.paused {
-          animation-play-state: paused;
-        }
-
-        @keyframes ticker-scroll {
+        @keyframes nw-ticker-scroll {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
@@ -256,7 +251,11 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         >
           <div
             ref={tickerRef}
-            className={`nw-track ${isPaused ? 'paused' : ''}`}
+            className="nw-track"
+            style={{
+              animation: `nw-ticker-scroll ${speed}s linear infinite`,
+              animationPlayState: isPaused ? 'paused' : 'running',
+            }}
           >
             {tickerItems.map((item, index) => {
               const isRecent = Date.now() - item.timestamp < 1000 * 60 * 30;
