@@ -9,6 +9,7 @@ import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import BookmarkButton from '@/components/BookmarkButton';
 import HighlightPopover from '@/components/HighlightPopover';
+import AudioPlayer from '@/components/AudioPlayer';
 
 interface LessonLayoutProps {
   slug: string;
@@ -30,18 +31,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
   const [tocItems, setTocItems] = useState<TocItem[]>([]);
   const [activeSection, setActiveSection] = useState('');
   const [tocOpen, setTocOpen] = useState(false);
-  const [ttsPlaying, setTtsPlaying] = useState(false);
-  const [ttsPaused, setTtsPaused] = useState(false);
-  const [ttsRate, setTtsRate] = useState(1);
-  const [ttsSupported, setTtsSupported] = useState(false);
-  const [ttsCurrentSection, setTtsCurrentSection] = useState('');
   const contentRef = useRef<HTMLElement>(null);
-  const ttsChunksRef = useRef<string[]>([]);
-  const ttsIndexRef = useRef(0);
-
-  useEffect(() => {
-    setTtsSupported(typeof window !== 'undefined' && 'speechSynthesis' in window);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -121,111 +111,6 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
     } catch { /* ignore */ }
     setCompleting(false);
   }, [completing, completed, slug]);
-
-  const buildTtsChunks = useCallback(() => {
-    if (!contentRef.current) return [];
-    const chunks: string[] = [];
-    const headings = contentRef.current.querySelectorAll('h2');
-    const allElements = Array.from(contentRef.current.children);
-    let currentChunk = '';
-    let currentHeading = '';
-
-    for (const el of allElements) {
-      if (el.tagName === 'H2') {
-        if (currentChunk.trim()) {
-          chunks.push(currentHeading ? `${currentHeading}. ${currentChunk.trim()}` : currentChunk.trim());
-        }
-        currentHeading = el.textContent || '';
-        currentChunk = '';
-      } else {
-        const text = el.textContent || '';
-        if (text.trim()) currentChunk += text.trim() + ' ';
-      }
-    }
-    if (currentChunk.trim()) {
-      chunks.push(currentHeading ? `${currentHeading}. ${currentChunk.trim()}` : currentChunk.trim());
-    }
-    if (chunks.length === 0 && headings.length === 0) {
-      const fullText = contentRef.current.textContent || '';
-      if (fullText.trim()) chunks.push(fullText.trim());
-    }
-    return chunks;
-  }, []);
-
-  const speakChunk = useCallback((index: number) => {
-    const chunks = ttsChunksRef.current;
-    if (index >= chunks.length) {
-      setTtsPlaying(false);
-      setTtsPaused(false);
-      setTtsCurrentSection('');
-      return;
-    }
-    ttsIndexRef.current = index;
-    const utterance = new SpeechSynthesisUtterance(chunks[index]);
-    utterance.rate = ttsRate;
-    utterance.onend = () => speakChunk(index + 1);
-    utterance.onerror = (e) => {
-      if (e.error !== 'canceled') {
-        setTtsPlaying(false);
-        setTtsPaused(false);
-      }
-    };
-    const sectionMatch = chunks[index].match(/^(.+?)\./);
-    if (sectionMatch && tocItems.find(t => t.text === sectionMatch[1])) {
-      setTtsCurrentSection(sectionMatch[1]);
-    }
-    window.speechSynthesis.speak(utterance);
-  }, [ttsRate, tocItems]);
-
-  const ttsPlay = useCallback(() => {
-    if (ttsPaused) {
-      window.speechSynthesis.resume();
-      setTtsPaused(false);
-      setTtsPlaying(true);
-      return;
-    }
-    window.speechSynthesis.cancel();
-    const chunks = buildTtsChunks();
-    ttsChunksRef.current = chunks;
-    ttsIndexRef.current = 0;
-    setTtsPlaying(true);
-    setTtsPaused(false);
-    speakChunk(0);
-  }, [ttsPaused, buildTtsChunks, speakChunk]);
-
-  const ttsPause = useCallback(() => {
-    window.speechSynthesis.pause();
-    setTtsPaused(true);
-    setTtsPlaying(false);
-  }, []);
-
-  const ttsStop = useCallback(() => {
-    window.speechSynthesis.cancel();
-    setTtsPlaying(false);
-    setTtsPaused(false);
-    setTtsCurrentSection('');
-    ttsIndexRef.current = 0;
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!ttsPlaying && !ttsPaused) return;
-    window.speechSynthesis.cancel();
-    setTtsPaused(false);
-    if (ttsPlaying) {
-      const chunks = ttsChunksRef.current;
-      if (chunks.length > 0) {
-        speakChunk(ttsIndexRef.current);
-      }
-    }
-  }, [ttsRate]);
 
   if (!nav) return null;
   const { lesson, total, progress, weekLabel, prev, next } = nav;
@@ -450,126 +335,11 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           margin-bottom: 8px;
         }
 
-        /* Voice Reader */
-        .voice-reader-bar {
+        /* Audio Player wrapper */
+        .lesson-audio {
           max-width: 700px;
           margin: 24px auto 0;
           padding: 0 3rem;
-        }
-
-        .voice-reader {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px 16px;
-          background: #141414;
-          border: 1px solid #1a1a1a;
-          border-radius: 2px;
-        }
-
-        .lesson-page.light-mode .voice-reader {
-          background: #ffffff;
-          border-color: #d0d0d1;
-        }
-
-        .vr-label {
-          font-family: 'Space Mono', monospace;
-          font-size: 9px;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: #8a8a8a;
-          white-space: nowrap;
-        }
-
-        .vr-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          background: transparent;
-          border: 1px solid #3a3a3a;
-          border-radius: 2px;
-          cursor: pointer;
-          transition: border-color 0.15s ease, background 0.15s ease;
-          flex-shrink: 0;
-        }
-
-        .vr-btn:hover {
-          border-color: #F7931A;
-        }
-
-        .vr-btn svg {
-          width: 14px;
-          height: 14px;
-        }
-
-        .vr-btn.playing {
-          border-color: #F7931A;
-          background: #F7931A;
-        }
-
-        .vr-btn.playing svg {
-          stroke: #fff;
-        }
-
-        .lesson-page.light-mode .vr-btn {
-          border-color: #c0c0c1;
-        }
-
-        .vr-status {
-          flex: 1;
-          font-family: 'Space Mono', monospace;
-          font-size: 11px;
-          color: #8a8a8a;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-          min-width: 0;
-        }
-
-        .vr-status.active {
-          color: #F7931A;
-        }
-
-        .vr-speed {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          flex-shrink: 0;
-        }
-
-        .vr-speed-btn {
-          padding: 4px 8px;
-          background: transparent;
-          border: 1px solid #3a3a3a;
-          border-radius: 2px;
-          font-family: 'Space Mono', monospace;
-          font-size: 10px;
-          color: #8a8a8a;
-          cursor: pointer;
-          transition: border-color 0.15s ease, color 0.15s ease;
-        }
-
-        .vr-speed-btn:hover {
-          border-color: #F7931A;
-          color: #F7931A;
-        }
-
-        .vr-speed-btn.active {
-          border-color: #F7931A;
-          color: #F7931A;
-        }
-
-        .lesson-page.light-mode .vr-speed-btn {
-          border-color: #c0c0c1;
-          color: #8a8a8a;
-        }
-
-        .lesson-page.light-mode .vr-speed-btn:hover,
-        .lesson-page.light-mode .vr-speed-btn.active {
-          border-color: #F7931A;
-          color: #F7931A;
         }
 
         .lesson-header {
@@ -1069,20 +839,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
             font-size: 11px;
           }
 
-          .voice-reader-bar {
+          .lesson-audio {
             padding: 0 1.5rem;
-          }
-
-          .voice-reader {
-            gap: 8px;
-            padding: 10px 12px;
-          }
-
-          .vr-label { display: none; }
-
-          .vr-speed-btn {
-            padding: 3px 6px;
-            font-size: 9px;
           }
 
           .lesson-content h2 {
@@ -1284,56 +1042,13 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           </div>
         )}
 
-        {ttsSupported && (
-          <div className="voice-reader-bar">
-            <div className="voice-reader">
-              <span className="vr-label">Listen</span>
-              {!ttsPlaying && !ttsPaused ? (
-                <button className="vr-btn" onClick={ttsPlay} aria-label="Play">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2">
-                    <polygon points="5 3 19 12 5 21 5 3" fill="#8a8a8a" stroke="none"/>
-                  </svg>
-                </button>
-              ) : (
-                <>
-                  {ttsPlaying ? (
-                    <button className="vr-btn playing" onClick={ttsPause} aria-label="Pause">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-                        <rect x="6" y="4" width="4" height="16" fill="#fff" stroke="none"/>
-                        <rect x="14" y="4" width="4" height="16" fill="#fff" stroke="none"/>
-                      </svg>
-                    </button>
-                  ) : (
-                    <button className="vr-btn" onClick={ttsPlay} aria-label="Resume">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2">
-                        <polygon points="5 3 19 12 5 21 5 3" fill="#8a8a8a" stroke="none"/>
-                      </svg>
-                    </button>
-                  )}
-                  <button className="vr-btn" onClick={ttsStop} aria-label="Stop">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2">
-                      <rect x="6" y="6" width="12" height="12" fill="#8a8a8a" stroke="none"/>
-                    </svg>
-                  </button>
-                </>
-              )}
-              <span className={`vr-status${ttsPlaying ? ' active' : ''}`}>
-                {ttsPlaying ? (ttsCurrentSection || 'Reading...') : ttsPaused ? 'Paused' : `${lesson.duration} · Listen to this lesson`}
-              </span>
-              <div className="vr-speed">
-                {[0.75, 1, 1.25, 1.5, 2].map(rate => (
-                  <button
-                    key={rate}
-                    className={`vr-speed-btn${ttsRate === rate ? ' active' : ''}`}
-                    onClick={() => setTtsRate(rate)}
-                  >
-                    {rate}x
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="lesson-audio">
+          <AudioPlayer
+            src={`/audio/lessons/${slug}.mp3`}
+            title={lesson.title}
+            duration={lesson.duration}
+          />
+        </div>
 
         <article className="lesson-content" ref={contentRef}>
           {children}

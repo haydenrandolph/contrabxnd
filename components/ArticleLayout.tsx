@@ -7,6 +7,7 @@ import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
 import BookmarkButton from '@/components/BookmarkButton';
 import HighlightPopover from '@/components/HighlightPopover';
+import AudioPlayer from '@/components/AudioPlayer';
 
 interface ArticleLayoutProps {
   article: {
@@ -375,6 +376,14 @@ export default function ArticleLayout({
               <span>{article.type}</span>
             </div>
           </header>
+
+          <div className="article-audio" style={{ padding: '0 0 2rem' }}>
+            <AudioPlayer
+              src={`/audio/writings/${slug}.mp3`}
+              title={article.title}
+              duration={article.readTime}
+            />
+          </div>
 
           <div className="article-content">
             {children}
