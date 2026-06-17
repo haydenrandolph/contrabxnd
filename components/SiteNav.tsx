@@ -429,31 +429,16 @@ export default function SiteNav({
 
       <div className={`mobile-overlay${light}${menuOpen ? ' open' : ''}`} onClick={() => setMenuOpen(false)}>
         <nav className="mobile-nav" onClick={(e) => e.stopPropagation()}>
-          {NAV_LINKS.flatMap((link) =>
-            link.comingSoon ? [
-              <a key={link.label} className="coming-soon" aria-disabled="true" aria-label={`${link.label} — coming soon`}>
-                {link.label}
-              </a>
-            ] : link.dropdown ? [
+          {NAV_LINKS.filter((link) => !link.comingSoon).map((link) =>
+            link.dropdown ? (
               <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>
                 {link.label}
-              </Link>,
-              ...link.dropdown.map((item) =>
-                item.comingSoon ? (
-                  <a key={`mob-${item.label}`} className="coming-soon" style={{ fontSize: '1.2rem', opacity: 0.25 }} aria-disabled="true">
-                    {item.label}
-                  </a>
-                ) : (
-                  <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)} style={{ fontSize: '1.2rem', opacity: 0.6 }}>
-                    {item.label}
-                  </Link>
-                )
-              ),
-            ] : [
+              </Link>
+            ) : (
               <Link key={link.href} href={link.href!} onClick={() => setMenuOpen(false)}>
                 {link.label}
               </Link>
-            ]
+            )
           )}
         </nav>
       </div>
