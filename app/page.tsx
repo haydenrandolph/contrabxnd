@@ -1285,7 +1285,7 @@ export default function TerminalPage() {
           <div className="terminal-body">
             {/* ── Chart ── */}
             <div className="chart-panel">
-              <BTCChart isLightMode={isLightMode} />
+              <BTCChart isLightMode={isLightMode} onPriceTick={(p) => setNetworkData(prev => ({ ...prev, price: p }))} />
             </div>
 
             {/* ── Sidebar ── */}

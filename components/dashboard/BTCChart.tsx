@@ -24,9 +24,10 @@ const BUCKET_SECONDS: Record<ChartInterval, number> = {
 
 interface BTCChartProps {
   isLightMode: boolean;
+  onPriceTick?: (price: number) => void;
 }
 
-export default function BTCChart({ isLightMode }: BTCChartProps) {
+export default function BTCChart({ isLightMode, onPriceTick }: BTCChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const chartInstanceRef = useRef<any>(null);
@@ -52,6 +53,9 @@ export default function BTCChart({ isLightMode }: BTCChartProps) {
 
   const isLightRef = useRef(isLightMode);
   isLightRef.current = isLightMode;
+
+  const onPriceTickRef = useRef(onPriceTick);
+  onPriceTickRef.current = onPriceTick;
 
   function getCandleBucket(timestampSec: number, itv: ChartInterval): number {
     const bucket = BUCKET_SECONDS[itv];
@@ -230,6 +234,8 @@ export default function BTCChart({ isLightMode }: BTCChartProps) {
           const size = parseFloat(msg.last_size || '0');
           const tickTime = Math.floor(new Date(msg.time).getTime() / 1000);
           if (isNaN(price) || price === 0) return;
+
+          onPriceTickRef.current?.(price);
 
           const itv = intervalRef.current;
           const bucket = getCandleBucket(tickTime, itv);
