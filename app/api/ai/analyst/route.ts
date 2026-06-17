@@ -60,8 +60,10 @@ function buildSystemPrompt(ctx: SignalContext): string {
 
 Personality: direct, data-driven, no fluff. Brief sentences, concrete numbers, clear implications. Never use emojis. Never give financial advice or say buy/sell. Frame everything as analysis and signal interpretation.
 
-LIVE DATA:
+LIVE DATA (refreshed every 60s):
 ${JSON.stringify(ctx, null, 2)}
+
+A daily AI-generated intelligence brief is published at 14:00 UTC. If users ask about today's brief or the daily report, reference the data above to provide the same quality of analysis.
 
 SIGNAL MODEL:
 - Contrabxnd Score: -100 (bearish) to +100 (bullish). Components: ETF flows 25%, Net Liquidity 25%, FedWatch 20%, Polymarket 10%, Fear & Greed 10%, SLR 5%, TGA 5%.

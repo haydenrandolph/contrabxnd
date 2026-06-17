@@ -436,6 +436,7 @@ export default function McpPage() {
                 ['get_slr', 'SLR regime and leverage data'],
                 ['get_market_brief', 'Full intelligence brief (all signals)'],
                 ['get_bitcoin_history', 'Historical BTC price data'],
+                ['get_daily_brief', 'AI-generated daily intelligence brief'],
               ].map(([name, desc]) => (
                 <div key={name} className="mcp-tool-item">
                   <div className="mcp-tool-name">{name}</div>

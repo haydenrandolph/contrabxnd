@@ -117,6 +117,8 @@ export default function TerminalPage() {
   const [liquidityData, setLiquidityData] = useState<LiquidityData | null>(null);
   const [slrData, setSlrData] = useState<SlrData | null>(null);
   const [polymarketData, setPolymarketData] = useState<PolymarketData | null>(null);
+  const [briefData, setBriefData] = useState<{ date: string; headline: string; summary: string; sections: Array<{ title: string; body: string }> } | null>(null);
+  const [briefExpanded, setBriefExpanded] = useState(false);
   const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [aiInput, setAiInput] = useState('');
   const [aiStreaming, setAiStreaming] = useState(false);
@@ -251,13 +253,15 @@ export default function TerminalPage() {
         fetch('/api/liquidity').then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/slr').then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/polymarket').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/brief').then(r => r.ok ? r.json() : null).catch(() => null),
       ];
-      const [sig, fed, liq, slr, poly] = await Promise.all(fetches);
+      const [sig, fed, liq, slr, poly, brief] = await Promise.all(fetches);
       if (sig && sig.score !== undefined) setSignalData(sig);
       if (fed) setFedwatchData(fed);
       if (liq) setLiquidityData(liq);
       if (slr) setSlrData(slr);
       if (poly) setPolymarketData(poly);
+      if (brief?.brief) setBriefData(brief.brief);
     };
     fetchMacro();
     const i = setInterval(fetchMacro, 5 * 60 * 1000);
@@ -751,6 +755,102 @@ export default function TerminalPage() {
           font-style: italic;
         }
 
+        /* Brief */
+
+        .brief-card {
+          border-bottom: 1px solid var(--cb-border);
+        }
+
+        .brief-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 12px 24px;
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+
+        .brief-header:hover {
+          background: var(--cb-surface);
+        }
+
+        .brief-header-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-width: 0;
+        }
+
+        .brief-tag {
+          font-size: 8px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--cb-bg);
+          background: var(--cb-accent);
+          padding: 2px 6px;
+          border-radius: 2px;
+          flex-shrink: 0;
+        }
+
+        .brief-headline {
+          font-size: 11px;
+          color: var(--cb-text);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          min-width: 0;
+        }
+
+        .brief-chevron {
+          color: var(--cb-text-muted);
+          flex-shrink: 0;
+          transition: transform 0.2s ease;
+        }
+
+        .brief-chevron.open {
+          transform: rotate(180deg);
+        }
+
+        .brief-body {
+          padding: 0 24px 16px;
+        }
+
+        .brief-summary {
+          font-size: 12px;
+          line-height: 1.6;
+          color: var(--cb-text-muted);
+          margin-bottom: 12px;
+        }
+
+        .brief-section {
+          padding: 8px 0;
+          border-top: 1px solid var(--cb-border);
+        }
+
+        .brief-section-title {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          margin-bottom: 4px;
+        }
+
+        .brief-section-body {
+          font-size: 11px;
+          line-height: 1.6;
+          color: var(--cb-text);
+        }
+
+        .brief-date {
+          font-size: 9px;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--cb-text-muted);
+          margin-top: 8px;
+        }
+
         /* Tab bar */
 
         .sidebar-tabs {
@@ -1175,6 +1275,8 @@ export default function TerminalPage() {
           .sentiment-content { padding: 14px 16px; }
           .sidebar-section-title { padding: 10px 16px; }
           .ai-messages { padding: 12px 16px; }
+          .brief-header { padding: 10px 16px; }
+          .brief-body { padding: 0 16px 12px; }
           .ai-input { font-size: 16px; padding: 14px 16px; }
           .ai-send-btn { padding: 14px 16px; min-height: 48px; }
           .modal-header { padding: 16px; }
@@ -1281,7 +1383,34 @@ export default function TerminalPage() {
                 </div>
               </div>
 
-              {/* 3. Tab bar */}
+              {/* 3. Daily Brief */}
+              {briefData && (
+                <div className="brief-card">
+                  <div className="brief-header" onClick={() => setBriefExpanded(!briefExpanded)}>
+                    <div className="brief-header-left">
+                      <span className="brief-tag">Brief</span>
+                      <span className="brief-headline">{briefData.headline}</span>
+                    </div>
+                    <svg className={`brief-chevron${briefExpanded ? ' open' : ''}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </div>
+                  {briefExpanded && (
+                    <div className="brief-body">
+                      <div className="brief-summary">{briefData.summary}</div>
+                      {briefData.sections.map((s, i) => (
+                        <div key={i} className="brief-section">
+                          <div className="brief-section-title">{s.title}</div>
+                          <div className="brief-section-body">{s.body}</div>
+                        </div>
+                      ))}
+                      <div className="brief-date">{briefData.date}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 4. Tab bar */}
               <div className="sidebar-tabs">
                 <button
                   className={`sidebar-tab-btn ${sidebarTab === 'macro' ? 'active' : ''}`}

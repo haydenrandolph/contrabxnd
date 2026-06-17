@@ -175,6 +175,16 @@ function createServer() {
     },
   );
 
+  server.tool(
+    'get_daily_brief',
+    'Get the latest AI-generated daily intelligence brief: headline, summary, and section-by-section analysis',
+    {},
+    async () => {
+      const data = await fetchInternal('/api/brief');
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
   return server;
 }
 
@@ -223,6 +233,7 @@ export async function GET(req: Request) {
         'get_signal_score', 'get_bitcoin_price', 'get_net_liquidity',
         'get_fedwatch', 'get_etf_flows', 'get_polymarket',
         'get_fear_greed', 'get_slr', 'get_market_brief', 'get_bitcoin_history',
+        'get_daily_brief',
       ],
     }), { headers: { 'Content-Type': 'application/json' } });
   }
