@@ -134,7 +134,7 @@ async function sendAlertEmail(email: string, alert: { target_price: number; dire
         <div style="font-family: 'Courier New', monospace; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #0a0a0a; color: #e8e4dc;">
           <div style="text-align: center; margin-bottom: 40px;">
             <h1 style="color: #F7931A; font-size: 14px; letter-spacing: 0.3em; text-transform: uppercase; margin: 0;">
-              Contra₿and
+              Contra₿xnd
             </h1>
           </div>
 

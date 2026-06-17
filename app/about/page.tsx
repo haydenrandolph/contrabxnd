@@ -120,7 +120,7 @@ export default function AboutPage() {
 
         <div className="page-header">
           <div className="page-label">ABOUT</div>
-          <h1 className="page-title">Contra₿and</h1>
+          <h1 className="page-title">Contra₿xnd</h1>
           <p className="page-subtitle">Contrabxnd knowledge for sovereign individuals.</p>
           <div className="page-divider" />
         </div>
