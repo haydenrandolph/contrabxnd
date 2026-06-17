@@ -1,5 +1,5 @@
-// Service Worker for Contraband PWA
-const CACHE_NAME = 'contraband-v1';
+// Service Worker for Contrabxnd PWA
+const CACHE_NAME = 'contrabxnd-v1';
 
 // Install event
 self.addEventListener('install', (event) => {
@@ -31,7 +31,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Contraband', options)
+    self.registration.showNotification(data.title || 'Contrabxnd', options)
   );
 });
 

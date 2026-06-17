@@ -484,7 +484,7 @@ export default function SiteNav({
           </Link>
         ) : (
           <Link href="/" className="logo-link">
-            <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={28} height={28} />
+            <Image src="/contraband-logo-v3.png" alt="Contrabxnd logo" width={28} height={28} />
             <span className="logo-text">Contra₿and</span>
             <span className="logo-sep">|</span>
             <span className="logo-badge">BIP</span>
@@ -543,7 +543,7 @@ export default function SiteNav({
       <div className={`mobile-overlay${light}${menuOpen ? ' open' : ''}`}>
         <div className="mobile-header">
           <Link href="/" className="logo-link" onClick={() => setMenuOpen(false)}>
-            <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={24} height={24} />
+            <Image src="/contraband-logo-v3.png" alt="Contrabxnd logo" width={24} height={24} />
             <span className="logo-text">Contra₿and</span>
           </Link>
           <button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">

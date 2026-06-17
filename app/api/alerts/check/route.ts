@@ -127,7 +127,7 @@ async function sendAlertEmail(email: string, alert: { target_price: number; dire
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Contraband <alerts@contrabxnd.io>',
+      from: 'Contrabxnd <alerts@contrabxnd.io>',
       to: email,
       subject: `Bitcoin Price Alert: ${direction} ${formattedTarget}`,
       html: `
@@ -157,7 +157,7 @@ async function sendAlertEmail(email: string, alert: { target_price: number; dire
           </div>
 
           <p style="color: #3a3a3a; font-size: 11px; text-align: center; margin-top: 40px;">
-            You're receiving this because you set a price alert on Contraband.
+            You're receiving this because you set a price alert on Contrabxnd.
           </p>
         </div>
       `,

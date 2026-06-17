@@ -81,8 +81,8 @@ export default function SiteFooter({ variant = 'standard', className }: SiteFoot
       <footer className={`site-footer${className ? ` ${className}` : ''}`}>
         <div className="footer-content">
           <div className="footer-left">
-            <Image src="/contraband-logo-v3.png" alt="Contraband logo" width={24} height={24} />
-            <span className="footer-copy">© 2025–2026 Contrabxnd by Feelin' Moody</span>
+            <Image src="/contraband-logo-v3.png" alt="Contrabxnd logo" width={24} height={24} />
+            <span className="footer-copy">© 2025–2026 Contrabxnd by FML</span>
           </div>
           <div className="footer-links">
             {links.map((link) => (
