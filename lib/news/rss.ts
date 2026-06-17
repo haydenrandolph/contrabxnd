@@ -5,6 +5,42 @@ interface RssFeed {
   name: string;
 }
 
+const BULLISH_KEYWORDS = [
+  'surge', 'surges', 'soar', 'soars', 'rally', 'rallies', 'record high',
+  'all-time high', 'ath', 'breakout', 'bull', 'bullish', 'adoption',
+  'inflow', 'inflows', 'accumulate', 'accumulation', 'buying', 'bought',
+  'approve', 'approval', 'approves', 'launch', 'launches', 'partnership',
+  'etf approval', 'institutional', 'billion', 'milestone', 'upgrade',
+  'growth', 'gains', 'gain', 'rises', 'rose', 'climbs', 'jumps',
+  'positive', 'optimism', 'bullrun', 'moon', 'demand',
+];
+
+const BEARISH_KEYWORDS = [
+  'crash', 'crashes', 'plunge', 'plunges', 'dump', 'dumps', 'sell-off',
+  'selloff', 'bear', 'bearish', 'ban', 'bans', 'fraud', 'scam', 'hack',
+  'hacked', 'exploit', 'guilty', 'arrest', 'charged', 'lawsuit', 'sue',
+  'fine', 'fined', 'penalty', 'outflow', 'outflows', 'withdraw',
+  'collapse', 'bankrupt', 'bankruptcy', 'liquidat', 'drops', 'drop',
+  'fell', 'falls', 'decline', 'plummets', 'tanks', 'crackdown',
+  'restriction', 'warning', 'risk', 'fear', 'panic', 'indicted',
+  'sentenced', 'prison',
+];
+
+function detectSentiment(title: string): NewsItem['sentiment'] {
+  const lower = title.toLowerCase();
+  let bull = 0;
+  let bear = 0;
+  for (const kw of BULLISH_KEYWORDS) {
+    if (lower.includes(kw)) bull++;
+  }
+  for (const kw of BEARISH_KEYWORDS) {
+    if (lower.includes(kw)) bear++;
+  }
+  if (bull > bear) return 'bullish';
+  if (bear > bull) return 'bearish';
+  return undefined;
+}
+
 const FEEDS: RssFeed[] = [
   { url: 'https://bitcoinmagazine.com/feed', name: 'Bitcoin Magazine' },
   { url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', name: 'CoinDesk' },
@@ -53,6 +89,7 @@ function parseItems(xml: string, sourceName: string): NewsItem[] {
         type: 'news',
       },
       timestamp,
+      sentiment: detectSentiment(title),
     });
   }
 
