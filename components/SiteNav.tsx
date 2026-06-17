@@ -60,9 +60,6 @@ const NAV_LINKS: NavLink[] = [
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
   { href: '/network', label: 'Merchants' },
-  { label: 'Podcasts', comingSoon: true },
-  { label: 'Videos', comingSoon: true },
-  { label: 'Merch', comingSoon: true },
   { href: '/about', label: 'About' },
 ];
 
