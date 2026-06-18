@@ -104,7 +104,7 @@ export default function TerminalPage() {
 
   const [fearGreed, setFearGreed] = useState<FearGreedData>({ value: null, label: null });
   const [etfFlows, setEtfFlows] = useState<EtfFlowData | null>(null);
-  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'derivatives' | 'network' | 'ai'>('macro');
+  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'derivatives' | 'ai'>('macro');
   const [derivativesData, setDerivativesData] = useState<{
     openInterest: { value: number | null; change24h: number | null };
     fundingRate: { value: number | null; predicted: number | null };
@@ -1403,12 +1403,6 @@ export default function TerminalPage() {
                   Derivs
                 </button>
                 <button
-                  className={`sidebar-tab-btn ${sidebarTab === 'network' ? 'active' : ''}`}
-                  onClick={() => setSidebarTab('network')}
-                >
-                  Network
-                </button>
-                <button
                   className={`sidebar-tab-btn ${sidebarTab === 'ai' ? 'active' : ''}`}
                   onClick={() => setSidebarTab('ai')}
                 >
@@ -1689,35 +1683,6 @@ export default function TerminalPage() {
                   </>
                 )}
 
-                {sidebarTab === 'network' && (
-                  <div className="metrics-grid">
-                    <div className="metric-cell">
-                      <div className="metric-label">Block</div>
-                      <div className="metric-value">{networkData.blockHeight === 0 ? skel('70px') : networkData.blockHeight.toLocaleString()}</div>
-                    </div>
-                    <div className="metric-cell">
-                      <div className="metric-label">Hash Rate</div>
-                      <div className="metric-value">{networkData.hashRate === 0 ? skel('60px') : `${networkData.hashRate.toFixed(1)} EH/s`}</div>
-                    </div>
-                    <div className="metric-cell">
-                      <div className="metric-label">Mempool</div>
-                      <div className="metric-value">{networkData.mempoolCount === 0 ? skel('50px') : fmtNum(networkData.mempoolCount, 0)}</div>
-                    </div>
-                    <div className="metric-cell">
-                      <div className="metric-label">Fee</div>
-                      <div className="metric-value">{networkData.priorityFee === 0 ? skel('50px') : `${networkData.priorityFee} sat/vB`}</div>
-                    </div>
-                    <div className="metric-cell">
-                      <div className="metric-label">Mkt Cap</div>
-                      <div className="metric-value">{networkData.marketCap === 0 ? skel('60px') : `$${fmtNum(networkData.marketCap)}`}</div>
-                    </div>
-                    <div className="metric-cell">
-                      <div className="metric-label">24h Vol</div>
-                      <div className="metric-value">{networkData.volume24h === 0 ? skel('60px') : `$${fmtNum(networkData.volume24h)}`}</div>
-                    </div>
-                  </div>
-                )}
-
                 {sidebarTab === 'ai' && (
                   <div className="ai-chat">
                     <div className="ai-messages" ref={aiScrollRef}>
@@ -1794,6 +1759,12 @@ export default function TerminalPage() {
           <span>MEMPOOL {networkData.mempoolCount > 0 ? fmtNum(networkData.mempoolCount, 0) : '—'}</span>
           <span className="status-sep">│</span>
           <span>FEE {networkData.priorityFee > 0 ? `${networkData.priorityFee} sat/vB` : '—'}</span>
+          <span className="status-sep">│</span>
+          <span>HASH {networkData.hashRate > 0 ? `${networkData.hashRate.toFixed(1)} EH/s` : '—'}</span>
+          <span className="status-sep">│</span>
+          <span>MCAP {networkData.marketCap > 0 ? `$${fmtNum(networkData.marketCap)}` : '—'}</span>
+          <span className="status-sep">│</span>
+          <span>VOL {networkData.volume24h > 0 ? `$${fmtNum(networkData.volume24h)}` : '—'}</span>
           {fearGreed.value !== null && (
             <><span className="status-sep">│</span><span>F&G {fearGreed.value} {fearGreed.label?.toUpperCase()}</span></>
           )}
