@@ -104,7 +104,11 @@ export default function TerminalPage() {
 
   const [fearGreed, setFearGreed] = useState<FearGreedData>({ value: null, label: null });
   const [etfFlows, setEtfFlows] = useState<EtfFlowData | null>(null);
-  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'derivatives' | 'ai'>('macro');
+  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'derivatives' | 'events' | 'ai'>('macro');
+  const [calendarEvents, setCalendarEvents] = useState<Array<{
+    date: string; type: string; title: string; detail: string;
+    impact: number; impactLabel: string; daysUntil: number;
+  }>>([]);
   const [derivativesData, setDerivativesData] = useState<{
     openInterest: { value: number | null; change24h: number | null };
     fundingRate: { value: number | null; predicted: number | null };
@@ -277,6 +281,21 @@ export default function TerminalPage() {
     };
     fetchDerivatives();
     const i = setInterval(fetchDerivatives, 5 * 60 * 1000);
+    return () => clearInterval(i);
+  }, []);
+
+  useEffect(() => {
+    const fetchCalendar = async () => {
+      try {
+        const res = await fetch('/api/calendar');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.events) setCalendarEvents(data.events);
+        }
+      } catch { /* silent */ }
+    };
+    fetchCalendar();
+    const i = setInterval(fetchCalendar, 30 * 60 * 1000);
     return () => clearInterval(i);
   }, []);
 
@@ -1403,6 +1422,12 @@ export default function TerminalPage() {
                   Derivs
                 </button>
                 <button
+                  className={`sidebar-tab-btn ${sidebarTab === 'events' ? 'active' : ''}`}
+                  onClick={() => setSidebarTab('events')}
+                >
+                  Events
+                </button>
+                <button
                   className={`sidebar-tab-btn ${sidebarTab === 'ai' ? 'active' : ''}`}
                   onClick={() => setSidebarTab('ai')}
                 >
@@ -1681,6 +1706,53 @@ export default function TerminalPage() {
                       </div>
                     )}
                   </>
+                )}
+
+                {sidebarTab === 'events' && (
+                  <div className="sidebar-feed" style={{ flex: 1 }}>
+                    {calendarEvents.length === 0 ? (
+                      <div className="feed-empty">Loading calendar...</div>
+                    ) : calendarEvents.map((evt, i) => {
+                      const evtDate = new Date(evt.date + 'T00:00:00Z');
+                      const month = evtDate.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase();
+                      const day = evtDate.getUTCDate();
+                      const typeColors: Record<string, string> = {
+                        fomc: 'var(--cb-accent)', cpi: '#ef4444', pce: '#f59e0b',
+                        jobs: '#3b82f6', gdp: '#8b5cf6', options: '#6366f1',
+                        difficulty: '#22c55e', halving: 'var(--cb-accent)',
+                      };
+                      const color = typeColors[evt.type] || 'var(--cb-text-muted)';
+                      return (
+                        <div key={`${evt.date}-${evt.type}-${i}`} className="feed-item" style={{ cursor: 'default' }}>
+                          <div style={{ minWidth: 40, textAlign: 'center', flexShrink: 0 }}>
+                            <div style={{ fontSize: '9px', letterSpacing: '0.08em', color: 'var(--cb-text-muted)' }}>{month}</div>
+                            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--cb-text)', lineHeight: 1 }}>{day}</div>
+                          </div>
+                          <div className="feed-body" style={{ minWidth: 0 }}>
+                            <div className="feed-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                              {evt.title}
+                            </div>
+                            <div className="feed-secondary">{evt.detail}</div>
+                          </div>
+                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--cb-text)', fontVariantNumeric: 'tabular-nums' }}>
+                              ±{evt.impact}%
+                            </div>
+                            <div style={{
+                              fontSize: '8px', letterSpacing: '0.1em', fontWeight: 700,
+                              color: evt.impactLabel === 'HIGH' || evt.impactLabel === 'EXTREME' ? color : 'var(--cb-text-muted)',
+                            }}>
+                              {evt.impactLabel}
+                            </div>
+                            <div style={{ fontSize: '9px', color: 'var(--cb-text-muted)', marginTop: 2 }}>
+                              {evt.daysUntil === 0 ? 'TODAY' : evt.daysUntil === 1 ? '1d' : `${evt.daysUntil}d`}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 )}
 
                 {sidebarTab === 'ai' && (
