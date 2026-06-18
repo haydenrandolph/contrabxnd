@@ -104,7 +104,14 @@ export default function TerminalPage() {
 
   const [fearGreed, setFearGreed] = useState<FearGreedData>({ value: null, label: null });
   const [etfFlows, setEtfFlows] = useState<EtfFlowData | null>(null);
-  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'network' | 'ai'>('macro');
+  const [sidebarTab, setSidebarTab] = useState<'macro' | 'flows' | 'derivatives' | 'network' | 'ai'>('macro');
+  const [derivativesData, setDerivativesData] = useState<{
+    openInterest: { value: number | null; change24h: number | null };
+    fundingRate: { value: number | null; predicted: number | null };
+    liquidations24h: { long: number | null; short: number | null; total: number | null };
+    longShortRatio: { ratio: number | null; longPct: number | null; shortPct: number | null };
+    source: string;
+  } | null>(null);
   const [signalData, setSignalData] = useState<SignalData | null>(null);
   const [fedwatchData, setFedwatchData] = useState<FedWatchData | null>(null);
   const [liquidityData, setLiquidityData] = useState<LiquidityData | null>(null);
@@ -258,6 +265,18 @@ export default function TerminalPage() {
     };
     fetchMacro();
     const i = setInterval(fetchMacro, 5 * 60 * 1000);
+    return () => clearInterval(i);
+  }, []);
+
+  useEffect(() => {
+    const fetchDerivatives = async () => {
+      try {
+        const res = await fetch('/api/derivatives');
+        if (res.ok) setDerivativesData(await res.json());
+      } catch { /* silent */ }
+    };
+    fetchDerivatives();
+    const i = setInterval(fetchDerivatives, 5 * 60 * 1000);
     return () => clearInterval(i);
   }, []);
 
@@ -1378,6 +1397,12 @@ export default function TerminalPage() {
                   Flows
                 </button>
                 <button
+                  className={`sidebar-tab-btn ${sidebarTab === 'derivatives' ? 'active' : ''}`}
+                  onClick={() => setSidebarTab('derivatives')}
+                >
+                  Derivs
+                </button>
+                <button
                   className={`sidebar-tab-btn ${sidebarTab === 'network' ? 'active' : ''}`}
                   onClick={() => setSidebarTab('network')}
                 >
@@ -1558,6 +1583,110 @@ export default function TerminalPage() {
                       </div>
                     </div>
                   </div>
+                )}
+
+                {sidebarTab === 'derivatives' && (
+                  <>
+                    {/* Open Interest */}
+                    <div className="macro-row">
+                      <span className="macro-label tip-wrap">Open Interest<span className="tip-icon">?</span><span className="tip-bubble">Total value of outstanding futures contracts. Rising OI with rising price = new money entering longs. Rising OI with falling price = new shorts opening. Signals conviction behind a move.</span></span>
+                      <div className="macro-value-group">
+                        <span className="macro-value">
+                          {derivativesData?.openInterest.value != null
+                            ? `$${(derivativesData.openInterest.value / 1e9).toFixed(2)}B`
+                            : '—'}
+                        </span>
+                        {derivativesData?.openInterest.change24h != null && (
+                          <span className={`macro-detail ${derivativesData.openInterest.change24h >= 0 ? 'positive' : 'negative'}`}>
+                            {derivativesData.openInterest.change24h >= 0 ? '↑' : '↓'} {Math.abs(derivativesData.openInterest.change24h).toFixed(1)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Funding Rate */}
+                    <div className="macro-row">
+                      <span className="macro-label tip-wrap">Funding Rate<span className="tip-icon">?</span><span className="tip-bubble">Periodic payment between long and short futures traders. Positive = longs pay shorts (bullish crowding). Negative = shorts pay longs (bearish crowding). Extreme values often precede reversals.</span></span>
+                      <div className="macro-value-group">
+                        <span className="macro-value" style={{
+                          color: derivativesData?.fundingRate.value != null
+                            ? derivativesData.fundingRate.value >= 0 ? 'var(--cb-positive)' : 'var(--cb-negative)'
+                            : undefined
+                        }}>
+                          {derivativesData?.fundingRate.value != null
+                            ? `${(derivativesData.fundingRate.value * 100).toFixed(4)}%`
+                            : '—'}
+                        </span>
+                        {derivativesData?.fundingRate.predicted != null && (
+                          <span className="macro-detail">
+                            pred {(derivativesData.fundingRate.predicted * 100).toFixed(4)}%
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Liquidations 24h */}
+                    <div className="macro-row" style={{ flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', width: '100%' }}>
+                        <span className="macro-label tip-wrap">Liquidations 24h<span className="tip-icon">?</span><span className="tip-bubble">Total value of futures positions forcefully closed in the last 24 hours. High liquidations signal over-leveraged markets. Long liquidations = cascading sells. Short liquidations = short squeezes.</span></span>
+                        <div className="macro-value-group">
+                          <span className="macro-value">
+                            {derivativesData?.liquidations24h.total != null
+                              ? `$${(derivativesData.liquidations24h.total / 1e6).toFixed(1)}M`
+                              : '—'}
+                          </span>
+                        </div>
+                      </div>
+                      {derivativesData?.liquidations24h.long != null && derivativesData?.liquidations24h.short != null && (
+                        <div style={{ display: 'flex', gap: '12px', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+                          <span style={{ color: 'var(--cb-positive)' }}>
+                            Long ${(derivativesData.liquidations24h.long / 1e6).toFixed(1)}M
+                          </span>
+                          <span style={{ color: 'var(--cb-negative)' }}>
+                            Short ${(derivativesData.liquidations24h.short / 1e6).toFixed(1)}M
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Long/Short Ratio */}
+                    <div className="macro-row" style={{ flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', width: '100%' }}>
+                        <span className="macro-label tip-wrap tip-up">L/S Ratio<span className="tip-icon">?</span><span className="tip-bubble">Ratio of long to short positions across exchanges. Above 1.0 = more longs than shorts. Extreme readings in either direction often precede liquidation cascades in the crowded side.</span></span>
+                        <div className="macro-value-group">
+                          <span className="macro-value">
+                            {derivativesData?.longShortRatio.ratio != null
+                              ? derivativesData.longShortRatio.ratio.toFixed(2)
+                              : '—'}
+                          </span>
+                        </div>
+                      </div>
+                      {derivativesData?.longShortRatio.longPct != null && derivativesData?.longShortRatio.shortPct != null && (
+                        <div className="fg-bar" style={{ width: '100%' }}>
+                          <div className="fg-bar-fill" style={{
+                            width: `${derivativesData.longShortRatio.longPct}%`,
+                            background: 'var(--cb-positive)',
+                          }} />
+                        </div>
+                      )}
+                      {derivativesData?.longShortRatio.longPct != null && derivativesData?.longShortRatio.shortPct != null && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+                          <span style={{ color: 'var(--cb-positive)' }}>
+                            Long {derivativesData.longShortRatio.longPct.toFixed(1)}%
+                          </span>
+                          <span style={{ color: 'var(--cb-negative)' }}>
+                            Short {derivativesData.longShortRatio.shortPct.toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {!derivativesData && (
+                      <div className="etf-setup-note">
+                        Add COINALYZE_API_KEY to .env.local to enable derivatives data.
+                      </div>
+                    )}
+                  </>
                 )}
 
                 {sidebarTab === 'network' && (
