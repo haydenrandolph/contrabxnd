@@ -23,6 +23,14 @@
     {
       "path": "/api/cron/market-brief",
       "schedule": "0 14 * * *"
+    },
+    {
+      "path": "/api/cron/analyst-predict",
+      "schedule": "30 14 * * *"
+    },
+    {
+      "path": "/api/cron/resolve-predictions",
+      "schedule": "0 15 * * *"
     }
   ]
 }

@@ -35,7 +35,10 @@ interface SiteNavProps {
   liveIndicator?: { connected: boolean };
 }
 
-type DropdownItem = { href: string; label: string; comingSoon?: false } | { label: string; comingSoon: true; href?: undefined };
+type DropdownItem =
+  | { href: string; label: string; comingSoon?: false; section?: undefined }
+  | { label: string; comingSoon: true; href?: undefined; section?: undefined }
+  | { label: string; section: true; href?: undefined; comingSoon?: undefined };
 type NavLink =
   | { href: string; label: string; comingSoon?: false; dropdown?: undefined }
   | { label: string; comingSoon: true; href?: undefined; dropdown?: undefined }
@@ -45,19 +48,20 @@ const NAV_LINKS: NavLink[] = [
   { href: '/', label: 'Terminal' },
   {
     href: '/toolkit',
-    label: 'Tool₿ox',
+    label: 'Infra',
     dropdown: [
+      { label: 'Tool₿ox', section: true },
       { href: '/toolkit/converter', label: 'Sats Converter' },
       { href: '/toolkit/dca', label: 'DCA Calculator' },
       { href: '/toolkit/time-machine', label: 'Time Machine' },
+      { label: 'Agents', section: true },
+      { href: '/agents', label: 'Registry' },
       { href: '/toolkit/mcp', label: 'MCP Server' },
+      { label: 'Marketplace', comingSoon: true },
       { label: 'Indexer', comingSoon: true },
       { label: 'Lightning', comingSoon: true },
-      { label: 'Wallets', comingSoon: true },
-      { label: 'Trading', comingSoon: true },
     ],
   },
-  { href: '/agents', label: 'Agents' },
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
   { href: '/network', label: 'Merchants' },
@@ -259,6 +263,18 @@ export default function SiteNav({
           opacity: 0.3;
           cursor: not-allowed;
           text-decoration: line-through;
+        }
+        .nav-dropdown .dd-section {
+          font-size: 8px;
+          font-weight: 700;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--cb-accent);
+          padding: 10px 16px 4px !important;
+          cursor: default;
+        }
+        .nav-dropdown .dd-section:first-child {
+          padding-top: 4px !important;
         }
 
         .nav-right {
@@ -501,13 +517,15 @@ export default function SiteNav({
                 {link.label}
               </span>
             ) : link.dropdown ? (
-              <div key={link.href} className={`nav-dropdown-wrap${activePath?.startsWith(link.href) ? ' active' : ''}`}>
+              <div key={link.href} className={`nav-dropdown-wrap${activePath?.startsWith(link.href) || activePath?.startsWith('/agents') ? ' active' : ''}`}>
                 <Link href={link.href} className="nav-dropdown-trigger">
                   {link.label}
                 </Link>
                 <div className="nav-dropdown">
                   {link.dropdown.map((item) =>
-                    item.comingSoon ? (
+                    item.section ? (
+                      <span key={item.label} className="dd-section">{item.label}</span>
+                    ) : item.comingSoon ? (
                       <span key={item.label} className="dd-coming-soon">{item.label}</span>
                     ) : (
                       <Link key={item.href} href={item.href}>{item.label}</Link>
