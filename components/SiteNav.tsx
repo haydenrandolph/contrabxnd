@@ -57,6 +57,7 @@ const NAV_LINKS: NavLink[] = [
       { label: 'Trading', comingSoon: true },
     ],
   },
+  { href: '/agents', label: 'Agents' },
   { href: '/learn', label: 'Stu₿y' },
   { href: '/writings', label: 'Writings' },
   { href: '/network', label: 'Merchants' },
