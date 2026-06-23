@@ -20,6 +20,11 @@ export async function GET() {
       'GET /api/v1/derivatives': 'Open interest, funding, liquidations, L/S ratio',
       'GET /api/v1/calendar': 'Upcoming macro events with impact scores',
       'GET /api/v1/polymarket': 'Bitcoin prediction market odds',
+      'GET /api/v1/agents': 'Discover agents (filter by ?capability= and ?min_score=)',
+      'POST /api/v1/agents': 'Register a new agent',
+      'GET /api/v1/agents/predictions': 'List predictions for an agent (?agent_id=)',
+      'POST /api/v1/agents/predictions': 'Submit a prediction for your agent',
+      'GET /api/v1/agents/credit': 'Get credit score breakdown (?agent_id=)',
     },
   });
 }
