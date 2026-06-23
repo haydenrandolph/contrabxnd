@@ -16,22 +16,27 @@ const TOOLS: ToolCard[] = [
   {
     title: 'Sats Converter',
     description: 'Convert between USD and Satoshis at the current exchange rate.',
-    href: '/toolkit/converter',
+    href: '/infra/converter',
   },
   {
     title: 'DCA Calculator',
     description: 'Simulate dollar-cost averaging returns over any historical period.',
-    href: '/toolkit/dca',
+    href: '/infra/dca',
   },
   {
     title: 'Time Machine',
     description: 'See what your money would be worth if you had bought Bitcoin.',
-    href: '/toolkit/time-machine',
+    href: '/infra/time-machine',
   },
   {
     title: 'MCP Server',
     description: 'Connect any AI client to live Contrabxnd intelligence data via the Model Context Protocol.',
-    href: '/toolkit/mcp',
+    href: '/infra/mcp',
+  },
+  {
+    title: 'Agent Registry',
+    description: 'Service discovery, credit scoring, and verifiable predictions. APIs and MCP tools built for AI agents.',
+    href: '/infra/agents',
   },
   {
     title: "Indexer",
@@ -55,7 +60,7 @@ const TOOLS: ToolCard[] = [
   },
 ];
 
-export default function ToolboxPage() {
+export default function InfraPage() {
   const { isLightMode } = useTheme();
 
   return (
@@ -207,12 +212,12 @@ export default function ToolboxPage() {
       `}</style>
 
       <div className={`toolbox-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/toolkit" />
+        <SiteNav activePath="/infra" />
 
         <div className="page-header">
-          <div className="page-label">TOOL₿OX</div>
-          <h1 className="page-title">Tool₿ox</h1>
-          <p className="page-subtitle">Calculate · Convert · Compare · Build</p>
+          <div className="page-label">INFRA</div>
+          <h1 className="page-title">Infrastructure</h1>
+          <p className="page-subtitle">Tools · Agents · APIs · Intelligence</p>
           <div className="page-divider" />
         </div>
 

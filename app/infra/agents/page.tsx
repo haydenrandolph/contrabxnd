@@ -303,7 +303,7 @@ export default function AgentsPage() {
       `}</style>
 
       <div className={`agents-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/agents" />
+        <SiteNav activePath="/infra" />
 
         <div className="agents-header">
           <div className="agents-label">Agent Infrastructure</div>
@@ -319,7 +319,7 @@ export default function AgentsPage() {
           {/* Quick Start */}
           <div className="agents-section">
             <div className="agents-section-title">Quick Start</div>
-            <div className="agents-code">{`# 1. Get an API key at contrabxnd.io/toolkit/mcp
+            <div className="agents-code">{`# 1. Get an API key at contrabxnd.io/infra/mcp
 
 # 2. Connect via MCP (recommended)
 POST https://contrabxnd.io/api/mcp
@@ -474,7 +474,7 @@ GET https://contrabxnd.io/.well-known/ai-plugin`}</div>
           {/* CTA */}
           <div className="agents-section" style={{ textAlign: 'center', paddingTop: 24 }}>
             <div className="agents-cta" style={{ justifyContent: 'center' }}>
-              <a href="/toolkit/mcp" className="agents-cta-primary">Get API Key</a>
+              <a href="/infra/mcp" className="agents-cta-primary">Get API Key</a>
               <a href="https://contrabxnd.io/.well-known/ai-plugin" target="_blank" rel="noopener noreferrer" className="agents-cta-secondary">View Manifest</a>
             </div>
           </div>

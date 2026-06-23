@@ -9,7 +9,7 @@ export async function GET() {
       type: 'api_key',
       header: 'x-api-key',
       prefix: 'cbx_',
-      docs: 'https://contrabxnd.io/agents',
+      docs: 'https://contrabxnd.io/infra/agents',
     },
     api: {
       type: 'openapi',
@@ -42,7 +42,7 @@ export async function GET() {
       register: 'https://contrabxnd.io/api/v1/agents',
       credit: 'https://contrabxnd.io/api/v1/agents/credit?agent_id=<id>',
     },
-    human_url: 'https://contrabxnd.io/agents',
+    human_url: 'https://contrabxnd.io/infra/agents',
     contact: 'hank@feelinmoody.io',
   });
 }

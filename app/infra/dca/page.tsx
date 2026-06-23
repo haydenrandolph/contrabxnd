@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import PurchasingPowerComparison from '@/components/toolkit/PurchasingPowerComparison';
+import DCACalculator from '@/components/toolkit/DCACalculator';
 
-export default function TimeMachinePage() {
+export default function DCAPage() {
   const [currentPrice, setCurrentPrice] = useState(0);
   const { isLightMode } = useTheme();
 
@@ -39,7 +39,7 @@ export default function TimeMachinePage() {
         }
 
         .page-header {
-          max-width: 720px;
+          max-width: 1100px;
           margin: 0 auto;
           padding: 80px 48px 0;
         }
@@ -89,7 +89,7 @@ export default function TimeMachinePage() {
         }
 
         .tool-content {
-          max-width: 720px;
+          max-width: 1100px;
           margin: 0 auto;
           padding: 48px 48px 96px;
         }
@@ -101,19 +101,19 @@ export default function TimeMachinePage() {
       `}</style>
 
       <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/toolkit" />
+        <SiteNav activePath="/infra" />
 
         <div className="page-header">
           <div className="page-label">
-            <a href="/toolkit">TOOL₿OX</a> / TIME MACHINE
+            <a href="/infra">INFRA</a> / DCA CALCULATOR
           </div>
-          <h1 className="page-title">Time Machine</h1>
-          <p className="page-subtitle">See what your money would be worth if you had bought Bitcoin.</p>
+          <h1 className="page-title">DCA Calculator</h1>
+          <p className="page-subtitle">Simulate dollar-cost averaging returns over any historical period.</p>
           <div className="page-divider" />
         </div>
 
         <div className="tool-content">
-          <PurchasingPowerComparison isLightMode={isLightMode} currentPrice={currentPrice} />
+          <DCACalculator isLightMode={isLightMode} currentPrice={currentPrice} />
         </div>
 
         <SiteFooter />

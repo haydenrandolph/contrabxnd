@@ -101,11 +101,11 @@ export default function ConverterPage() {
       `}</style>
 
       <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/toolkit" />
+        <SiteNav activePath="/infra" />
 
         <div className="page-header">
           <div className="page-label">
-            <a href="/toolkit">TOOL₿OX</a> / CONVERTER
+            <a href="/infra">INFRA</a> / CONVERTER
           </div>
           <h1 className="page-title">Sats Converter</h1>
           <p className="page-subtitle">Convert between USD and Satoshis at the live exchange rate.</p>

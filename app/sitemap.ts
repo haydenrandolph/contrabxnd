@@ -21,11 +21,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/learn/boarding-pass`, changeFrequency: 'weekly' as const, priority: 0.8 },
     { url: `${SITE_URL}/writings`, changeFrequency: 'weekly' as const, priority: 0.8 },
     { url: `${SITE_URL}/network`, changeFrequency: 'monthly' as const, priority: 0.6 },
-    { url: `${SITE_URL}/toolkit`, changeFrequency: 'monthly' as const, priority: 0.7 },
-    { url: `${SITE_URL}/toolkit/converter`, changeFrequency: 'monthly' as const, priority: 0.5 },
-    { url: `${SITE_URL}/toolkit/dca`, changeFrequency: 'monthly' as const, priority: 0.5 },
-    { url: `${SITE_URL}/toolkit/time-machine`, changeFrequency: 'monthly' as const, priority: 0.5 },
-    { url: `${SITE_URL}/toolkit/mcp`, changeFrequency: 'monthly' as const, priority: 0.6 },
+    { url: `${SITE_URL}/infra`, changeFrequency: 'monthly' as const, priority: 0.7 },
+    { url: `${SITE_URL}/infra/converter`, changeFrequency: 'monthly' as const, priority: 0.5 },
+    { url: `${SITE_URL}/infra/dca`, changeFrequency: 'monthly' as const, priority: 0.5 },
+    { url: `${SITE_URL}/infra/time-machine`, changeFrequency: 'monthly' as const, priority: 0.5 },
+    { url: `${SITE_URL}/infra/mcp`, changeFrequency: 'monthly' as const, priority: 0.6 },
+    { url: `${SITE_URL}/infra/agents`, changeFrequency: 'weekly' as const, priority: 0.7 },
     { url: `${SITE_URL}/about`, changeFrequency: 'monthly' as const, priority: 0.4 },
   ];
 

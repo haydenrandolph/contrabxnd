@@ -4,7 +4,7 @@ export async function GET() {
   return NextResponse.json({
     name: 'Contrabxnd API',
     version: 'v1',
-    docs: 'https://contrabxnd.io/toolkit/mcp',
+    docs: 'https://contrabxnd.io/infra/mcp',
     auth: 'Pass your API key via the x-api-key header',
     rateLimits: {
       free: '60 requests/hour',

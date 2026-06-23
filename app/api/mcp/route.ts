@@ -209,7 +209,7 @@ async function authGuard(req: Request): Promise<Response | null> {
   const valid = await validateApiKey(req);
   if (!valid) {
     return new Response(
-      JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message: 'Invalid or missing API key. Get one at https://contrabxnd.io/toolkit/mcp' }, id: null }),
+      JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message: 'Invalid or missing API key. Get one at https://contrabxnd.io/infra/mcp' }, id: null }),
       { status: 401, headers: { 'Content-Type': 'application/json' } },
     );
   }
@@ -228,7 +228,7 @@ export async function GET(req: Request) {
     return new Response(JSON.stringify({
       name: 'contrabxnd',
       version: '1.0.0',
-      description: 'Contrabxnd Bitcoin Intelligence Platform - MCP Server. Get your API key at https://contrabxnd.io/toolkit/mcp',
+      description: 'Contrabxnd Bitcoin Intelligence Platform - MCP Server. Get your API key at https://contrabxnd.io/infra/mcp',
       tools: [
         'get_signal_score', 'get_bitcoin_price', 'get_net_liquidity',
         'get_fedwatch', 'get_etf_flows', 'get_polymarket',

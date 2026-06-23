@@ -47,16 +47,16 @@ type NavLink =
 const NAV_LINKS: NavLink[] = [
   { href: '/', label: 'Terminal' },
   {
-    href: '/toolkit',
+    href: '/infra',
     label: 'Infra',
     dropdown: [
       { label: 'Tool₿ox', section: true },
-      { href: '/toolkit/converter', label: 'Sats Converter' },
-      { href: '/toolkit/dca', label: 'DCA Calculator' },
-      { href: '/toolkit/time-machine', label: 'Time Machine' },
+      { href: '/infra/converter', label: 'Sats Converter' },
+      { href: '/infra/dca', label: 'DCA Calculator' },
+      { href: '/infra/time-machine', label: 'Time Machine' },
       { label: 'Agents', section: true },
-      { href: '/agents', label: 'Registry' },
-      { href: '/toolkit/mcp', label: 'MCP Server' },
+      { href: '/infra/agents', label: 'Registry' },
+      { href: '/infra/mcp', label: 'MCP Server' },
       { label: 'Marketplace', comingSoon: true },
       { label: 'Indexer', comingSoon: true },
       { label: 'Lightning', comingSoon: true },
@@ -517,7 +517,7 @@ export default function SiteNav({
                 {link.label}
               </span>
             ) : link.dropdown ? (
-              <div key={link.href} className={`nav-dropdown-wrap${activePath?.startsWith(link.href) || activePath?.startsWith('/agents') ? ' active' : ''}`}>
+              <div key={link.href} className={`nav-dropdown-wrap${activePath?.startsWith(link.href) || activePath?.startsWith('/infra/agents') ? ' active' : ''}`}>
                 <Link href={link.href} className="nav-dropdown-trigger">
                   {link.label}
                 </Link>

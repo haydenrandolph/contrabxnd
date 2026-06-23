@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import SiteFooter from '@/components/SiteFooter';
-import DCACalculator from '@/components/toolkit/DCACalculator';
+import PurchasingPowerComparison from '@/components/toolkit/PurchasingPowerComparison';
 
-export default function DCAPage() {
+export default function TimeMachinePage() {
   const [currentPrice, setCurrentPrice] = useState(0);
   const { isLightMode } = useTheme();
 
@@ -39,7 +39,7 @@ export default function DCAPage() {
         }
 
         .page-header {
-          max-width: 1100px;
+          max-width: 720px;
           margin: 0 auto;
           padding: 80px 48px 0;
         }
@@ -89,7 +89,7 @@ export default function DCAPage() {
         }
 
         .tool-content {
-          max-width: 1100px;
+          max-width: 720px;
           margin: 0 auto;
           padding: 48px 48px 96px;
         }
@@ -101,19 +101,19 @@ export default function DCAPage() {
       `}</style>
 
       <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/toolkit" />
+        <SiteNav activePath="/infra" />
 
         <div className="page-header">
           <div className="page-label">
-            <a href="/toolkit">TOOL₿OX</a> / DCA CALCULATOR
+            <a href="/infra">INFRA</a> / TIME MACHINE
           </div>
-          <h1 className="page-title">DCA Calculator</h1>
-          <p className="page-subtitle">Simulate dollar-cost averaging returns over any historical period.</p>
+          <h1 className="page-title">Time Machine</h1>
+          <p className="page-subtitle">See what your money would be worth if you had bought Bitcoin.</p>
           <div className="page-divider" />
         </div>
 
         <div className="tool-content">
-          <DCACalculator isLightMode={isLightMode} currentPrice={currentPrice} />
+          <PurchasingPowerComparison isLightMode={isLightMode} currentPrice={currentPrice} />
         </div>
 
         <SiteFooter />

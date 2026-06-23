@@ -405,11 +405,11 @@ export default function McpPage() {
       `}</style>
 
       <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/toolkit" />
+        <SiteNav activePath="/infra" />
 
         <div className="page-header">
           <div className="page-label">
-            <a href="/toolkit">TOOL₿OX</a> / MCP SERVER
+            <a href="/infra">INFRA</a> / MCP SERVER
           </div>
           <h1 className="page-title">MCP Server</h1>
           <p className="page-subtitle">
