@@ -35,14 +35,21 @@ interface SiteNavProps {
   liveIndicator?: { connected: boolean };
 }
 
-type DropdownItem =
-  | { href: string; label: string; comingSoon?: false; section?: undefined }
-  | { label: string; comingSoon: true; href?: undefined; section?: undefined }
-  | { label: string; section: true; href?: undefined; comingSoon?: undefined };
+interface DropdownChild {
+  href?: string;
+  label: string;
+  comingSoon?: boolean;
+}
+
+interface DropdownGroup {
+  label: string;
+  children: DropdownChild[];
+}
+
 type NavLink =
   | { href: string; label: string; comingSoon?: false; dropdown?: undefined }
   | { label: string; comingSoon: true; href?: undefined; dropdown?: undefined }
-  | { label: string; href: string; dropdown: DropdownItem[]; comingSoon?: false };
+  | { label: string; href: string; dropdown: DropdownGroup[]; comingSoon?: false };
 
 const NAV_LINKS: NavLink[] = [
   { href: '/', label: 'Terminal' },
@@ -50,16 +57,24 @@ const NAV_LINKS: NavLink[] = [
     href: '/infra',
     label: 'Infra',
     dropdown: [
-      { label: 'Tool₿ox', section: true },
-      { href: '/infra/converter', label: 'Sats Converter' },
-      { href: '/infra/dca', label: 'DCA Calculator' },
-      { href: '/infra/time-machine', label: 'Time Machine' },
-      { label: 'Agents', section: true },
-      { href: '/infra/agents', label: 'Registry' },
-      { href: '/infra/mcp', label: 'MCP Server' },
-      { label: 'Marketplace', comingSoon: true },
-      { label: 'Indexer', comingSoon: true },
-      { label: 'Lightning', comingSoon: true },
+      {
+        label: 'Tool₿ox',
+        children: [
+          { href: '/infra/converter', label: 'Sats Converter' },
+          { href: '/infra/dca', label: 'DCA Calculator' },
+          { href: '/infra/time-machine', label: 'Time Machine' },
+        ],
+      },
+      {
+        label: 'Agents',
+        children: [
+          { href: '/infra/agents', label: 'Registry' },
+          { href: '/infra/mcp', label: 'MCP Server' },
+          { label: 'Marketplace', comingSoon: true },
+          { label: 'Indexer', comingSoon: true },
+          { label: 'Lightning', comingSoon: true },
+        ],
+      },
     ],
   },
   { href: '/learn', label: 'Stu₿y' },
@@ -76,8 +91,13 @@ export default function SiteNav({
   liveIndicator,
 }: SiteNavProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const { isLightMode, toggleTheme } = useTheme();
   const light = isLightMode ? ' light' : '';
+
+  const toggleGroup = (label: string) => {
+    setExpandedGroups(prev => ({ ...prev, [label]: !prev[label] }));
+  };
 
   return (
     <>
@@ -264,17 +284,55 @@ export default function SiteNav({
           cursor: not-allowed;
           text-decoration: line-through;
         }
-        .nav-dropdown .dd-section {
-          font-size: 8px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          color: var(--cb-accent);
-          padding: 10px 16px 4px !important;
-          cursor: default;
+        .dd-group + .dd-group {
+          border-top: 1px solid rgba(255, 255, 255, 0.06);
         }
-        .nav-dropdown .dd-section:first-child {
-          padding-top: 4px !important;
+        .site-nav.light .dd-group + .dd-group {
+          border-top-color: rgba(0, 0, 0, 0.06);
+        }
+        .dd-group-trigger {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          padding: 8px 16px;
+          font-family: 'Space Mono', monospace;
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #6a6a6a;
+          background: none;
+          border: none;
+          cursor: pointer;
+          transition: color 0.15s ease;
+          line-height: 1;
+        }
+        .dd-group-trigger:hover {
+          color: #e8e4dc;
+        }
+        .site-nav.light .dd-group-trigger:hover {
+          color: #0a0a0a;
+        }
+        .dd-group-trigger.open {
+          color: var(--cb-accent);
+        }
+        .dd-group-trigger svg {
+          transition: transform 0.15s ease;
+        }
+        .dd-group-trigger.open svg {
+          transform: rotate(90deg);
+        }
+        .dd-group-children {
+          display: none;
+        }
+        .dd-group-children.open {
+          display: block;
+        }
+        .dd-group-children a,
+        .dd-group-children span {
+          padding-left: 24px !important;
+          font-size: 10px;
         }
 
         .nav-right {
@@ -517,20 +575,33 @@ export default function SiteNav({
                 {link.label}
               </span>
             ) : link.dropdown ? (
-              <div key={link.href} className={`nav-dropdown-wrap${activePath?.startsWith(link.href) || activePath?.startsWith('/infra/agents') ? ' active' : ''}`}>
+              <div key={link.href} className={`nav-dropdown-wrap${activePath?.startsWith(link.href) ? ' active' : ''}`}>
                 <Link href={link.href} className="nav-dropdown-trigger">
                   {link.label}
                 </Link>
                 <div className="nav-dropdown">
-                  {link.dropdown.map((item) =>
-                    item.section ? (
-                      <span key={item.label} className="dd-section">{item.label}</span>
-                    ) : item.comingSoon ? (
-                      <span key={item.label} className="dd-coming-soon">{item.label}</span>
-                    ) : (
-                      <Link key={item.href} href={item.href}>{item.label}</Link>
-                    )
-                  )}
+                  {link.dropdown.map((group) => (
+                    <div key={group.label} className="dd-group">
+                      <button
+                        className={`dd-group-trigger${expandedGroups[group.label] ? ' open' : ''}`}
+                        onClick={() => toggleGroup(group.label)}
+                      >
+                        {group.label}
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </button>
+                      <div className={`dd-group-children${expandedGroups[group.label] ? ' open' : ''}`}>
+                        {group.children.map((child) =>
+                          child.comingSoon ? (
+                            <span key={child.label} className="dd-coming-soon">{child.label}</span>
+                          ) : (
+                            <Link key={child.href} href={child.href!}>{child.label}</Link>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ) : (
