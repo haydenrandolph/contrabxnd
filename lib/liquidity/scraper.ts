@@ -50,13 +50,12 @@ async function fetchTGA(): Promise<TgaResult> {
       return { tga_balance: null, raw: data };
     }
 
-    // The value is in actual dollars (e.g. "736123000000"). Convert to millions.
+    // Treasury API reports in millions USD (dataFormat "$1,000,000")
     const rawValue = safeParseFloat(
       record.open_today_bal ?? record.close_today_bal,
     );
 
-    const tga_balance =
-      rawValue !== null ? Math.round((rawValue / 1_000_000) * 100) / 100 : null;
+    const tga_balance = rawValue;
 
     return { tga_balance, raw: record };
   } catch (err) {
@@ -105,14 +104,12 @@ async function fetchRRP(): Promise<RrpResult> {
     let latestRecord: unknown = null;
 
     for (const op of operations) {
-      // NY Fed labels RRP operations with "Repo" operationType and
-      // the note field or details indicate direction.
-      // totalAmtAccepted is in billions for some endpoints, millions for others.
-      // The lastTwoWeeks endpoint uses millions.
+      // NY Fed reports totalAmtAccepted in raw dollars. Convert to millions
+      // to match FRED/Treasury units. Filter for Reverse Repo operations.
+      if (op.operationType !== 'Reverse Repo') continue;
       const total = safeParseFloat(op.totalAmtAccepted);
       if (total !== null) {
-        // Take the first (most recent) operation with a non-null total
-        latestRrp = total;
+        latestRrp = Math.round((total / 1_000_000) * 100) / 100;
         latestRecord = op;
         break;
       }

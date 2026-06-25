@@ -48,6 +48,7 @@ export async function GET() {
       fundingPredicted,
       liqHistory,
       lsHistory,
+      priceRes,
     ] = await Promise.all([
       coinalyzeFetch('open-interest'),
       coinalyzeFetch('open-interest-history', {
@@ -67,14 +68,20 @@ export async function GET() {
         from: String(oneDayAgo),
         to: String(now),
       }),
+      fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : null)
+        .catch(() => null),
     ]);
+
+    const btcPrice = priceRes?.bitcoin?.usd ?? 0;
 
     // Open Interest: current value + 24h change
     let oiValue: number | null = null;
     let oiChange: number | null = null;
 
     if (oiCurrent?.[0]) {
-      oiValue = oiCurrent[0].value ?? oiCurrent[0].c ?? null;
+      const raw = oiCurrent[0].value ?? oiCurrent[0].c ?? null;
+      oiValue = raw !== null && btcPrice > 0 ? raw * btcPrice : raw;
     }
     if (oiHistory?.[0]?.history?.length >= 2) {
       const h = oiHistory[0].history;
@@ -107,8 +114,10 @@ export async function GET() {
 
     if (liqHistory?.[0]?.history?.length > 0) {
       const entries = liqHistory[0].history;
-      liqLong = entries.reduce((sum: number, e: { l: number }) => sum + (e.l || 0), 0);
-      liqShort = entries.reduce((sum: number, e: { s: number }) => sum + (e.s || 0), 0);
+      const rawLong = entries.reduce((sum: number, e: { l: number }) => sum + (e.l || 0), 0);
+      const rawShort = entries.reduce((sum: number, e: { s: number }) => sum + (e.s || 0), 0);
+      liqLong = btcPrice > 0 ? rawLong * btcPrice : rawLong;
+      liqShort = btcPrice > 0 ? rawShort * btcPrice : rawShort;
     }
 
     // Long/Short Ratio: latest
