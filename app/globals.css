@@ -1,5 +1,8 @@
-@import "tailwindcss";
+/* Font @import must precede Tailwind: `@import "tailwindcss"` expands inline
+   into rules, and CSS requires all @import rules to come first (Turbopack dev
+   enforces this strictly — otherwise the font import errors). */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
+@import "tailwindcss";
 
 :root {
   --contraband-black: #0a0a0a;
