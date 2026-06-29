@@ -96,6 +96,58 @@ export interface Database {
           created_at?: string;
         };
       };
+      bookmarks: {
+        Row: {
+          id: string;
+          user_id: string;
+          content_type: 'article' | 'lesson';
+          content_slug: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          content_type: 'article' | 'lesson';
+          content_slug: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          content_type?: 'article' | 'lesson';
+          content_slug?: string;
+          created_at?: string;
+        };
+      };
+      highlights: {
+        Row: {
+          id: string;
+          user_id: string;
+          content_type: 'article' | 'lesson';
+          content_slug: string;
+          text: string;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          content_type: 'article' | 'lesson';
+          content_slug: string;
+          text: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          content_type?: 'article' | 'lesson';
+          content_slug?: string;
+          text?: string;
+          note?: string | null;
+          created_at?: string;
+        };
+      };
       etf_snapshots: {
         Row: {
           id: string;

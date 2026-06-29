@@ -2,8 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User, Session, Provider } from '@supabase/supabase-js';
 import type { Profile } from '@/lib/supabase/types';
+
+type OAuthProvider = Extract<Provider, 'google' | 'apple' | 'twitter'>;
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +15,10 @@ interface AuthContextType {
   isConfigured: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signInWithOAuth: (provider: OAuthProvider) => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updatePassword: (password: string) => Promise<{ error: Error | null }>;
+  resendConfirmation: (email: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   showAuthModal: 'signin' | 'signup' | null;
   setShowAuthModal: (modal: 'signin' | 'signup' | null) => void;
@@ -38,13 +44,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Error fetching profile:', error);
       return null;
     }
-    return data as Profile;
+    return data as Profile | null;
   };
 
   useEffect(() => {
@@ -80,15 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
 
-        if (session?.user) {
+        if (!session?.user) {
+          setProfile(null);
+        } else if (event === 'SIGNED_IN') {
+          // Only (re)fetch the profile on an actual sign-in. Token refreshes
+          // and user-metadata updates keep the profile we already have.
           const profile = await fetchProfile(session.user.id);
           setProfile(profile);
-        } else {
-          setProfile(null);
-        }
-
-        // Close modal on successful auth
-        if (event === 'SIGNED_IN') {
           setShowAuthModal(null);
         }
       }
@@ -116,25 +120,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: new Error('Auth not configured') };
     }
 
-    const { data, error } = await supabase.auth.signUp({
+    // The profile row is created by the `handle_new_user` database trigger
+    // (migration 010) using this metadata. We deliberately do NOT insert into
+    // `profiles` from the client: with email confirmation enabled signUp
+    // returns no session, so a client insert would run unauthenticated and be
+    // rejected by RLS. The trigger also covers OAuth signups, which never call
+    // this method at all.
+    const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
         data: {
-          display_name: displayName,
+          display_name: displayName || undefined,
         },
       },
     });
 
-    if (!error && data.user) {
-      // Create profile in database
-      await supabase.from('profiles').insert({
-        id: data.user.id,
-        email: data.user.email,
-        display_name: displayName || null,
-      });
-    }
+    return { error: error as Error | null };
+  };
 
+  const signInWithOAuth = async (provider: OAuthProvider) => {
+    if (!supabase) {
+      return { error: new Error('Auth not configured') };
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback?next=/`,
+      },
+    });
+    return { error: error as Error | null };
+  };
+
+  const resetPassword = async (email: string) => {
+    if (!supabase) {
+      return { error: new Error('Auth not configured') };
+    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/api/auth/callback?next=/auth/reset`,
+    });
+    return { error: error as Error | null };
+  };
+
+  const updatePassword = async (password: string) => {
+    if (!supabase) {
+      return { error: new Error('Auth not configured') };
+    }
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error: error as Error | null };
+  };
+
+  const resendConfirmation = async (email: string) => {
+    if (!supabase) {
+      return { error: new Error('Auth not configured') };
+    }
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
     return { error: error as Error | null };
   };
 
@@ -157,6 +198,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isConfigured,
         signIn,
         signUp,
+        signInWithOAuth,
+        resetPassword,
+        updatePassword,
+        resendConfirmation,
         signOut,
         showAuthModal,
         setShowAuthModal,
