@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { nodeFetch } from '@/lib/node/client';
 
 interface CalendarEvent {
   date: string;
@@ -171,7 +172,7 @@ function buildScheduledEvents(now: Date): CalendarEvent[] {
 async function getDifficultyEvents(now: Date): Promise<CalendarEvent[]> {
   const events: CalendarEvent[] = [];
   try {
-    const res = await fetch('https://mempool.space/api/v1/blocks');
+    const { res } = await nodeFetch('/api/v1/blocks');
     if (!res.ok) return events;
     const blocks = await res.json();
     if (!blocks?.[0]) return events;

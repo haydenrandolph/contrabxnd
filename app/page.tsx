@@ -165,10 +165,10 @@ export default function TerminalPage() {
   const fetchNetworkData = useCallback(async () => {
     try {
       const [blocksRes, mempoolRes, feesRes, hashRateRes] = await Promise.all([
-        fetch('https://mempool.space/api/v1/blocks').catch(() => null),
-        fetch('https://mempool.space/api/mempool').catch(() => null),
-        fetch('https://mempool.space/api/v1/fees/recommended').catch(() => null),
-        fetch('https://mempool.space/api/v1/mining/hashrate/3d').catch(() => null),
+        fetch('/api/node/v1/blocks').catch(() => null),
+        fetch('/api/node/mempool').catch(() => null),
+        fetch('/api/node/v1/fees/recommended').catch(() => null),
+        fetch('/api/node/v1/mining/hashrate/3d').catch(() => null),
       ]);
       if (blocksRes) {
         const blocks = await blocksRes.json();
@@ -202,7 +202,7 @@ export default function TerminalPage() {
 
   const fetchRecentTransactions = useCallback(async () => {
     try {
-      const res = await fetch('https://mempool.space/api/mempool/recent');
+      const res = await fetch('/api/node/mempool/recent');
       if (!res.ok) return;
       const txs: Array<{ txid: string; value: number }> = await res.json();
       let count = 0;
@@ -304,7 +304,7 @@ export default function TerminalPage() {
     let txPoll: NodeJS.Timeout;
     const connect = () => {
       try {
-        const ws = new WebSocket('wss://mempool.space/api/v1/ws');
+        const ws = new WebSocket(process.env.NEXT_PUBLIC_NODE_MEMPOOL_WS_URL || 'wss://mempool.space/api/v1/ws');
         wsRef.current = ws;
         ws.onopen = () => {
           setWsConnected(true);
