@@ -220,8 +220,8 @@ export default function NetworkMap({
 
       // Create popup content
       const popupContent = `
-        <div style="font-family: 'Space Mono', monospace; min-width: 200px;">
-          <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; margin: 0 0 4px 0;">${business.name}</h3>
+        <div style="font-family: 'JetBrains Mono', monospace; min-width: 200px;">
+          <h3 style="font-family: 'Inter', serif; font-size: 1.1rem; margin: 0 0 4px 0;">${business.name}</h3>
           <p style="font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 8px 0;">${business.category}</p>
           ${business.location.city || business.location.country ? `
             <p style="font-size: 11px; color: #666; margin: 0 0 8px 0;">

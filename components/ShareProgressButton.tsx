@@ -67,7 +67,7 @@ export default function ShareProgressButton() {
           background: transparent;
           border: 1px solid #3a3a3a;
           color: #8a8a8a;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -103,7 +103,7 @@ export default function ShareProgressButton() {
           transform: translateX(-50%);
           background: #F7931A;
           color: #fff;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           letter-spacing: 0.05em;
           padding: 0.75rem 1.5rem;

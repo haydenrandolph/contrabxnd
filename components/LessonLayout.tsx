@@ -134,7 +134,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         .lesson-page {
           background: #0a0a0a;
           color: #e8e4dc;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 14px;
           line-height: 1.7;
           overflow-x: hidden;
@@ -198,7 +198,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           border: 1px solid #1a1a1a;
           border-radius: 2px;
           color: #e8e4dc;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -271,7 +271,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           gap: 12px;
           padding: 10px 20px;
           text-decoration: none;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           color: #8a8a8a;
           transition: color 0.15s ease, background 0.15s ease;
@@ -309,7 +309,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         /* Section Dividers */
         .lesson-content h2 {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.75rem;
           font-weight: 400;
           margin: 3rem 0 1.5rem;
@@ -327,7 +327,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         .lesson-content h2::before {
           content: attr(data-section-index);
           display: block;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.2em;
           color: #F7931A;
@@ -391,7 +391,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-number {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1rem;
           color: #F7931A;
         }
@@ -425,7 +425,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: clamp(2rem, 5vw, 3rem);
           font-weight: 400;
           line-height: 1.2;
@@ -438,7 +438,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-subtitle {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.25rem;
           font-style: italic;
           color: #8a8a8a;
@@ -451,7 +451,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-content p {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.25rem;
           line-height: 1.9;
           margin-bottom: 1.75rem;
@@ -481,7 +481,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-content h3 {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.35rem;
           font-weight: 400;
           margin: 2.5rem 0 1rem;
@@ -499,7 +499,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-content li {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.15rem;
           line-height: 1.8;
           margin-bottom: 0.75rem;
@@ -552,7 +552,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .key-concept-text {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.5rem;
           font-style: italic;
           line-height: 1.5;
@@ -579,7 +579,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .highlight-box h4 {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.2em;
           text-transform: uppercase;
@@ -623,7 +623,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .illustration-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.25rem;
           color: #8a8a8a;
         }
@@ -645,7 +645,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .summary-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.25rem;
           font-weight: 400;
           margin-bottom: 1rem;
@@ -692,7 +692,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           background: transparent;
           border: 1px solid #F7931A;
           color: #F7931A;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -742,7 +742,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           background: transparent;
           border: 1px solid #3a3a3a;
           color: #e8e4dc;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;

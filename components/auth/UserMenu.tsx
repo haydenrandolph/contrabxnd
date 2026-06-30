@@ -38,7 +38,7 @@ export default function UserMenu() {
           }
 
           .auth-btn {
-            font-family: 'Space Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -169,7 +169,7 @@ export default function UserMenu() {
           display: block;
           width: 100%;
           padding: 0.75rem 1rem;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           color: #8a8a8a;
           text-decoration: none;

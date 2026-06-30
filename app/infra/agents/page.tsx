@@ -73,7 +73,7 @@ export default function AgentsPage() {
           margin-bottom: 16px;
         }
         .agents-title {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
           letter-spacing: -0.02em;

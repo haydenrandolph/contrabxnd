@@ -75,7 +75,7 @@ export default function BTCChart({ isLightMode, onPriceTick }: BTCChartProps) {
       layout: {
         background: { type: lc.ColorType.Solid, color: colors.bg },
         textColor: colors.text,
-        fontFamily: "'Space Mono', monospace",
+        fontFamily: "'JetBrains Mono', monospace",
         fontSize: 10,
       },
       grid: {
@@ -355,7 +355,7 @@ export default function BTCChart({ isLightMode, onPriceTick }: BTCChartProps) {
         }
 
         .chart-toolbar-label {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -366,7 +366,7 @@ export default function BTCChart({ isLightMode, onPriceTick }: BTCChartProps) {
         }
 
         .interval-btn {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -403,7 +403,7 @@ export default function BTCChart({ isLightMode, onPriceTick }: BTCChartProps) {
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;

@@ -230,7 +230,7 @@ export default function NetworkPage() {
         .network-page {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           line-height: 1.7;
           overflow-x: hidden;
@@ -245,7 +245,7 @@ export default function NetworkPage() {
         }
 
         .page-label {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -254,7 +254,7 @@ export default function NetworkPage() {
         }
 
         .page-title {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
           letter-spacing: -0.02em;
@@ -264,7 +264,7 @@ export default function NetworkPage() {
         }
 
         .page-subtitle {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           color: var(--cb-text-muted);
           max-width: 600px;
@@ -293,7 +293,7 @@ export default function NetworkPage() {
           border: 1px solid var(--cb-border);
           border-radius: 2px;
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -333,7 +333,7 @@ export default function NetworkPage() {
           border: 1px solid var(--cb-border);
           border-radius: 2px;
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           transition: border-color 0.15s ease;
         }
@@ -353,7 +353,7 @@ export default function NetworkPage() {
           border: 1px solid var(--cb-border);
           border-radius: 2px;
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           cursor: pointer;
           transition: border-color 0.15s ease;
@@ -410,7 +410,7 @@ export default function NetworkPage() {
           border: 1px solid var(--cb-border);
           border-radius: 2px;
           color: var(--cb-text-muted);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           cursor: pointer;
           transition: border-color 0.15s ease, color 0.15s ease;
@@ -485,7 +485,7 @@ export default function NetworkPage() {
         }
 
         .list-header h3 {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: 1.2rem;
           font-weight: 400;
           margin-bottom: 4px;
@@ -548,7 +548,7 @@ export default function NetworkPage() {
         }
 
         .business-name {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: 1.4rem;
           font-weight: 400;
           margin-right: 16px;
@@ -639,7 +639,7 @@ export default function NetworkPage() {
         }
 
         .empty-state-title {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: 1.5rem;
           margin-bottom: 8px;
         }

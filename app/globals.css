@@ -1,7 +1,7 @@
 /* Font @import must precede Tailwind: `@import "tailwindcss"` expands inline
    into rules, and CSS requires all @import rules to come first (Turbopack dev
    enforces this strictly — otherwise the font import errors). */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -10,34 +10,44 @@
   --contraband-dark-gray: #1a1a1a;
   --contraband-mid-gray: #3a3a3a;
   --contraband-light-gray: #8a8a8a;
-  --contraband-cream: #e8e4dc;
+  --contraband-cream: #ededed;
   --contraband-rust: #F7931A;
   --contraband-rust-light: #ff6600;
-  --contraband-white: #f7f7f8;
+  --contraband-white: #fafafa;
 
-  /* Design system — Anduril/Palantir inspired */
+  /* FML design system — shared neutral base + Bitcoin-orange product accent
+     (the family pattern: parent uses #333, Mako teal, Contrabxnd orange).
+     Default (no class) = DARK terminal theme; html.light-mode = FML light. */
   --cb-bg: #0a0a0a;
-  --cb-surface: #111111;
+  --cb-surface: #141414;
+  --cb-bg-surface: #1a1a1a;
   --cb-border: rgba(255, 255, 255, 0.08);
-  --cb-text: #e8e4dc;
-  --cb-text-muted: #6a6a6a;
+  --cb-border-hover: rgba(255, 255, 255, 0.16);
+  --cb-text: #ededed;
+  --cb-text-muted: #8a8a8a;
+  --cb-text-dim: #5a5a5a;
   --cb-accent: #F7931A;
   --cb-radius: 2px;
-  --cb-font-display: 'Cormorant Garamond', serif;
-  --cb-font-mono: 'Space Mono', monospace;
+  --cb-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --cb-font-display: 'Inter', system-ui, sans-serif;
+  --cb-font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 html.light-mode {
-  --cb-bg: #f7f7f8;
+  /* FML light tokens — identical neutral base to feelinmoody.io / mako */
+  --cb-bg: #fafafa;
   --cb-surface: #ffffff;
-  --cb-border: rgba(0, 0, 0, 0.08);
-  --cb-text: #0a0a0a;
-  --cb-text-muted: #6a6a6a;
+  --cb-bg-surface: #f0f0f0;
+  --cb-border: #e5e5e5;
+  --cb-border-hover: #d0d0d0;
+  --cb-text: #111111;
+  --cb-text-muted: #6b6b6b;
+  --cb-text-dim: #a0a0a0;
 }
 
 @theme inline {
-  --color-background: var(--contraband-black);
-  --color-foreground: var(--contraband-cream);
+  --color-background: var(--cb-bg);
+  --color-foreground: var(--cb-text);
 }
 
 * {
@@ -47,16 +57,37 @@ html.light-mode {
 body {
   background: var(--cb-bg);
   color: var(--cb-text);
-  font-family: var(--cb-font-mono);
-  font-size: 13px;
+  font-family: var(--cb-font-sans);
+  font-size: 14px;
   line-height: 1.6;
   transition: opacity 0.4s ease, background 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body.ready {
   opacity: 1;
 }
+
+/* FML shared utilities ---------------------------------------------------- */
+.mono { font-family: var(--cb-font-mono); }
+
+/* Subtle grid background (dark theme = light lines; light-mode = dark lines) */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+html.light-mode .grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+}
+
+/* Pulsing live-data dot */
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.pulse-dot { animation: pulse-dot 2.5s ease-in-out infinite; }
 
 /* Theme is driven by a `light-mode` class on <html> (set pre-hydration by an
    inline script in the root layout and toggled at runtime by ThemeContext).

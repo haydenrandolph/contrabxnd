@@ -164,7 +164,7 @@ export default function AccountPage() {
         .account-page {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           min-height: 100vh;
         }
@@ -188,7 +188,7 @@ export default function AccountPage() {
         }
 
         .account-title {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: 2.5rem;
           font-weight: 400;
           letter-spacing: -0.02em;
@@ -209,7 +209,7 @@ export default function AccountPage() {
         }
 
         .section-title {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: 1.5rem;
           font-weight: 400;
           margin-bottom: 24px;
@@ -270,7 +270,7 @@ export default function AccountPage() {
         }
 
         .not-logged-in h2 {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: 2rem;
           margin-bottom: 16px;
         }
@@ -289,7 +289,7 @@ export default function AccountPage() {
           border: none;
           border-radius: 2px;
           color: #fff;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -320,7 +320,7 @@ export default function AccountPage() {
           border: 1px solid var(--cb-accent);
           border-radius: 2px;
           color: var(--cb-accent);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -406,7 +406,7 @@ export default function AccountPage() {
         }
 
         .highlight-text {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: 1.1rem;
           font-style: italic;
           line-height: 1.6;

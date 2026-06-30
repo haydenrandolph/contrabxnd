@@ -83,7 +83,7 @@ export default function InfraPage() {
         }
 
         .page-label {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -92,7 +92,7 @@ export default function InfraPage() {
         }
 
         .page-title {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
           letter-spacing: -0.02em;
@@ -102,7 +102,7 @@ export default function InfraPage() {
         }
 
         .page-subtitle {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           color: var(--cb-text-muted);
           max-width: 600px;

@@ -158,7 +158,7 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
         }
 
         .news-modal-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.75rem;
           font-weight: 400;
           line-height: 1.3;

@@ -50,7 +50,7 @@ export default function StreakBadge() {
           display: flex;
           align-items: center;
           gap: 0.35rem;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           color: #F7931A;
           letter-spacing: 0.05em;

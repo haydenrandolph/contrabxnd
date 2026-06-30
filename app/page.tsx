@@ -471,7 +471,7 @@ export default function TerminalPage() {
         .terminal {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           height: 100vh;
           display: flex;
@@ -570,7 +570,7 @@ export default function TerminalPage() {
           border: 1px solid var(--cb-border);
           border-radius: 2px;
           color: var(--cb-text-muted);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -825,7 +825,7 @@ export default function TerminalPage() {
 
         .sidebar-tab-btn {
           flex: 1;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -917,7 +917,7 @@ export default function TerminalPage() {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
           border-radius: 2px;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           line-height: 1.6;
           letter-spacing: 0;
@@ -1259,7 +1259,7 @@ export default function TerminalPage() {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           width: 100%; padding: 12px 24px;
           background: transparent; border: 1px solid var(--cb-border); border-radius: 2px;
-          color: var(--cb-text); font-family: 'Space Mono', monospace;
+          color: var(--cb-text); font-family: 'JetBrains Mono', monospace;
           font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
           text-decoration: none; cursor: pointer; transition: all 0.15s ease;
         }

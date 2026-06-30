@@ -116,7 +116,7 @@ export default function McpPage() {
           padding: 80px 48px 0;
         }
         .page-label {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -130,7 +130,7 @@ export default function McpPage() {
         }
         .page-label a:hover { color: var(--cb-text); }
         .page-title {
-          font-family: var(--cb-font-display, 'Cormorant Garamond', serif);
+          font-family: var(--cb-font-display, 'Inter', serif);
           font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
           letter-spacing: -0.02em;
@@ -139,7 +139,7 @@ export default function McpPage() {
           margin-bottom: 12px;
         }
         .page-subtitle {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           color: var(--cb-text-muted);
           max-width: 600px;
@@ -161,7 +161,7 @@ export default function McpPage() {
           margin-bottom: 48px;
         }
         .mcp-section-title {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -184,7 +184,7 @@ export default function McpPage() {
           font-size: 12px;
           font-weight: 700;
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
         }
         .mcp-tool-desc {
           font-size: 11px;
@@ -197,7 +197,7 @@ export default function McpPage() {
           border: 1px solid var(--cb-border);
           border-radius: 2px;
           padding: 16px 20px;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           line-height: 1.6;
           overflow-x: auto;
@@ -214,7 +214,7 @@ export default function McpPage() {
           border-radius: 2px;
           padding: 4px 10px;
           font-size: 10px;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           color: var(--cb-text-muted);
           cursor: pointer;
           text-transform: uppercase;
@@ -243,7 +243,7 @@ export default function McpPage() {
           border: none;
           border-radius: 2px;
           padding: 8px 20px;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.06em;
           text-transform: uppercase;
@@ -274,7 +274,7 @@ export default function McpPage() {
           margin-bottom: 8px;
         }
         .mcp-new-key-value {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           word-break: break-all;
           color: var(--cb-text);
@@ -301,7 +301,7 @@ export default function McpPage() {
           border-radius: 2px;
         }
         .mcp-key-prefix {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           color: var(--cb-text);
         }
@@ -387,7 +387,7 @@ export default function McpPage() {
           font-size: 11px;
           font-weight: 700;
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           white-space: nowrap;
           min-width: 160px;
         }

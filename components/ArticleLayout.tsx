@@ -56,7 +56,7 @@ export default function ArticleLayout({
         .article-page {
           background: #0a0a0a;
           color: #e8e4dc;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           min-height: 100vh;
         }
 
@@ -153,7 +153,7 @@ export default function ArticleLayout({
         }
 
         .article-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 3rem;
           font-weight: 400;
           line-height: 1.1;
@@ -167,7 +167,7 @@ export default function ArticleLayout({
         }
 
         .article-subtitle {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.5rem;
           font-weight: 400;
           line-height: 1.4;
@@ -190,7 +190,7 @@ export default function ArticleLayout({
         }
 
         .article-content > p:first-of-type::first-letter {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 4rem;
           float: left;
           line-height: 1;
@@ -264,7 +264,7 @@ export default function ArticleLayout({
         }
 
         .related-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 2rem;
           font-weight: 400;
           margin-bottom: 3rem;
@@ -308,7 +308,7 @@ export default function ArticleLayout({
         }
 
         .related-card-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.5rem;
           font-weight: 400;
           line-height: 1.3;

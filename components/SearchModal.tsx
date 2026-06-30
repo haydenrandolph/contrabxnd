@@ -217,7 +217,7 @@ export default function SearchModal() {
         }
 
         .search-input {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 14px;
           background: none;
           border: none;
@@ -240,7 +240,7 @@ export default function SearchModal() {
         }
 
         .search-hint {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           color: #6a6a6a;
           background: #1a1a1a;
@@ -296,7 +296,7 @@ export default function SearchModal() {
         }
 
         .search-result-badge {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -315,7 +315,7 @@ export default function SearchModal() {
         }
 
         .search-result-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.1rem;
           font-weight: 400;
           color: #e8e4dc;
@@ -327,7 +327,7 @@ export default function SearchModal() {
         }
 
         .search-result-excerpt {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           color: #6a6a6a;
           margin-top: 2px;
@@ -340,7 +340,7 @@ export default function SearchModal() {
         .search-empty {
           padding: 2rem 1.25rem;
           text-align: center;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           color: #6a6a6a;
         }
@@ -352,7 +352,7 @@ export default function SearchModal() {
           gap: 1rem;
           padding: 0.6rem 1.25rem;
           border-top: 1px solid #3a3a3a;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           color: #6a6a6a;
         }

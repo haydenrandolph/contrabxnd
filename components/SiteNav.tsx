@@ -115,7 +115,7 @@ export default function SiteNav({
           z-index: 100;
           background: #0a0a0a;
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           line-height: 1;
         }
@@ -147,7 +147,7 @@ export default function SiteNav({
           opacity: 0.4;
         }
         .logo-badge {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           font-weight: 700;
           letter-spacing: 0.12em;
@@ -155,7 +155,7 @@ export default function SiteNav({
           line-height: 1;
         }
         .logo-text {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           font-weight: 400;
           letter-spacing: 0.2em;
@@ -203,7 +203,7 @@ export default function SiteNav({
           cursor: pointer;
           background: none;
           border: none;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           line-height: 1;
         }
         .nav-links a:hover,
@@ -296,7 +296,7 @@ export default function SiteNav({
           justify-content: space-between;
           width: 100%;
           padding: 8px 16px;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           font-weight: 700;
           letter-spacing: 0.12em;
@@ -488,7 +488,7 @@ export default function SiteNav({
           align-items: center;
           justify-content: space-between;
           padding: 16px 24px;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -525,7 +525,7 @@ export default function SiteNav({
           border-top-color: rgba(0, 0, 0, 0.08);
         }
         .mobile-footer-badge {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           letter-spacing: 0.12em;
           text-transform: uppercase;

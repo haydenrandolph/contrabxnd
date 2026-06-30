@@ -173,7 +173,7 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
             y={toY(tick) + 3}
             textAnchor="end"
             fill={axisColor}
-            style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px' }}
+            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px' }}
           >
             {formatUSD(tick)}
           </text>
@@ -187,7 +187,7 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
             y={H - PB + 20}
             textAnchor="middle"
             fill={axisColor}
-            style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px' }}
+            style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px' }}
           >
             {label}
           </text>
@@ -247,7 +247,7 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
                 x={tx + 10}
                 y={ty + 16}
                 fill={tooltipText}
-                style={{ fontFamily: "'Space Mono', monospace", fontSize: '11px' }}
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px' }}
               >
                 {pt.date}
               </text>
@@ -255,7 +255,7 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
                 x={tx + 10}
                 y={ty + 34}
                 fill="var(--cb-text-muted)"
-                style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px' }}
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px' }}
               >
                 Invested: {formatUSD(pt.invested)}
               </text>
@@ -263,7 +263,7 @@ export default function DCAChart({ dataPoints, isLightMode }: DCAChartProps) {
                 x={tx + 10}
                 y={ty + 52}
                 fill="var(--cb-accent)"
-                style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px' }}
+                style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px' }}
               >
                 Value: {formatUSD(pt.value)}
               </text>

@@ -42,7 +42,7 @@ export default function WritingsPage() {
         .writings-page {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           min-height: 100vh;
         }
@@ -54,7 +54,7 @@ export default function WritingsPage() {
         }
 
         .page-label {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -73,7 +73,7 @@ export default function WritingsPage() {
         }
 
         .page-subtitle {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
           color: var(--cb-text-muted);
           max-width: 600px;
@@ -100,7 +100,7 @@ export default function WritingsPage() {
           background: none;
           border: none;
           color: var(--cb-text-muted);
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;

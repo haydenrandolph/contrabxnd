@@ -155,7 +155,7 @@ export default function JoinNetworkModal({
         }
 
         .modal-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.5rem;
           color: #e8e4dc;
         }
@@ -214,7 +214,7 @@ export default function JoinNetworkModal({
           border: 1px solid #2a2a2a;
           border-radius: 4px;
           color: #e8e4dc;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 14px;
           transition: border-color 0.2s ease;
         }
@@ -263,7 +263,7 @@ export default function JoinNetworkModal({
           border: none;
           border-radius: 4px;
           color: #fff;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -304,7 +304,7 @@ export default function JoinNetworkModal({
         }
 
         .success-title {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 1.5rem;
           color: #e8e4dc;
           margin-bottom: 0.75rem;
@@ -343,7 +343,7 @@ export default function JoinNetworkModal({
           border: 1px solid #2a2a2a;
           border-radius: 4px;
           color: #8a8a8a;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.05em;

@@ -122,7 +122,7 @@ export default function HighlightPopover({ contentType, contentSlug }: Highlight
           border: 1px solid #3a3a3a;
           border-radius: 6px;
           color: #e8e4dc;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -166,7 +166,7 @@ export default function HighlightPopover({ contentType, contentSlug }: Highlight
           border: 1px solid #3a3a3a;
           border-radius: 20px;
           padding: 6px 16px;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           color: #F7931A;
           box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);

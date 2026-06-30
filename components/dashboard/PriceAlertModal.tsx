@@ -150,7 +150,7 @@ export default function PriceAlertModal({
         }
 
         .modal-title {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -196,7 +196,7 @@ export default function PriceAlertModal({
         }
 
         .current-price-value {
-          font-family: 'Cormorant Garamond', serif;
+          font-family: 'Inter', serif;
           font-size: 2rem;
           color: #e8e4dc;
         }
@@ -220,7 +220,7 @@ export default function PriceAlertModal({
           background: #141414;
           border: 1px solid #2a2a2a;
           color: #e8e4dc;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 16px;
           transition: border-color 0.2s ease;
         }
@@ -245,7 +245,7 @@ export default function PriceAlertModal({
           background: #141414;
           border: 1px solid #2a2a2a;
           color: #8a8a8a;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -315,7 +315,7 @@ export default function PriceAlertModal({
           background: #F7931A;
           border: none;
           color: #fff;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
           letter-spacing: 0.15em;
           text-transform: uppercase;

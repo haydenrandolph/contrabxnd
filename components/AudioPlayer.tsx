@@ -102,7 +102,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
             border-color: #d0d0d1;
           }
           .ap-loading-text {
-            font-family: 'Space Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
             color: #3a3a3a;
           }
@@ -174,7 +174,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
         }
 
         .ap-label {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -182,7 +182,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
         }
 
         .ap-title {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           color: #8a8a8a;
           overflow: hidden;
@@ -227,7 +227,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
           background: transparent;
           border: 1px solid #3a3a3a;
           border-radius: 2px;
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           color: #8a8a8a;
           cursor: pointer;
@@ -249,7 +249,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
         }
 
         .ap-time {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           color: #8a8a8a;
           font-variant-numeric: tabular-nums;
@@ -326,13 +326,13 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
             <button className="ap-skip" onClick={() => skip(-15)} aria-label="Back 15s">
               <svg viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2">
                 <path d="M1 4v6h6" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                <text x="12" y="16" textAnchor="middle" fill="#8a8a8a" stroke="none" fontSize="7" fontFamily="Space Mono">15</text>
+                <text x="12" y="16" textAnchor="middle" fill="#8a8a8a" stroke="none" fontSize="7" fontFamily="JetBrains Mono">15</text>
               </svg>
             </button>
             <button className="ap-skip" onClick={() => skip(30)} aria-label="Forward 30s">
               <svg viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2">
                 <path d="M23 4v6h-6" /><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10" />
-                <text x="12" y="16" textAnchor="middle" fill="#8a8a8a" stroke="none" fontSize="7" fontFamily="Space Mono">30</text>
+                <text x="12" y="16" textAnchor="middle" fill="#8a8a8a" stroke="none" fontSize="7" fontFamily="JetBrains Mono">30</text>
               </svg>
             </button>
             <div className="ap-speed">

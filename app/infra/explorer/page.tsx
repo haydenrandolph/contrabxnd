@@ -150,11 +150,11 @@ export default function ExplorerPage() {
       <style jsx global>{`
         .tool-page { background: var(--cb-bg); color: var(--cb-text); font-family: var(--cb-font-mono); font-size: 13px; line-height: 1.7; min-height: 100vh; overflow-x: hidden; }
         .page-header { max-width: 860px; margin: 0 auto; padding: 80px 48px 0; }
-        .page-label { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cb-accent); margin-bottom: 16px; }
+        .page-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cb-accent); margin-bottom: 16px; }
         .page-label a { color: var(--cb-text-muted); text-decoration: none; transition: color 0.15s ease; }
         .page-label a:hover { color: var(--cb-text); }
-        .page-title { font-family: var(--cb-font-display, 'Cormorant Garamond', serif); font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 12px; }
-        .page-subtitle { font-family: 'Space Mono', monospace; font-size: 13px; color: var(--cb-text-muted); max-width: 600px; }
+        .page-title { font-family: var(--cb-font-display, 'Inter', serif); font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 12px; }
+        .page-subtitle { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--cb-text-muted); max-width: 600px; }
         .page-divider { width: 100%; height: 1px; background: var(--cb-border); margin-top: 32px; }
         .tool-content { max-width: 860px; margin: 0 auto; padding: 40px 48px 96px; }
 

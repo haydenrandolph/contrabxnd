@@ -67,7 +67,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
           display: 'inline-flex',
           alignItems: 'center',
           gap: '6px',
-          fontFamily: "'Space Mono', monospace",
+          fontFamily: "'JetBrains Mono', monospace",
           fontSize: '9px',
           letterSpacing: '0.15em',
           textTransform: 'uppercase' as const,
@@ -108,7 +108,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
           gap: 6px;
           padding: 10px 14px;
           border-right: 1px solid ${border};
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -184,7 +184,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         }
 
         .nw-item-time {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           letter-spacing: 0.05em;
           color: ${textMuted};
@@ -196,7 +196,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         }
 
         .nw-item-source {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -205,7 +205,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         }
 
         .nw-item-title {
-          font-family: 'Space Mono', monospace;
+          font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
           color: ${textPrimary};
         }

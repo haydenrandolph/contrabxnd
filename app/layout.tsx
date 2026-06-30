@@ -64,7 +64,7 @@ export default function RootLayout({
             wrong theme and to keep the <html>-level class in sync. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem('contraband-theme')==='light'){document.documentElement.classList.add('light-mode')}}catch(e){}`,
+            __html: `try{if(localStorage.getItem('contraband-theme')!=='dark'){document.documentElement.classList.add('light-mode')}}catch(e){}`,
           }}
         />
         <style
