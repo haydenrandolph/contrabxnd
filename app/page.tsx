@@ -96,6 +96,13 @@ interface HashrateData {
   source: string;
 }
 
+interface OnchainData {
+  pending: boolean;
+  mvrv: number | null;
+  mvrv_label: string | null;
+  realized_price: number | null;
+}
+
 export default function TerminalPage() {
   const [networkData, setNetworkData] = useState<NetworkData>({
     price: 0, change24h: 0, marketCap: 0, volume24h: 0,
@@ -129,6 +136,7 @@ export default function TerminalPage() {
   const [slrData, setSlrData] = useState<SlrData | null>(null);
   const [polymarketData, setPolymarketData] = useState<PolymarketData | null>(null);
   const [hashrateData, setHashrateData] = useState<HashrateData | null>(null);
+  const [onchainData, setOnchainData] = useState<OnchainData | null>(null);
   const [briefData, setBriefData] = useState<{ date: string; headline: string; summary: string; sections: Array<{ title: string; body: string }> } | null>(null);
   const [briefExpanded, setBriefExpanded] = useState(false);
   const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
@@ -267,8 +275,9 @@ export default function TerminalPage() {
         fetch('/api/polymarket').then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/brief').then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/hashrate').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/onchain').then(r => r.ok ? r.json() : null).catch(() => null),
       ];
-      const [sig, fed, liq, slr, poly, brief, hash] = await Promise.all(fetches);
+      const [sig, fed, liq, slr, poly, brief, hash, onchain] = await Promise.all(fetches);
       if (sig && sig.score !== undefined) setSignalData(sig);
       if (fed) setFedwatchData(fed);
       if (liq) setLiquidityData(liq);
@@ -276,6 +285,7 @@ export default function TerminalPage() {
       if (poly) setPolymarketData(poly);
       if (brief?.brief) setBriefData(brief.brief);
       if (hash?.hash_ribbon) setHashrateData(hash);
+      if (onchain && !onchain.pending) setOnchainData(onchain);
     };
     fetchMacro();
     const i = setInterval(fetchMacro, 5 * 60 * 1000);
@@ -1509,6 +1519,17 @@ export default function TerminalPage() {
                         )}
                       </div>
                     </div>
+
+                    {/* MVRV — only renders once the sovereign UTXO indexer has run */}
+                    {onchainData && onchainData.mvrv != null && (
+                      <div className="macro-row">
+                        <span className="macro-label tip-wrap">MVRV<span className="tip-icon">?</span><span className="tip-bubble">Market Value to Realized Value — market cap divided by realized cap (the aggregate cost basis of all coins). Below 1 is historically undervalued (price under what holders paid); above ~3.2 is cycle-top territory. Computed from our own node&apos;s UTXO set.</span></span>
+                        <div className="macro-value-group">
+                          <span className="macro-value">{onchainData.mvrv.toFixed(2)}</span>
+                          <span className="macro-detail">{onchainData.mvrv_label?.toLowerCase()}{onchainData.realized_price ? ` · RP $${Math.round(onchainData.realized_price).toLocaleString()}` : ''}</span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Polymarket */}
                     <div className="macro-row" style={{ flexDirection: 'column', gap: '6px' }}>

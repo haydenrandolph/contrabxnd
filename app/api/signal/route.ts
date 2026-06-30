@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import type { MeetingForecast } from '@/lib/fedwatch/types';
 import { getMiningIntelligence } from '@/lib/hashrate';
+import { getBitcoinPrice } from '@/lib/price';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,7 +68,7 @@ export async function GET() {
 
   try {
     // Fetch all data sources in parallel
-    const [etfResult, liquidityResult, fedwatchResult, fearGreedResult, slrResult, polymarketResult, hashRibbonResult] =
+    const [etfResult, liquidityResult, fedwatchResult, fearGreedResult, slrResult, polymarketResult, hashRibbonResult, onchainResult] =
       await Promise.allSettled([
         fetchEtfData(supabase),
         fetchLiquidityData(supabase),
@@ -76,6 +77,7 @@ export async function GET() {
         fetchSlrData(supabase),
         fetchPolymarketData(supabase),
         fetchHashRibbonData(),
+        fetchOnchainData(supabase),
       ]);
 
     // Build components map with their default weights
@@ -100,6 +102,7 @@ export async function GET() {
     tryAdd('fear_greed', 0.10, fearGreedResult);
     tryAdd('slr', 0.05, slrResult);
     tryAdd('hash_ribbon', 0.05, hashRibbonResult);
+    tryAdd('mvrv', 0.10, onchainResult);
 
     // TGA is derived from the liquidity result
     if (liquidityResult.status === 'fulfilled' && liquidityResult.value != null) {
@@ -323,6 +326,30 @@ async function fetchHashRibbonData(): Promise<ComponentResult | null> {
   } catch {
     return null;
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchOnchainData(supabase: any): Promise<ComponentResult | null> {
+  const { data: row } = await supabase
+    .from('onchain_snapshots')
+    .select('realized_cap, total_supply')
+    .order('date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!row?.realized_cap || !row?.total_supply) return null; // indexer hasn't run
+
+  const priceResult = await getBitcoinPrice();
+  const price = priceResult?.data.price;
+  if (!price) return null;
+
+  const mvrv = (price * Number(row.total_supply)) / Number(row.realized_cap);
+  // MVRV ~0.8 = deep value (bullish), ~3.5 = cycle-top territory (bearish).
+  const score = clamp(linearMap(mvrv, 0.8, 3.5, 100, -100));
+  let label = 'fair value';
+  if (mvrv < 1) label = 'undervalued';
+  else if (mvrv > 3.2) label = 'overvalued';
+  const detail = `MVRV ${mvrv.toFixed(2)} (${label})`;
+  return { score, weight: 0, detail };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

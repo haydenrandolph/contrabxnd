@@ -439,6 +439,7 @@ export default function McpPage() {
                 ['get_fear_greed', 'Fear and Greed Index'],
                 ['get_slr', 'SLR regime and leverage data'],
                 ['get_mining_intelligence', 'Hash Ribbon, difficulty ribbon, next adjustment'],
+                ['get_onchain_metrics', 'Realized price, MVRV, HODL waves (sovereign indexer)'],
                 ['get_market_brief', 'Full intelligence brief (all signals)'],
                 ['get_bitcoin_history', 'Historical BTC price data'],
                 ['get_daily_brief', 'AI-generated daily intelligence brief'],
