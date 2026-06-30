@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { createAdminClient } from '@/lib/supabase/server';
 import { nodeJson, nodeFetch } from '@/lib/node/client';
+import { decodeScript } from '@/lib/node/script';
 import crypto from 'crypto';
 import { z } from 'zod';
 
@@ -27,6 +28,11 @@ interface AddrTx {
   txid: string;
   fee: number;
   status: TxStatus;
+}
+interface Vout {
+  scriptpubkey_address?: string;
+  scriptpubkey_type?: string;
+  value: number;
 }
 
 const SATS = 1e8;
@@ -352,6 +358,70 @@ function createServer() {
     },
   );
 
+  server.tool(
+    'trace_funds',
+    'Follow Bitcoin forward through the transaction graph from a starting txid, hop by hop along the largest spent output (the main flow). Reports where funds went and where they currently rest. Served by the Contrabxnd node.',
+    {
+      txid: z.string().describe('Starting transaction id (64-char hex)'),
+      max_hops: z.number().int().min(1).max(10).optional().describe('How many hops to follow (default 5)'),
+    },
+    async ({ txid, max_hops }) => {
+      if (!/^[a-fA-F0-9]{64}$/.test(txid)) return fail('txid must be a 64-character hex string.');
+      const hops = max_hops ?? 5;
+      const trail: unknown[] = [];
+      let current = txid;
+      let source: string | null = null;
+      try {
+        for (let i = 0; i < hops; i++) {
+          const [{ data: tx, source: s }, { data: spends }] = await Promise.all([
+            nodeJson<{ vout: Vout[] }>(`/api/tx/${current}`),
+            nodeJson<Array<{ spent: boolean; txid: string | null }>>(`/api/tx/${current}/outspends`),
+          ]);
+          source = s;
+          const spentIdx = spends
+            .map((o, idx) => ({ o, idx }))
+            .filter((x) => x.o.spent)
+            .sort((a, b) => (tx.vout[b.idx]?.value ?? 0) - (tx.vout[a.idx]?.value ?? 0));
+          const spentCount = spentIdx.length;
+          if (spentCount === 0) {
+            trail.push({ hop: i + 1, txid: current, note: 'Funds at rest — all outputs unspent.', outputs: tx.vout.length });
+            break;
+          }
+          const top = spentIdx[0];
+          const out = tx.vout[top.idx];
+          trail.push({
+            hop: i + 1,
+            txid: current,
+            followed_output: top.idx,
+            address: out.scriptpubkey_address ?? out.scriptpubkey_type ?? 'unknown',
+            value_btc: out.value / SATS,
+            spent_in: spends[top.idx].txid,
+            total_outputs: tx.vout.length,
+            spent_outputs: spentCount,
+            note: spentCount > 1 ? `Fan-out: ${spentCount} of ${tx.vout.length} outputs spent; following the largest.` : undefined,
+          });
+          const next = spends[top.idx].txid;
+          if (!next) break;
+          current = next;
+        }
+        return ok({ start: txid, hops_followed: trail.length, data_source: source, trail });
+      } catch {
+        return fail(`Could not trace from ${txid}.`);
+      }
+    },
+  );
+
+  server.tool(
+    'decode_script',
+    'Decode a Bitcoin script (scriptPubKey hex) into readable ASM and explain its type — P2PKH, P2SH, P2WPKH, P2WSH, P2TR, P2PK, OP_RETURN, bare multisig, or non-standard.',
+    { script: z.string().describe('Script as a hex string (e.g. a scriptPubKey)') },
+    async ({ script }) => {
+      const decoded = decodeScript(script);
+      if (!decoded) return fail('Invalid script hex. Provide an even-length hexadecimal string.');
+      return ok(decoded);
+    },
+  );
+
   return server;
 }
 
@@ -404,6 +474,7 @@ export async function GET(req: Request) {
         // Phase 2 — Indexer (Contrabxnd node)
         'query_address', 'query_transaction', 'query_block',
         'get_mempool_analysis', 'estimate_fee', 'get_address_history',
+        'trace_funds', 'decode_script',
       ],
     }), { headers: { 'Content-Type': 'application/json' } });
   }

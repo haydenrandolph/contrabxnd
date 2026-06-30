@@ -570,6 +570,8 @@ Accept: application/json, text/event-stream</div>
                     ['get_mempool_analysis', 'Real-time mempool depth and fee distribution'],
                     ['estimate_fee', 'Smart fee estimation from node mempool'],
                     ['get_address_history', 'Recent transaction history for any address'],
+                    ['trace_funds', 'Follow BTC forward through the transaction graph'],
+                    ['decode_script', 'Decode and explain any Bitcoin script'],
                   ],
                 },
                 {
