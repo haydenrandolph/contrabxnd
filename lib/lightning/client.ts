@@ -124,7 +124,9 @@ export async function listChannels() {
 
 export async function createInvoice(value_sat: number, memo?: string) {
   const resp = await lndPost<AddInvoiceResp>('/v1/invoices', { value: String(value_sat), memo: memo ?? '' });
-  return { payment_request: resp.payment_request, add_index: resp.add_index };
+  // LND REST returns r_hash as base64; expose hex for L402 token binding.
+  const payment_hash = Buffer.from(resp.r_hash, 'base64').toString('hex');
+  return { payment_request: resp.payment_request, add_index: resp.add_index, payment_hash };
 }
 
 export const decodeInvoice = (payreq: string) =>

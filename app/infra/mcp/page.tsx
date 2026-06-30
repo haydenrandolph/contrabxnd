@@ -613,12 +613,11 @@ Accept: application/json, text/event-stream</div>
                 },
                 {
                   phase: 'Phase 6',
-                  title: 'x402 Micropayments',
-                  status: 'planned',
+                  title: 'L402 Micropayments',
+                  status: 'live',
                   tools: [
-                    ['create_paywall', 'Gate any tool behind a Lightning micropayment'],
-                    ['verify_payment', 'Verify BOLT11 payment before granting access'],
-                    ['get_pricing', 'List paywalled tools and their sat prices'],
+                    ['get_pricing', 'List paywalled resources and their sat prices'],
+                    ['GET /api/premium/*', 'L402-gated endpoints: 402 + invoice, pay, retry with preimage'],
                   ],
                 },
               ].map(({ phase, title, status, tools }) => (

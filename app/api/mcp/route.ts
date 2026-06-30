@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/server';
 import { nodeJson, nodeFetch } from '@/lib/node/client';
 import { decodeScript } from '@/lib/node/script';
 import { lndConfigured, getInfo, getBalances, listChannels, createInvoice, decodeInvoice } from '@/lib/lightning/client';
+import { PAYWALL } from '@/lib/lightning/l402';
 import crypto from 'crypto';
 import { z } from 'zod';
 
@@ -525,6 +526,22 @@ function createServer() {
     },
   );
 
+  server.tool(
+    'get_pricing',
+    'List Contrabxnd resources gated behind Lightning micropayments (L402): resource name, sat price, endpoint, and how to pay. Pay the 402 invoice, then retry with Authorization: L402 <token>:<preimage>.',
+    {},
+    async () => {
+      const items = Object.entries(PAYWALL).map(([resource, v]) => ({
+        resource,
+        price_sats: v.price_sats,
+        description: v.description,
+        endpoint: `${BASE_URL}/api/premium/${resource.replace('premium-', '')}`,
+        protocol: 'L402',
+      }));
+      return ok({ paywalled_resources: items, how_to_pay: 'GET the endpoint → receive 402 + BOLT11 invoice → pay it → retry with header "Authorization: L402 <token>:<preimage>".' });
+    },
+  );
+
   return server;
 }
 
@@ -581,6 +598,8 @@ export async function GET(req: Request) {
         // Phase 3 — Lightning (Contrabxnd LND node)
         'get_node_info', 'get_lightning_balance', 'list_channels',
         'create_invoice', 'decode_invoice',
+        // Phase 6 — L402 micropayments
+        'get_pricing',
       ],
     }), { headers: { 'Content-Type': 'application/json' } });
   }
