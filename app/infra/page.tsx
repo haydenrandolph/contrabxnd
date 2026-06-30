@@ -39,9 +39,9 @@ const TOOLS: ToolCard[] = [
     href: '/infra/agents',
   },
   {
-    title: "Indexer",
-    description: "Query and analyze the blockchain through the Contrabxnd Bitcoin node.",
-    comingSoon: true,
+    title: "Block Explorer",
+    description: "Look up any address, transaction, or block through the Contrabxnd Bitcoin node.",
+    href: '/infra/explorer',
   },
   {
     title: "Lightning Channel",
