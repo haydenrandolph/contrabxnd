@@ -3,6 +3,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { createAdminClient } from '@/lib/supabase/server';
 import { nodeJson, nodeFetch } from '@/lib/node/client';
 import { decodeScript } from '@/lib/node/script';
+import { lndConfigured, getInfo, getBalances, listChannels, createInvoice, decodeInvoice } from '@/lib/lightning/client';
 import crypto from 'crypto';
 import { z } from 'zod';
 
@@ -422,6 +423,108 @@ function createServer() {
     },
   );
 
+  // ── Phase 3: Lightning (read + receive, via the Contrabxnd LND node) ──
+
+  const lnGuard = () =>
+    lndConfigured() ? null : fail('Lightning node not connected yet. Coming online soon.');
+
+  server.tool(
+    'get_node_info',
+    "Get the Contrabxnd Lightning node's public info: pubkey, alias, active channel count, peers, sync status, and connect URIs.",
+    {},
+    async () => {
+      const g = lnGuard();
+      if (g) return g;
+      try {
+        const i = await getInfo();
+        return ok({
+          pubkey: i.identity_pubkey,
+          alias: i.alias,
+          active_channels: i.num_active_channels,
+          peers: i.num_peers,
+          synced_to_chain: i.synced_to_chain,
+          block_height: i.block_height,
+          version: i.version,
+          uris: i.uris ?? [],
+        });
+      } catch {
+        return fail('Lightning node unreachable.');
+      }
+    },
+  );
+
+  server.tool(
+    'get_lightning_balance',
+    "Get the Contrabxnd node's Lightning channel balances (local/remote/pending) and on-chain wallet balances, in satoshis.",
+    {},
+    async () => {
+      const g = lnGuard();
+      if (g) return g;
+      try {
+        return ok(await getBalances());
+      } catch {
+        return fail('Lightning node unreachable.');
+      }
+    },
+  );
+
+  server.tool(
+    'list_channels',
+    'List the active Lightning channels on the Contrabxnd node: peer pubkey, capacity, and local/remote balance per channel.',
+    {},
+    async () => {
+      const g = lnGuard();
+      if (g) return g;
+      try {
+        const channels = await listChannels();
+        return ok({ count: channels.length, channels });
+      } catch {
+        return fail('Lightning node unreachable.');
+      }
+    },
+  );
+
+  server.tool(
+    'create_invoice',
+    'Generate a BOLT11 Lightning invoice on the Contrabxnd node to receive a payment. Returns the payment_request string.',
+    {
+      value_sat: z.number().int().positive().describe('Amount to receive, in satoshis'),
+      memo: z.string().max(256).optional().describe('Optional description'),
+    },
+    async ({ value_sat, memo }) => {
+      const g = lnGuard();
+      if (g) return g;
+      try {
+        return ok(await createInvoice(value_sat, memo));
+      } catch {
+        return fail('Could not create invoice.');
+      }
+    },
+  );
+
+  server.tool(
+    'decode_invoice',
+    'Decode a BOLT11 Lightning invoice (payment request) to reveal destination, amount, description, timestamp, and expiry.',
+    { payment_request: z.string().describe('BOLT11 invoice string (lnbc...)') },
+    async ({ payment_request }) => {
+      const g = lnGuard();
+      if (g) return g;
+      try {
+        const d = await decodeInvoice(payment_request);
+        return ok({
+          destination: d.destination,
+          amount_sat: Number(d.num_satoshis),
+          description: d.description,
+          payment_hash: d.payment_hash,
+          timestamp: d.timestamp,
+          expiry_sec: Number(d.expiry),
+        });
+      } catch {
+        return fail('Could not decode invoice. Check the BOLT11 string.');
+      }
+    },
+  );
+
   return server;
 }
 
@@ -475,6 +578,9 @@ export async function GET(req: Request) {
         'query_address', 'query_transaction', 'query_block',
         'get_mempool_analysis', 'estimate_fee', 'get_address_history',
         'trace_funds', 'decode_script',
+        // Phase 3 — Lightning (Contrabxnd LND node)
+        'get_node_info', 'get_lightning_balance', 'list_channels',
+        'create_invoice', 'decode_invoice',
       ],
     }), { headers: { 'Content-Type': 'application/json' } });
   }

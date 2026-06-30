@@ -44,9 +44,9 @@ const TOOLS: ToolCard[] = [
     href: '/infra/explorer',
   },
   {
-    title: "Lightning Channel",
-    description: "Open a Lightning channel with the Contrabxnd node for instant payments.",
-    comingSoon: true,
+    title: "Lightning",
+    description: "Connect to the Contrabxnd Lightning node — view its channels, capacity, and generate invoices.",
+    href: '/infra/lightning',
   },
   {
     title: "Wallets",

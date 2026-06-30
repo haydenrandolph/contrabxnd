@@ -577,15 +577,13 @@ Accept: application/json, text/event-stream</div>
                 {
                   phase: 'Phase 3',
                   title: 'Lightning',
-                  status: 'coming soon',
+                  status: 'live',
                   tools: [
-                    ['get_node_info', 'Contrabxnd node pubkey, capacity, channel count'],
+                    ['get_node_info', 'Contrabxnd node pubkey, alias, channel count, URIs'],
+                    ['get_lightning_balance', 'Channel + on-chain balances'],
                     ['list_channels', 'Active channels with balance and peer info'],
-                    ['open_channel', 'Open a channel to the Contrabxnd node'],
                     ['create_invoice', 'Generate a BOLT11 Lightning invoice'],
-                    ['pay_invoice', 'Pay any Lightning invoice through the node'],
                     ['decode_invoice', 'Decode BOLT11 to see amount, description, expiry'],
-                    ['get_forwarding_history', 'Routing revenue and forward stats'],
                   ],
                 },
                 {
