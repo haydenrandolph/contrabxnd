@@ -205,6 +205,16 @@ function createServer() {
   );
 
   server.tool(
+    'get_mining_intelligence',
+    'Get hash rate and difficulty intelligence: Hash Ribbon state (miner capitulation/recovery bottom signal), 30d/60d hashrate MAs, Difficulty Ribbon compression, and the next difficulty-adjustment forecast.',
+    {},
+    async () => {
+      const data = await fetchInternal('/api/hashrate');
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
+    },
+  );
+
+  server.tool(
     'get_daily_brief',
     'Get the latest AI-generated daily intelligence brief: headline, summary, and section-by-section analysis',
     {},
@@ -390,7 +400,7 @@ export async function GET(req: Request) {
         'get_signal_score', 'get_bitcoin_price', 'get_net_liquidity',
         'get_fedwatch', 'get_etf_flows', 'get_polymarket',
         'get_fear_greed', 'get_slr', 'get_market_brief', 'get_bitcoin_history',
-        'get_daily_brief',
+        'get_daily_brief', 'get_mining_intelligence',
         // Phase 2 — Indexer (Contrabxnd node)
         'query_address', 'query_transaction', 'query_block',
         'get_mempool_analysis', 'estimate_fee', 'get_address_history',

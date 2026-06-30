@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import type { MeetingForecast } from '@/lib/fedwatch/types';
+import { getMiningIntelligence } from '@/lib/hashrate';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,7 +67,7 @@ export async function GET() {
 
   try {
     // Fetch all data sources in parallel
-    const [etfResult, liquidityResult, fedwatchResult, fearGreedResult, slrResult, polymarketResult] =
+    const [etfResult, liquidityResult, fedwatchResult, fearGreedResult, slrResult, polymarketResult, hashRibbonResult] =
       await Promise.allSettled([
         fetchEtfData(supabase),
         fetchLiquidityData(supabase),
@@ -74,6 +75,7 @@ export async function GET() {
         fetchFearGreedData(),
         fetchSlrData(supabase),
         fetchPolymarketData(supabase),
+        fetchHashRibbonData(),
       ]);
 
     // Build components map with their default weights
@@ -97,6 +99,7 @@ export async function GET() {
     tryAdd('polymarket', 0.10, polymarketResult);
     tryAdd('fear_greed', 0.10, fearGreedResult);
     tryAdd('slr', 0.05, slrResult);
+    tryAdd('hash_ribbon', 0.05, hashRibbonResult);
 
     // TGA is derived from the liquidity result
     if (liquidityResult.status === 'fulfilled' && liquidityResult.value != null) {
@@ -311,6 +314,15 @@ async function fetchSlrData(supabase: any): Promise<ComponentResult | null> {
   const detail = `${label} regime`;
 
   return { score, weight: 0, detail };
+}
+
+async function fetchHashRibbonData(): Promise<ComponentResult | null> {
+  try {
+    const m = await getMiningIntelligence();
+    return { score: m.score, weight: 0, detail: m.detail };
+  } catch {
+    return null;
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

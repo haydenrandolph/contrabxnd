@@ -89,6 +89,13 @@ interface PolymarketData {
   count: number;
 }
 
+interface HashrateData {
+  current_hashrate_ehs: number;
+  hash_ribbon: { state: string; ratio: number; recovery_signal: boolean };
+  difficulty_adjustment: { estimated_change_percent: number; days_until: number };
+  source: string;
+}
+
 export default function TerminalPage() {
   const [networkData, setNetworkData] = useState<NetworkData>({
     price: 0, change24h: 0, marketCap: 0, volume24h: 0,
@@ -121,6 +128,7 @@ export default function TerminalPage() {
   const [liquidityData, setLiquidityData] = useState<LiquidityData | null>(null);
   const [slrData, setSlrData] = useState<SlrData | null>(null);
   const [polymarketData, setPolymarketData] = useState<PolymarketData | null>(null);
+  const [hashrateData, setHashrateData] = useState<HashrateData | null>(null);
   const [briefData, setBriefData] = useState<{ date: string; headline: string; summary: string; sections: Array<{ title: string; body: string }> } | null>(null);
   const [briefExpanded, setBriefExpanded] = useState(false);
   const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
@@ -258,14 +266,16 @@ export default function TerminalPage() {
         fetch('/api/slr').then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/polymarket').then(r => r.ok ? r.json() : null).catch(() => null),
         fetch('/api/brief').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/hashrate').then(r => r.ok ? r.json() : null).catch(() => null),
       ];
-      const [sig, fed, liq, slr, poly, brief] = await Promise.all(fetches);
+      const [sig, fed, liq, slr, poly, brief, hash] = await Promise.all(fetches);
       if (sig && sig.score !== undefined) setSignalData(sig);
       if (fed) setFedwatchData(fed);
       if (liq) setLiquidityData(liq);
       if (slr) setSlrData(slr);
       if (poly) setPolymarketData(poly);
       if (brief?.brief) setBriefData(brief.brief);
+      if (hash?.hash_ribbon) setHashrateData(hash);
     };
     fetchMacro();
     const i = setInterval(fetchMacro, 5 * 60 * 1000);
@@ -1478,6 +1488,25 @@ export default function TerminalPage() {
                         <span className="macro-value">
                           {slrData?.policy_label != null ? slrData.policy_label.toUpperCase() : '—'}
                         </span>
+                      </div>
+                    </div>
+
+                    {/* Hash Ribbon */}
+                    <div className="macro-row">
+                      <span className="macro-label tip-wrap">Hash Ribbon<span className="tip-icon">?</span><span className="tip-bubble">30-day vs 60-day moving average of network hash rate. When miners capitulate (30d falls below 60d) and then recover (crosses back above), it has historically marked major price bottoms. Difficulty change shown is the next retarget estimate.</span></span>
+                      <div className="macro-value-group">
+                        {hashrateData?.hash_ribbon ? (
+                          <>
+                            <span className="macro-value" style={hashrateData.hash_ribbon.recovery_signal ? { color: 'var(--cb-accent)' } : undefined}>
+                              {hashrateData.hash_ribbon.recovery_signal ? 'RECOVERY' : hashrateData.hash_ribbon.state.toUpperCase()}
+                            </span>
+                            <span className={`macro-detail ${hashrateData.difficulty_adjustment.estimated_change_percent >= 0 ? 'positive' : 'negative'}`}>
+                              diff {hashrateData.difficulty_adjustment.estimated_change_percent >= 0 ? '+' : ''}{hashrateData.difficulty_adjustment.estimated_change_percent.toFixed(1)}% · {hashrateData.current_hashrate_ehs.toFixed(0)} EH/s
+                            </span>
+                          </>
+                        ) : (
+                          <span className="macro-value">—</span>
+                        )}
                       </div>
                     </div>
 
