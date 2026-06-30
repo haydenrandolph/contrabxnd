@@ -362,6 +362,12 @@ export default function McpPage() {
         .mcp-roadmap-status.soon {
           color: var(--cb-accent);
         }
+        .mcp-roadmap-status.live {
+          color: var(--cb-bg);
+          background: var(--cb-accent);
+          padding: 2px 6px;
+          border-radius: 2px;
+        }
         .mcp-roadmap-tools {
           display: flex;
           flex-direction: column;
@@ -555,15 +561,14 @@ Accept: application/json, text/event-stream</div>
                 {
                   phase: 'Phase 2',
                   title: 'Indexer',
-                  status: 'coming soon',
+                  status: 'live',
                   tools: [
-                    ['query_address', 'Balance, tx count, UTXO set for any address'],
+                    ['query_address', 'Balance, total received/sent, tx count for any address'],
                     ['query_transaction', 'Full tx details: inputs, outputs, fee, confirmations'],
-                    ['query_block', 'Block header, tx list, miner, size, weight'],
+                    ['query_block', 'Block header, miner pool, size, weight, difficulty'],
                     ['get_mempool_analysis', 'Real-time mempool depth and fee distribution'],
-                    ['trace_funds', 'Follow BTC flow across transaction chains'],
-                    ['decode_script', 'Decode and explain any Bitcoin script'],
                     ['estimate_fee', 'Smart fee estimation from node mempool'],
+                    ['get_address_history', 'Recent transaction history for any address'],
                   ],
                 },
                 {
@@ -622,7 +627,7 @@ Accept: application/json, text/event-stream</div>
                       <span className="mcp-roadmap-phase-tag">{phase}</span>
                       <span className="mcp-roadmap-title">{title}</span>
                     </div>
-                    <span className={`mcp-roadmap-status ${status === 'coming soon' ? 'soon' : ''}`}>
+                    <span className={`mcp-roadmap-status ${status === 'coming soon' ? 'soon' : status === 'live' ? 'live' : ''}`}>
                       {status}
                     </span>
                   </div>

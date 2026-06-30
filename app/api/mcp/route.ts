@@ -1,8 +1,37 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { createAdminClient } from '@/lib/supabase/server';
+import { nodeJson, nodeFetch } from '@/lib/node/client';
 import crypto from 'crypto';
 import { z } from 'zod';
+
+// ── Node indexer types (mempool.space API shape) ──
+interface AddrStats {
+  funded_txo_count: number;
+  funded_txo_sum: number;
+  spent_txo_count: number;
+  spent_txo_sum: number;
+  tx_count: number;
+}
+interface AddrInfo {
+  address: string;
+  chain_stats: AddrStats;
+  mempool_stats: AddrStats;
+}
+interface TxStatus {
+  confirmed: boolean;
+  block_height?: number;
+  block_time?: number;
+}
+interface AddrTx {
+  txid: string;
+  fee: number;
+  status: TxStatus;
+}
+
+const SATS = 1e8;
+const ok = (obj: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(obj, null, 2) }] });
+const fail = (msg: string) => ({ content: [{ type: 'text' as const, text: JSON.stringify({ error: msg }, null, 2) }], isError: true });
 
 export const dynamic = 'force-dynamic';
 
@@ -185,6 +214,134 @@ function createServer() {
     },
   );
 
+  // ── Phase 2: Indexer tools (query the blockchain through the Contrabxnd node) ──
+
+  server.tool(
+    'query_address',
+    'Look up any Bitcoin address: confirmed balance, total received/sent, transaction count, and unconfirmed (mempool) activity. Served by the Contrabxnd node.',
+    { address: z.string().describe('Bitcoin address (legacy, SegWit, or Taproot)') },
+    async ({ address }) => {
+      try {
+        const { data, source } = await nodeJson<AddrInfo>(`/api/address/${encodeURIComponent(address)}`);
+        const cs = data.chain_stats;
+        const ms = data.mempool_stats;
+        const balanceSats = cs.funded_txo_sum - cs.spent_txo_sum;
+        return ok({
+          address: data.address,
+          balance_btc: balanceSats / SATS,
+          balance_sats: balanceSats,
+          total_received_btc: cs.funded_txo_sum / SATS,
+          total_sent_btc: cs.spent_txo_sum / SATS,
+          tx_count: cs.tx_count,
+          unconfirmed_tx_count: ms.tx_count,
+          unconfirmed_balance_sats: ms.funded_txo_sum - ms.spent_txo_sum,
+          data_source: source,
+        });
+      } catch {
+        return fail(`Could not look up address "${address}". Check that it is a valid Bitcoin address.`);
+      }
+    },
+  );
+
+  server.tool(
+    'query_transaction',
+    'Get full details for a transaction: inputs, outputs, fee, size, and confirmation status. Served by the Contrabxnd node.',
+    { txid: z.string().describe('64-character transaction id (hex)') },
+    async ({ txid }) => {
+      if (!/^[a-fA-F0-9]{64}$/.test(txid)) return fail('txid must be a 64-character hex string.');
+      try {
+        const { data, source } = await nodeJson<{ fee: number; status: TxStatus; weight: number }>(`/api/tx/${txid}`);
+        return ok({ ...data, fee_btc: (data.fee ?? 0) / SATS, vsize: Math.ceil(data.weight / 4), data_source: source });
+      } catch {
+        return fail(`Transaction ${txid} not found.`);
+      }
+    },
+  );
+
+  server.tool(
+    'query_block',
+    'Get a block by height or hash: header, miner pool (if known), tx count, size, weight, and difficulty. Served by the Contrabxnd node.',
+    { id: z.string().describe('Block height (e.g. "840000") or 64-char block hash') },
+    async ({ id }) => {
+      try {
+        let hash = id;
+        if (/^\d+$/.test(id)) {
+          const { res } = await nodeFetch(`/api/block-height/${id}`);
+          if (!res.ok) return fail(`Block height ${id} not found.`);
+          hash = (await res.text()).trim();
+        } else if (!/^[a-fA-F0-9]{64}$/.test(id)) {
+          return fail('Provide a numeric block height or a 64-character block hash.');
+        }
+        const { data, source } = await nodeJson<Record<string, unknown>>(`/api/block/${hash}`);
+        return ok({ ...data, data_source: source });
+      } catch {
+        return fail(`Block "${id}" not found.`);
+      }
+    },
+  );
+
+  server.tool(
+    'get_mempool_analysis',
+    'Real-time mempool state: pending transaction count, total size, accumulated fees, and recommended fee rates by priority. Served by the Contrabxnd node.',
+    {},
+    async () => {
+      try {
+        const [mp, fees] = await Promise.all([
+          nodeJson<{ count: number; vsize: number; total_fee: number }>('/api/mempool'),
+          nodeJson<Record<string, number>>('/api/v1/fees/recommended'),
+        ]);
+        return ok({
+          pending_tx_count: mp.data.count,
+          mempool_vsize_mb: +(mp.data.vsize / 1e6).toFixed(2),
+          total_fees_btc: mp.data.total_fee / SATS,
+          recommended_fees_sat_vb: fees.data,
+          data_source: mp.source,
+        });
+      } catch {
+        return fail('Could not read mempool state from the node.');
+      }
+    },
+  );
+
+  server.tool(
+    'estimate_fee',
+    'Smart fee estimation (sat/vB) for next-block, 30-minute, 1-hour, and economy confirmation targets, from the Contrabxnd node mempool.',
+    {},
+    async () => {
+      try {
+        const { data, source } = await nodeJson<Record<string, number>>('/api/v1/fees/recommended');
+        return ok({ fees_sat_vb: data, data_source: source });
+      } catch {
+        return fail('Could not estimate fees from the node.');
+      }
+    },
+  );
+
+  server.tool(
+    'get_address_history',
+    'Recent transaction history for an address (most recent first, up to 50): txid, fee, and confirmation status. Served by the Contrabxnd node.',
+    { address: z.string().describe('Bitcoin address') },
+    async ({ address }) => {
+      try {
+        const { data, source } = await nodeJson<AddrTx[]>(`/api/address/${encodeURIComponent(address)}/txs`);
+        return ok({
+          address,
+          count: data.length,
+          transactions: data.map((tx) => ({
+            txid: tx.txid,
+            fee_sats: tx.fee,
+            confirmed: tx.status.confirmed,
+            block_height: tx.status.block_height ?? null,
+            block_time: tx.status.block_time ?? null,
+          })),
+          data_source: source,
+        });
+      } catch {
+        return fail(`Could not load history for address "${address}".`);
+      }
+    },
+  );
+
   return server;
 }
 
@@ -234,6 +391,9 @@ export async function GET(req: Request) {
         'get_fedwatch', 'get_etf_flows', 'get_polymarket',
         'get_fear_greed', 'get_slr', 'get_market_brief', 'get_bitcoin_history',
         'get_daily_brief',
+        // Phase 2 — Indexer (Contrabxnd node)
+        'query_address', 'query_transaction', 'query_block',
+        'get_mempool_analysis', 'estimate_fee', 'get_address_history',
       ],
     }), { headers: { 'Content-Type': 'application/json' } });
   }
