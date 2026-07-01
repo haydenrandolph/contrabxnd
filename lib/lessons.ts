@@ -106,6 +106,18 @@ export function getLessonBySlug(slug: string): Lesson | undefined {
   return LESSONS.find((l) => l.slug === slug);
 }
 
+/** Sidebar sections for the GitBook shell: weeks → lessons. */
+export function lessonSidebarSections(activeSlug: string) {
+  return WEEKS.map((w) => ({
+    title: `${w.label} · ${w.title}`,
+    items: w.lessons.map((l) => ({
+      title: `${l.number} · ${l.title}`,
+      href: `${COURSE.href}/${l.slug}`,
+      active: l.slug === activeSlug,
+    })),
+  }));
+}
+
 export interface LessonNavLink {
   href: string;
   label: string;

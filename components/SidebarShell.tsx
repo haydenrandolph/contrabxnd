@@ -21,14 +21,20 @@ export default function SidebarShell({
   subtitle,
   prev,
   next,
+  bare = false,
+  activePath,
   children,
 }: {
   label: string;
   sections: ShellNavSection[];
-  title: string;
+  title?: string;
   subtitle?: string;
   prev?: { href: string; title: string } | null;
   next?: { href: string; title: string } | null;
+  /** Skip the default title header — the page renders its own header inside. */
+  bare?: boolean;
+  /** SiteNav active path; defaults from label. */
+  activePath?: string;
   children: ReactNode;
 }) {
   const { isLightMode } = useTheme();
@@ -52,6 +58,7 @@ export default function SidebarShell({
         .sb-link.active { color: var(--cb-accent); border-left-color: var(--cb-accent); }
 
         .sb-main { flex: 1 1 auto; min-width: 0; padding: 56px 56px 96px; max-width: 860px; }
+        .sb-main.bare { padding: 0; max-width: none; }
         .sb-eyebrow { font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cb-text-dim); margin-bottom: 14px; }
         .sb-title { font-family: var(--cb-font-display); font-weight: 300; letter-spacing: -0.02em; font-size: clamp(2rem, 4vw, 2.75rem); line-height: 1.1; color: var(--cb-text); margin: 0; }
         .sb-subtitle { font-size: 1rem; font-weight: 300; color: var(--cb-text-muted); margin-top: 12px; max-width: 620px; line-height: 1.6; }
@@ -85,7 +92,7 @@ export default function SidebarShell({
       `}</style>
 
       <div className={`sb-shell ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath={label === 'Docs' ? '/docs' : '/infra'} />
+        <SiteNav activePath={activePath ?? (label === 'Docs' ? '/docs' : '/infra')} />
 
         <button className="sb-menu-btn" onClick={() => setOpen(true)}>☰ {label}</button>
         {open && <div className="sb-scrim" onClick={() => setOpen(false)} />}
@@ -109,11 +116,15 @@ export default function SidebarShell({
             ))}
           </aside>
 
-          <main className="sb-main">
-            <div className="sb-eyebrow">{label}</div>
-            <h1 className="sb-title">{title}</h1>
-            {subtitle && <p className="sb-subtitle">{subtitle}</p>}
-            <div className="sb-divider" />
+          <main className={`sb-main ${bare ? 'bare' : ''}`}>
+            {!bare && (
+              <>
+                <div className="sb-eyebrow">{label}</div>
+                <h1 className="sb-title">{title}</h1>
+                {subtitle && <p className="sb-subtitle">{subtitle}</p>}
+                <div className="sb-divider" />
+              </>
+            )}
 
             {children}
 

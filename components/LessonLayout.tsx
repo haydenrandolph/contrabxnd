@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { getLessonNav } from '@/lib/lessons';
-import SiteNav from '@/components/SiteNav';
+import { getLessonNav, lessonSidebarSections } from '@/lib/lessons';
+import SidebarShell from '@/components/SidebarShell';
 import SiteFooter from '@/components/SiteFooter';
 import BookmarkButton from '@/components/BookmarkButton';
 import HighlightPopover from '@/components/HighlightPopover';
@@ -989,12 +989,11 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
       `}</style>
 
-      <div className={`lesson-page ${isLightMode ? 'light-mode' : ''}`}>
+      <SidebarShell bare label="Study" activePath="/learn" sections={lessonSidebarSections(slug)}>
+        <div className={`lesson-page ${isLightMode ? 'light-mode' : ''}`}>
         <div className="progress-container">
           <div className="progress-bar" style={{ width: `${progress}%` }}></div>
         </div>
-
-        <SiteNav activePath="/learn" />
 
         <header className="lesson-header">
           <div className="lesson-breadcrumb">
@@ -1103,7 +1102,8 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         <HighlightPopover contentType="lesson" contentSlug={slug} />
 
         <SiteFooter variant="instructor" />
-      </div>
+        </div>
+      </SidebarShell>
     </>
   );
 }

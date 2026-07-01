@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ReactNode, useState, useEffect } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
-import SiteNav from '@/components/SiteNav';
+import SidebarShell from '@/components/SidebarShell';
 import SiteFooter from '@/components/SiteFooter';
 import BookmarkButton from '@/components/BookmarkButton';
 import HighlightPopover from '@/components/HighlightPopover';
@@ -37,6 +37,25 @@ export default function ArticleLayout({
   const { isLightMode } = useTheme();
 
   const [readProgress, setReadProgress] = useState(0);
+  const [navSections, setNavSections] = useState<{ title: string; items: { title: string; href: string; active: boolean }[] }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/writings')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.writings) {
+          setNavSections([{
+            title: 'Writings',
+            items: d.writings.map((w: { slug: string; title: string }) => ({
+              title: w.title,
+              href: `/writings/${w.slug}`,
+              active: w.slug === slug,
+            })),
+          }]);
+        }
+      })
+      .catch(() => {});
+  }, [slug]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -341,13 +360,11 @@ export default function ArticleLayout({
         }
       `}</style>
 
-      <div className={`article-page ${isLightMode ? 'light-mode' : ''}`}>
+      <SidebarShell bare label="Writings" activePath="/writings" sections={navSections}>
+        <div className={`article-page ${isLightMode ? 'light-mode' : ''}`}>
         <div className="article-progress-container">
           <div className="article-progress-bar" style={{ width: `${readProgress}%` }} />
         </div>
-
-        <SiteNav activePath="/writings" />
-
 
         <div className="article-container">
           <Link href="/writings" className="back-link">
@@ -456,7 +473,8 @@ export default function ArticleLayout({
         <HighlightPopover contentType="article" contentSlug={slug} />
 
         <SiteFooter />
-      </div>
+        </div>
+      </SidebarShell>
     </>
   );
 }
