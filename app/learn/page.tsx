@@ -118,8 +118,8 @@ export default function LearnPage() {
 
         .page-title {
           font-family: var(--cb-font-display, 'Inter', serif);
-          font-size: clamp(2rem, 4vw, 3rem);
-          font-weight: 400;
+          font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+          font-weight: 500;
           letter-spacing: -0.02em;
           line-height: 1.15;
           color: var(--cb-text);
@@ -163,7 +163,7 @@ export default function LearnPage() {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
           border-radius: var(--cb-radius);
-          padding: 48px;
+          padding: 28px;
           position: relative;
           transition: border-color 0.15s ease;
           display: flex;
@@ -176,9 +176,9 @@ export default function LearnPage() {
 
         .course-badge {
           position: absolute;
-          top: 2rem;
-          right: 2rem;
-          padding: 0.4rem 0.75rem;
+          top: 1.5rem;
+          right: 1.5rem;
+          padding: 0.35rem 0.7rem;
           background: var(--cb-accent);
           border-radius: var(--cb-radius);
           font-size: 9px;
@@ -189,25 +189,26 @@ export default function LearnPage() {
 
         .course-number {
           font-family: var(--cb-font-display, 'Inter', serif);
-          font-size: 3rem;
+          font-size: 1.75rem;
           color: var(--cb-border);
           line-height: 1;
-          margin-bottom: 24px;
+          margin-bottom: 16px;
         }
 
         .course-title {
           font-family: var(--cb-font-display, 'Inter', serif);
-          font-size: 2rem;
-          font-weight: 400;
-          margin-bottom: 8px;
+          font-size: 1.4rem;
+          font-weight: 500;
+          letter-spacing: -0.01em;
+          margin-bottom: 6px;
         }
 
         .course-tagline {
           font-family: var(--cb-font-display, 'Inter', serif);
-          font-size: 1.1rem;
+          font-size: 1rem;
           font-style: italic;
           color: var(--cb-accent);
-          margin-bottom: 24px;
+          margin-bottom: 18px;
         }
 
         .course-description {

@@ -101,15 +101,16 @@ export default function BoardingPassCoursePage() {
 
         .course-title {
           font-family: var(--cb-font-display);
-          font-size: clamp(2.5rem, 6vw, 4rem);
-          font-weight: 400;
+          font-size: clamp(1.8rem, 4vw, 2.75rem);
+          font-weight: 500;
+          letter-spacing: -0.02em;
           line-height: 1.15;
           margin-bottom: 1rem;
         }
 
         .course-tagline {
           font-family: var(--cb-font-display);
-          font-size: 1.5rem;
+          font-size: 1.1rem;
           font-style: italic;
           color: var(--cb-accent);
           margin-bottom: 2rem;
@@ -117,9 +118,9 @@ export default function BoardingPassCoursePage() {
 
         .course-description {
           font-family: var(--cb-font-display);
-          font-size: 1.2rem;
+          font-size: 1.0625rem;
           color: var(--cb-text-muted);
-          line-height: 1.8;
+          line-height: 1.7;
           margin-bottom: 3rem;
         }
 

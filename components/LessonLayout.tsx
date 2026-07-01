@@ -16,21 +16,12 @@ interface LessonLayoutProps {
   children: ReactNode;
 }
 
-interface TocItem {
-  id: string;
-  text: string;
-  index: number;
-}
-
 export default function LessonLayout({ slug, children }: LessonLayoutProps) {
   const { isLightMode } = useTheme();
   const { user } = useAuth();
   const [completed, setCompleted] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [tocItems, setTocItems] = useState<TocItem[]>([]);
-  const [activeSection, setActiveSection] = useState('');
-  const [tocOpen, setTocOpen] = useState(false);
   const contentRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -50,39 +41,6 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
       document.title = `${nav.lesson.title} | Contrabxnd`;
     }
   }, [nav]);
-
-  useEffect(() => {
-    if (!contentRef.current) return;
-    const headings = contentRef.current.querySelectorAll('h2');
-    const items: TocItem[] = [];
-    headings.forEach((h2, i) => {
-      const id = `section-${i + 1}`;
-      h2.id = id;
-      h2.setAttribute('data-section-index', String(i + 1));
-      items.push({ id, text: h2.textContent || '', index: i + 1 });
-    });
-    setTocItems(items);
-  }, [children]);
-
-  useEffect(() => {
-    if (tocItems.length === 0) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible.length > 0) {
-          setActiveSection(visible[0].target.id);
-        }
-      },
-      { rootMargin: '-80px 0px -60% 0px', threshold: 0 }
-    );
-    tocItems.forEach(item => {
-      const el = document.getElementById(item.id);
-      if (el) observer.observe(el);
-    });
-    return () => observer.disconnect();
-  }, [tocItems]);
 
   useEffect(() => {
     if (!user) return;
@@ -1019,37 +977,6 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           </div>
           <p className="lesson-subtitle">{lesson.subtitle}</p>
         </header>
-
-        {tocItems.length > 0 && (
-          <div className="lesson-toc">
-            <button className="toc-toggle" onClick={() => setTocOpen(!tocOpen)}>
-              <span className="toc-toggle-left">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 6h16M4 12h16M4 18h16"/>
-                </svg>
-                Sections
-                <span className="toc-count">{tocItems.length}</span>
-              </span>
-              <svg className={`toc-chevron${tocOpen ? ' open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
-            </button>
-            <ul className={`toc-list${tocOpen ? ' open' : ''}`}>
-              {tocItems.map(item => (
-                <li key={item.id} className="toc-item">
-                  <a
-                    href={`#${item.id}`}
-                    className={`toc-link${activeSection === item.id ? ' active' : ''}`}
-                    onClick={() => setTocOpen(false)}
-                  >
-                    <span className="toc-number">{String(item.index).padStart(2, '0')}</span>
-                    {item.text}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         <div className="lesson-audio">
           <AudioPlayer
