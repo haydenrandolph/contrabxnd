@@ -137,7 +137,7 @@ export default function WritingsPage() {
           margin-bottom: 48px;
           padding: 48px;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           background: var(--cb-surface);
           text-decoration: none;
           color: inherit;
@@ -186,7 +186,7 @@ export default function WritingsPage() {
           flex-direction: column;
           gap: 0;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
 
         .article-row {

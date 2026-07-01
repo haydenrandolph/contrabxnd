@@ -516,7 +516,7 @@ export default function TerminalPage() {
 
         .terminal-sidebar::-webkit-scrollbar { width: 4px; }
         .terminal-sidebar::-webkit-scrollbar-track { background: transparent; }
-        .terminal-sidebar::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
+        .terminal-sidebar::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: var(--cb-radius); }
 
         .sidebar-section {
           border-bottom: 1px solid var(--cb-border);
@@ -568,7 +568,7 @@ export default function TerminalPage() {
           padding: 8px 16px;
           background: transparent;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-text-muted);
           font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
@@ -624,8 +624,8 @@ export default function TerminalPage() {
         .fg-value { font-size: 1.5rem; font-weight: 700; color: var(--cb-accent); line-height: 1; }
         .fg-label { font-size: 12px; color: var(--cb-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
 
-        .fg-bar { width: 100%; height: 4px; background: var(--cb-surface); border-radius: 2px; overflow: hidden; }
-        .fg-bar-fill { height: 100%; background: var(--cb-accent); border-radius: 2px; transition: width 0.6s ease; }
+        .fg-bar { width: 100%; height: 4px; background: var(--cb-surface); border-radius: var(--cb-radius); overflow: hidden; }
+        .fg-bar-fill { height: 100%; background: var(--cb-accent); border-radius: var(--cb-radius); transition: width 0.6s ease; }
         .fg-unavailable { font-size: 11px; color: var(--cb-text-muted); font-style: italic; }
 
         /* Polymarket */
@@ -693,7 +693,7 @@ export default function TerminalPage() {
           width: 100%;
           height: 4px;
           background: var(--cb-surface);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
           margin-top: 8px;
           margin-bottom: 8px;
@@ -702,7 +702,7 @@ export default function TerminalPage() {
         .score-bar-fill {
           height: 100%;
           background: var(--cb-accent);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           transition: width 0.6s ease;
         }
 
@@ -754,7 +754,7 @@ export default function TerminalPage() {
           color: var(--cb-bg);
           background: var(--cb-accent);
           padding: 2px 6px;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           flex-shrink: 0;
         }
 
@@ -916,7 +916,7 @@ export default function TerminalPage() {
           padding: 10px 12px;
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
           line-height: 1.6;
@@ -967,7 +967,7 @@ export default function TerminalPage() {
 
         .sidebar-feed::-webkit-scrollbar { width: 4px; }
         .sidebar-feed::-webkit-scrollbar-track { background: transparent; }
-        .sidebar-feed::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
+        .sidebar-feed::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: var(--cb-radius); }
 
         .feed-item {
           display: flex;
@@ -1028,7 +1028,7 @@ export default function TerminalPage() {
 
         .ai-messages::-webkit-scrollbar { width: 4px; }
         .ai-messages::-webkit-scrollbar-track { background: transparent; }
-        .ai-messages::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
+        .ai-messages::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: var(--cb-radius); }
 
         .ai-welcome {
           display: flex;
@@ -1063,7 +1063,7 @@ export default function TerminalPage() {
         .ai-suggestion {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 8px 12px;
           font-family: var(--cb-font-mono);
           font-size: 10px;
@@ -1217,7 +1217,7 @@ export default function TerminalPage() {
         .modal {
           background: var(--cb-bg);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           width: 100%; max-width: 480px;
           overflow: hidden;
         }
@@ -1258,7 +1258,7 @@ export default function TerminalPage() {
         .modal-link {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           width: 100%; padding: 12px 24px;
-          background: transparent; border: 1px solid var(--cb-border); border-radius: 2px;
+          background: transparent; border: 1px solid var(--cb-border); border-radius: var(--cb-radius);
           color: var(--cb-text); font-family: 'JetBrains Mono', monospace;
           font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
           text-decoration: none; cursor: pointer; transition: all 0.15s ease;
@@ -1268,7 +1268,7 @@ export default function TerminalPage() {
 
         /* ── Util ── */
 
-        .skeleton { background: var(--cb-surface); border-radius: 2px; animation: shimmer 1.5s ease-in-out infinite; }
+        .skeleton { background: var(--cb-surface); border-radius: var(--cb-radius); animation: shimmer 1.5s ease-in-out infinite; }
         @keyframes shimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
         /* ── Mobile ── */

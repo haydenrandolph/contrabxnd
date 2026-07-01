@@ -50,14 +50,14 @@ export default function ProgressBar({
         .progress-bar {
           width: 100%;
           background: #1a1a1a;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
         }
 
         .progress-fill {
           height: 100%;
           background: linear-gradient(90deg, #F7931A 0%, #d4854c 100%);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           transition: width 0.5s ease;
         }
 

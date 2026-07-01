@@ -246,7 +246,7 @@ export default function SiteNav({
           min-width: 180px;
           background: #0a0a0a;
           border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 8px 0;
           opacity: 0;
           visibility: hidden;
@@ -349,7 +349,7 @@ export default function SiteNav({
           height: 32px;
           background: transparent;
           border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           cursor: pointer;
           color: #6a6a6a;
           transition: color 0.15s ease, border-color 0.15s ease;
@@ -463,7 +463,7 @@ export default function SiteNav({
           height: 44px;
           background: none;
           border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           cursor: pointer;
           color: #6a6a6a;
           transition: color 0.15s ease, border-color 0.15s ease;

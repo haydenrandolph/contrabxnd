@@ -291,7 +291,7 @@ export default function NetworkPage() {
           padding: 10px 20px;
           background: transparent;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-text);
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
@@ -331,7 +331,7 @@ export default function NetworkPage() {
           padding: 12px 16px;
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-text);
           font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
@@ -351,7 +351,7 @@ export default function NetworkPage() {
           padding: 12px 16px;
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-text);
           font-family: 'JetBrains Mono', monospace;
           font-size: 13px;
@@ -408,7 +408,7 @@ export default function NetworkPage() {
           padding: 8px 12px;
           background: transparent;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-text-muted);
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
@@ -466,7 +466,7 @@ export default function NetworkPage() {
           flex: 1;
           min-width: 0;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
         }
 
@@ -515,7 +515,7 @@ export default function NetworkPage() {
 
         .business-cards::-webkit-scrollbar-thumb {
           background: var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
 
         .business-cards::-webkit-scrollbar-thumb:hover {
@@ -525,7 +525,7 @@ export default function NetworkPage() {
         .business-card {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 20px;
           transition: border-color 0.15s ease;
           cursor: pointer;
@@ -560,7 +560,7 @@ export default function NetworkPage() {
           gap: 4px;
           padding: 4px 8px;
           border: 1px solid var(--cb-accent);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -600,7 +600,7 @@ export default function NetworkPage() {
           font-size: 10px;
           padding: 4px 8px;
           background: var(--cb-bg);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-text-muted);
           text-transform: uppercase;
           letter-spacing: 0.05em;

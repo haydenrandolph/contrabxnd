@@ -115,7 +115,8 @@ export default function McpPage() {
           gap: 1px;
           background: var(--cb-border);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
+          overflow: hidden;
         }
         .mcp-tool-item {
           padding: 12px 16px;
@@ -136,7 +137,7 @@ export default function McpPage() {
         .mcp-code-block {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 16px 20px;
           font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
@@ -152,7 +153,7 @@ export default function McpPage() {
           right: 8px;
           background: var(--cb-bg);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 4px 10px;
           font-size: 10px;
           font-family: 'JetBrains Mono', monospace;
@@ -166,7 +167,7 @@ export default function McpPage() {
         .mcp-auth-box {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 24px;
         }
         .mcp-auth-signin {
@@ -182,7 +183,7 @@ export default function McpPage() {
           background: var(--cb-text);
           color: var(--cb-bg);
           border: none;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 8px 20px;
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
@@ -205,7 +206,7 @@ export default function McpPage() {
           padding: 16px;
           background: var(--cb-bg);
           border: 1px solid var(--cb-accent);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
         .mcp-new-key-label {
           font-size: 10px;
@@ -239,7 +240,7 @@ export default function McpPage() {
           padding: 10px 16px;
           background: var(--cb-bg);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
         .mcp-key-prefix {
           font-family: 'JetBrains Mono', monospace;
@@ -263,7 +264,7 @@ export default function McpPage() {
         }
         .mcp-roadmap-phase {
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
         }
         .mcp-roadmap-header {
@@ -286,7 +287,7 @@ export default function McpPage() {
           color: var(--cb-text-muted);
           background: var(--cb-bg);
           padding: 2px 8px;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           border: 1px solid var(--cb-border);
         }
         .mcp-roadmap-title {
@@ -307,7 +308,7 @@ export default function McpPage() {
           color: var(--cb-bg);
           background: var(--cb-accent);
           padding: 2px 6px;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
         .mcp-roadmap-tools {
           display: flex;

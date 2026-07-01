@@ -95,7 +95,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
             padding: 14px 16px;
             background: #141414;
             border: 1px solid #1a1a1a;
-            border-radius: 2px;
+            border-radius: var(--cb-radius);
           }
           :global(html.light-mode) .ap-loading {
             background: #ffffff;
@@ -130,7 +130,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
           padding: 14px 16px;
           background: #141414;
           border: 1px solid #1a1a1a;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
         :global(html.light-mode) .audio-player {
           background: #ffffff;
@@ -151,7 +151,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
           height: 36px;
           background: transparent;
           border: 1px solid #3a3a3a;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           cursor: pointer;
           transition: border-color 0.15s ease, background 0.15s ease;
           flex-shrink: 0;
@@ -226,7 +226,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
           padding: 3px 6px;
           background: transparent;
           border: 1px solid #3a3a3a;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           font-family: 'JetBrains Mono', monospace;
           font-size: 9px;
           color: #8a8a8a;
@@ -261,7 +261,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
           flex: 1;
           height: 4px;
           background: #1a1a1a;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           cursor: pointer;
           position: relative;
         }
@@ -272,7 +272,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
         .ap-bar-fill {
           height: 100%;
           background: #F7931A;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           transition: width 0.1s linear;
         }
 

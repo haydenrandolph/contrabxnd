@@ -162,7 +162,7 @@ export default function LearnPage() {
         .course-card {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 48px;
           position: relative;
           transition: border-color 0.15s ease;
@@ -180,7 +180,7 @@ export default function LearnPage() {
           right: 2rem;
           padding: 0.4rem 0.75rem;
           background: var(--cb-accent);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           font-size: 9px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -252,7 +252,7 @@ export default function LearnPage() {
           padding: 16px 32px;
           background: transparent;
           border: 1px solid var(--cb-text);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-text);
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
@@ -380,14 +380,14 @@ export default function LearnPage() {
           flex: 1;
           height: 4px;
           background: var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
         }
 
         .course-progress-fill {
           height: 100%;
           background: #22c55e;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           transition: width 0.15s ease;
         }
 

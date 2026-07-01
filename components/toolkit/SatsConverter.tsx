@@ -129,7 +129,7 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
           padding-right: 4.5rem;
           font-size: 18px;
           font-family: var(--cb-font-mono);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           outline: none;
           transition: border-color 0.15s ease;
           box-sizing: border-box;
@@ -159,7 +159,7 @@ export default function SatsConverter({ isLightMode, currentPrice }: SatsConvert
         .swap-button {
           width: 40px;
           height: 40px;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           border: 1px solid var(--cb-border);
           background: var(--cb-surface);
           color: var(--cb-accent);

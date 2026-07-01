@@ -203,7 +203,7 @@ export default function AccountPage() {
         .account-section {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 32px;
           margin-bottom: 32px;
         }
@@ -287,7 +287,7 @@ export default function AccountPage() {
           padding: 16px 32px;
           background: var(--cb-accent);
           border: none;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: #fff;
           font-family: 'JetBrains Mono', monospace;
           font-size: 12px;
@@ -318,7 +318,7 @@ export default function AccountPage() {
           padding: 12px 24px;
           background: transparent;
           border: 1px solid var(--cb-accent);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-accent);
           font-family: 'JetBrains Mono', monospace;
           font-size: 11px;
@@ -362,7 +362,7 @@ export default function AccountPage() {
           text-transform: uppercase;
           padding: 4px 8px;
           border: 1px solid var(--cb-accent);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-accent);
           flex-shrink: 0;
         }
@@ -441,7 +441,7 @@ export default function AccountPage() {
           text-transform: uppercase;
           padding: 2px 6px;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: var(--cb-text-muted);
         }
 

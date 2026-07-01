@@ -315,7 +315,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           color: var(--cb-text);
           font-family: var(--cb-font-mono);
           font-size: 13px;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           transition: border-color 0.15s ease;
           box-sizing: border-box;
         }
@@ -344,7 +344,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           align-items: center;
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
         }
 
@@ -387,7 +387,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           text-transform: uppercase;
           cursor: pointer;
           transition: opacity 0.15s ease;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           white-space: nowrap;
         }
 
@@ -428,7 +428,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         .dca-skeleton-card {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
@@ -436,7 +436,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         }
 
         .dca-skeleton-line {
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           height: 14px;
           background: var(--cb-border);
           animation: shimmer 1.5s ease-in-out infinite;
@@ -455,7 +455,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         .dca-skeleton-chart {
           width: 100%;
           height: 200px;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           background: var(--cb-border);
           animation: shimmer 1.5s ease-in-out infinite;
         }
@@ -486,7 +486,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
         .dca-metric-card {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 1.5rem;
           display: flex;
           flex-direction: column;
@@ -517,7 +517,7 @@ export default function DCACalculator({ isLightMode, currentPrice }: DCACalculat
           width: 100%;
           aspect-ratio: 2 / 1;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
           background: var(--cb-bg);
         }

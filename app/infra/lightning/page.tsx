@@ -42,7 +42,7 @@ export default function LightningPage() {
         .ln-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cb-text-muted); }
         .ln-dot.online { background: var(--cb-accent); }
 
-        .ln-card { border: 1px solid var(--cb-border); border-radius: 2px; margin-bottom: 20px; }
+        .ln-card { border: 1px solid var(--cb-border); border-radius: var(--cb-radius); margin-bottom: 20px; }
         .ln-card-head { padding: 12px 16px; border-bottom: 1px solid var(--cb-border); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cb-text-muted); }
         .ln-row { display: flex; gap: 16px; padding: 11px 16px; border-bottom: 1px solid var(--cb-border); }
         .ln-row:last-child { border-bottom: none; }
@@ -51,11 +51,11 @@ export default function LightningPage() {
         .ln-val.big { font-size: 18px; }
 
         .ln-connect { padding: 16px; }
-        .ln-connect-uri { background: var(--cb-bg); border: 1px solid var(--cb-border); border-radius: 2px; padding: 12px 14px; word-break: break-all; font-size: 12px; color: var(--cb-text-muted); margin: 10px 0; }
-        .ln-btn { background: var(--cb-text); color: var(--cb-bg); border: none; border-radius: 2px; font-family: var(--cb-font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 9px 18px; cursor: pointer; transition: opacity 0.15s ease; }
+        .ln-connect-uri { background: var(--cb-bg); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); padding: 12px 14px; word-break: break-all; font-size: 12px; color: var(--cb-text-muted); margin: 10px 0; }
+        .ln-btn { background: var(--cb-text); color: var(--cb-bg); border: none; border-radius: var(--cb-radius); font-family: var(--cb-font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 9px 18px; cursor: pointer; transition: opacity 0.15s ease; }
         .ln-btn:hover { opacity: 0.85; }
 
-        .ln-empty { border: 1px solid var(--cb-border); border-left: 2px solid var(--cb-accent); border-radius: 2px; padding: 20px; color: var(--cb-text-muted); }
+        .ln-empty { border: 1px solid var(--cb-border); border-left: 2px solid var(--cb-accent); border-radius: var(--cb-radius); padding: 20px; color: var(--cb-text-muted); }
         .ln-empty h3 { color: var(--cb-text); font-family: var(--cb-font-display, serif); font-weight: 400; font-size: 20px; margin: 0 0 8px; }
 
         .ln-note { font-size: 11px; color: var(--cb-text-muted); margin-top: 8px; }

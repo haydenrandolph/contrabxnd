@@ -69,7 +69,7 @@ export default function AgentsPage() {
           display: flex;
           flex-direction: column;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
         }
         .agents-grid-row {
@@ -105,7 +105,7 @@ export default function AgentsPage() {
           gap: 1px;
           background: var(--cb-border);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
         .agents-tool-item {
           padding: 12px 16px;
@@ -125,7 +125,7 @@ export default function AgentsPage() {
         .agents-credit-table {
           width: 100%;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           border-collapse: separate;
           border-spacing: 0;
           overflow: hidden;
@@ -155,7 +155,7 @@ export default function AgentsPage() {
         .agents-code {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 16px 20px;
           font-size: 12px;
           line-height: 1.6;
@@ -178,7 +178,7 @@ export default function AgentsPage() {
           letter-spacing: 0.06em;
           text-transform: uppercase;
           text-decoration: none;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           transition: opacity 0.15s ease;
         }
         .agents-cta a:hover { opacity: 0.85; }
@@ -199,7 +199,7 @@ export default function AgentsPage() {
         }
         .agents-capability {
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           overflow: hidden;
         }
         .agents-capability-header {
@@ -221,7 +221,7 @@ export default function AgentsPage() {
           letter-spacing: 0.1em;
           text-transform: uppercase;
           padding: 2px 8px;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
         .agents-capability-tag.live {
           background: var(--cb-accent);

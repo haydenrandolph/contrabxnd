@@ -146,19 +146,19 @@ export default function ExplorerPage() {
     <>
       <style jsx global>{`
         .ex-search { display: flex; gap: 8px; }
-        .ex-input { flex: 1; background: var(--cb-bg); border: 1px solid var(--cb-border); border-radius: 2px; color: var(--cb-text); font-family: var(--cb-font-mono); font-size: 13px; padding: 12px 14px; outline: none; transition: border-color 0.15s ease; }
+        .ex-input { flex: 1; background: var(--cb-bg); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); color: var(--cb-text); font-family: var(--cb-font-mono); font-size: 13px; padding: 12px 14px; outline: none; transition: border-color 0.15s ease; }
         .ex-input:focus { border-color: var(--cb-accent); }
-        .ex-btn { background: var(--cb-text); color: var(--cb-bg); border: none; border-radius: 2px; font-family: var(--cb-font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; padding: 0 22px; cursor: pointer; transition: opacity 0.15s ease; }
+        .ex-btn { background: var(--cb-text); color: var(--cb-bg); border: none; border-radius: var(--cb-radius); font-family: var(--cb-font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; padding: 0 22px; cursor: pointer; transition: opacity 0.15s ease; }
         .ex-btn:hover { opacity: 0.85; }
         .ex-btn:disabled { opacity: 0.4; cursor: default; }
         .ex-hint { margin-top: 10px; font-size: 11px; color: var(--cb-text-muted); }
 
-        .ex-error { margin-top: 24px; border: 1px solid var(--cb-border); border-left: 2px solid var(--cb-accent); border-radius: 2px; padding: 14px 16px; color: var(--cb-text-muted); font-size: 12px; }
+        .ex-error { margin-top: 24px; border: 1px solid var(--cb-border); border-left: 2px solid var(--cb-accent); border-radius: var(--cb-radius); padding: 14px 16px; color: var(--cb-text-muted); font-size: 12px; }
 
-        .ex-result { margin-top: 28px; border: 1px solid var(--cb-border); border-radius: 2px; }
+        .ex-result { margin-top: 28px; border: 1px solid var(--cb-border); border-radius: var(--cb-radius); }
         .ex-result-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--cb-border); }
         .ex-result-kind { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cb-text-muted); }
-        .ex-badge { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 7px; border-radius: 2px; }
+        .ex-badge { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; padding: 2px 7px; border-radius: var(--cb-radius); }
         .ex-badge.node { background: var(--cb-accent); color: var(--cb-bg); }
         .ex-badge.public { border: 1px solid var(--cb-border); color: var(--cb-text-muted); }
 

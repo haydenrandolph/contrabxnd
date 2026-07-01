@@ -28,17 +28,18 @@
   --cb-text-dim: #5a5a5a;
   --cb-accent: #F7931A;
   --cb-accent-subtle: rgba(247, 147, 26, 0.12);
-  --cb-radius: 2px;
+  --cb-radius: 10px;
   --cb-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --cb-font-display: 'Inter', system-ui, sans-serif;
   --cb-font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 html.light-mode {
-  /* FML light tokens — identical neutral base to feelinmoody.io / mako */
+  /* FML light tokens — ONE cohesive background (#fafafa) like feelinmoody.io;
+     cards are defined by borders, not a contrasting white fill. */
   --cb-bg: #fafafa;
-  --cb-surface: #ffffff;
-  --cb-bg-surface: #f0f0f0;
+  --cb-surface: #fafafa;
+  --cb-bg-surface: #f2f2f3;
   --cb-border: #e5e5e5;
   --cb-border-hover: #d0d0d0;
   --cb-text: #111111;

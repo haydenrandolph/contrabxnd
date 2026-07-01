@@ -125,7 +125,7 @@ export default function PurchasingPowerComparison({
           font-size: 13px;
           padding: 0.75rem 1rem;
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           background: var(--cb-bg);
           color: var(--cb-text);
           outline: none;
@@ -167,7 +167,7 @@ export default function PurchasingPowerComparison({
           background: var(--cb-accent);
           color: #ffffff;
           border: 1px solid var(--cb-accent);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           cursor: pointer;
           transition: opacity 0.15s ease;
           white-space: nowrap;
@@ -197,7 +197,7 @@ export default function PurchasingPowerComparison({
           gap: 1px;
           background: var(--cb-border);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
 
         .ppc-card {
@@ -272,7 +272,7 @@ export default function PurchasingPowerComparison({
         .ppc-skeleton {
           position: relative;
           overflow: hidden;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           background: var(--cb-surface);
           animation: ppc-shimmer 1.5s ease-in-out infinite;
         }
@@ -289,7 +289,7 @@ export default function PurchasingPowerComparison({
           gap: 1px;
           background: var(--cb-border);
           border: 1px solid var(--cb-border);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
         }
 
         .ppc-skeleton-card {

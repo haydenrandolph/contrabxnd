@@ -125,7 +125,7 @@ export default function ResetPasswordPage() {
           max-width: 400px;
           background: #0d0d0d;
           border: 1px solid #2a2a2a;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 2rem;
         }
         .reset-title {
@@ -162,7 +162,7 @@ export default function ResetPasswordPage() {
           padding: 0.75rem 1rem;
           background: #141414;
           border: 1px solid #2a2a2a;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: #e8e4dc;
           font-family: 'JetBrains Mono', monospace;
           font-size: 14px;
@@ -175,7 +175,7 @@ export default function ResetPasswordPage() {
         .reset-error {
           background: rgba(239, 68, 68, 0.1);
           border: 1px solid rgba(239, 68, 68, 0.3);
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           padding: 0.75rem;
           margin-bottom: 1rem;
           color: #ef4444;
@@ -186,7 +186,7 @@ export default function ResetPasswordPage() {
           padding: 0.875rem 1.5rem;
           background: #F7931A;
           border: none;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: #fff;
           font-family: 'JetBrains Mono', monospace;
           font-size: 12px;

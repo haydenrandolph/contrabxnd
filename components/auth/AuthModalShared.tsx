@@ -34,7 +34,7 @@ export function AuthModalStyles() {
       .auth-modal {
         background: #0d0d0d;
         border: 1px solid #2a2a2a;
-        border-radius: 2px;
+        border-radius: var(--cb-radius);
         max-width: 400px;
         width: 100%;
       }
@@ -58,7 +58,7 @@ export function AuthModalStyles() {
         height: 32px;
         background: transparent;
         border: 1px solid #3a3a3a;
-        border-radius: 2px;
+        border-radius: var(--cb-radius);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -102,7 +102,7 @@ export function AuthModalStyles() {
         padding: 0.75rem 1rem;
         background: #141414;
         border: 1px solid #2a2a2a;
-        border-radius: 2px;
+        border-radius: var(--cb-radius);
         color: #e8e4dc;
         font-family: 'JetBrains Mono', monospace;
         font-size: 14px;
@@ -121,7 +121,7 @@ export function AuthModalStyles() {
       .auth-error {
         background: rgba(239, 68, 68, 0.1);
         border: 1px solid rgba(239, 68, 68, 0.3);
-        border-radius: 2px;
+        border-radius: var(--cb-radius);
         padding: 0.75rem;
         margin-bottom: 1rem;
         color: #ef4444;
@@ -131,7 +131,7 @@ export function AuthModalStyles() {
       .auth-notice {
         background: rgba(247, 147, 26, 0.08);
         border: 1px solid rgba(247, 147, 26, 0.25);
-        border-radius: 2px;
+        border-radius: var(--cb-radius);
         padding: 0.75rem;
         margin-bottom: 1rem;
         color: #F7931A;
@@ -143,7 +143,7 @@ export function AuthModalStyles() {
         padding: 0.875rem 1.5rem;
         background: #F7931A;
         border: none;
-        border-radius: 2px;
+        border-radius: var(--cb-radius);
         color: #fff;
         font-family: 'JetBrains Mono', monospace;
         font-size: 12px;
@@ -196,7 +196,7 @@ export function AuthModalStyles() {
         padding: 0.75rem 1rem;
         background: transparent;
         border: 1px solid #2a2a2a;
-        border-radius: 2px;
+        border-radius: var(--cb-radius);
         color: #e8e4dc;
         font-family: 'JetBrains Mono', monospace;
         font-size: 12px;

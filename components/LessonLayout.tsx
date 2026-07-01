@@ -196,7 +196,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           padding: 16px 20px;
           background: #141414;
           border: 1px solid #1a1a1a;
-          border-radius: 2px;
+          border-radius: var(--cb-radius);
           color: #e8e4dc;
           font-family: 'JetBrains Mono', monospace;
           font-size: 10px;
