@@ -106,9 +106,14 @@ export function getLessonBySlug(slug: string): Lesson | undefined {
   return LESSONS.find((l) => l.slug === slug);
 }
 
-/** Sidebar sections for the GitBook shell: weeks → lessons. */
+/** Sidebar sections for the GitBook shell: course intro → weeks → lessons.
+ *  Pass '' as activeSlug on the course intro/overview page. */
 export function lessonSidebarSections(activeSlug: string) {
-  return WEEKS.map((w) => ({
+  const overview = {
+    title: COURSE.title,
+    items: [{ title: 'Introduction', href: COURSE.href, active: activeSlug === '' }],
+  };
+  const weeks = WEEKS.map((w) => ({
     title: `${w.label} · ${w.title}`,
     items: w.lessons.map((l) => ({
       title: `${l.number} · ${l.title}`,
@@ -116,6 +121,7 @@ export function lessonSidebarSections(activeSlug: string) {
       active: l.slug === activeSlug,
     })),
   }));
+  return [overview, ...weeks];
 }
 
 export interface LessonNavLink {

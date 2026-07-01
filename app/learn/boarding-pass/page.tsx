@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { COURSE, WEEKS } from '@/lib/lessons';
-import SiteNav from '@/components/SiteNav';
+import { COURSE, WEEKS, lessonSidebarSections } from '@/lib/lessons';
+import SidebarShell from '@/components/SidebarShell';
 import SiteFooter from '@/components/SiteFooter';
 import ShareProgressButton from '@/components/ShareProgressButton';
 
@@ -620,8 +620,8 @@ export default function BoardingPassCoursePage() {
         }
       `}</style>
 
-      <div className={`course-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/learn" />
+      <SidebarShell bare label="Study" activePath="/learn" sections={lessonSidebarSections('')}>
+        <div className={`course-page ${isLightMode ? 'light-mode' : ''}`}>
 
         <header className="course-header">
           <Link href="/learn" className="course-back">
@@ -730,7 +730,8 @@ export default function BoardingPassCoursePage() {
         </section>
 
         <SiteFooter variant="instructor" />
-      </div>
+        </div>
+      </SidebarShell>
     </>
   );
 }
