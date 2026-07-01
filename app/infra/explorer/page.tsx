@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import InfraShell from '@/components/infra/InfraShell';
 import ResultCard from '@/components/explorer/ResultCard';
 
@@ -21,10 +21,9 @@ export default function ExplorerPage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
 
   const send = useCallback(async (text: string) => {
@@ -88,8 +87,8 @@ export default function ExplorerPage() {
   return (
     <>
       <style jsx global>{`
-        .cx-chat { display: flex; flex-direction: column; height: calc(100vh - 260px); min-height: 420px; }
-        .cx-stream { flex: 1; overflow-y: auto; padding-right: 4px; }
+        .cx-chat { display: block; }
+        .cx-stream { padding-bottom: 8px; }
         .cx-empty { color: var(--cb-text-muted); font-size: 14px; line-height: 1.7; }
         .cx-examples { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
         .cx-example { text-align: left; border: 1px solid var(--cb-border); border-radius: var(--cb-radius); background: var(--cb-surface); color: var(--cb-text); font-family: var(--cb-font-mono); font-size: 12.5px; padding: 12px 14px; cursor: pointer; transition: border-color 0.15s ease; }
@@ -108,7 +107,7 @@ export default function ExplorerPage() {
 
         .cx-error { border: 1px solid var(--cb-border); border-left: 2px solid var(--cb-accent); border-radius: var(--cb-radius); padding: 12px 14px; color: var(--cb-text-muted); font-size: 13px; margin-bottom: 16px; }
 
-        .cx-form { display: flex; gap: 8px; padding-top: 16px; border-top: 1px solid var(--cb-border); }
+        .cx-form { display: flex; gap: 8px; padding: 14px 0; border-top: 1px solid var(--cb-border); position: sticky; bottom: 0; background: var(--cb-bg); z-index: 5; }
         .cx-input { flex: 1; background: var(--cb-bg); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); color: var(--cb-text); font-family: var(--cb-font-sans); font-size: 14px; padding: 12px 14px; outline: none; transition: border-color 0.15s ease; }
         .cx-input:focus { border-color: var(--cb-accent); }
         .cx-send { background: var(--cb-text); color: var(--cb-bg); border: none; border-radius: var(--cb-radius); font-family: var(--cb-font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; padding: 0 22px; cursor: pointer; transition: opacity 0.15s ease; }
@@ -122,7 +121,7 @@ export default function ExplorerPage() {
         subtitle="Ask about any address, transaction, block, the mempool, or fees — answered live from the Contrabxnd sovereign node."
       >
         <div className="cx-chat">
-          <div className="cx-stream" ref={scrollRef}>
+          <div className="cx-stream">
             {messages.length === 0 && !loading && (
               <div className="cx-empty">
                 Ask a question in plain English and the on-chain analyst will query the node to answer.
