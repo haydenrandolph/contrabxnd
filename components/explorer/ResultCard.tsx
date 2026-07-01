@@ -90,14 +90,14 @@ export default function ResultCard({ tool, data }: { tool: string; data: Data })
 
   return (
     <>
-      <style jsx>{`
-        .rc { border: 1px solid var(--cb-border); border-radius: var(--cb-radius); margin-top: 12px; overflow: hidden; }
-        .rc-head { padding: 8px 14px; border-bottom: 1px solid var(--cb-border); font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cb-text-dim); }
-        .rc-row { display: flex; gap: 14px; padding: 8px 14px; border-bottom: 1px solid var(--cb-border); }
+      <style jsx global>{`
+        .rc { border: 1px solid var(--cb-border); border-radius: var(--cb-radius); margin: 14px 0 6px; overflow: hidden; }
+        .rc-head { padding: 9px 16px; border-bottom: 1px solid var(--cb-border); background: var(--cb-bg-surface); font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cb-text-dim); }
+        .rc-row { display: flex; align-items: baseline; gap: 20px; padding: 10px 16px; border-bottom: 1px solid var(--cb-border); }
         .rc-row:last-child { border-bottom: none; }
-        .rc-k { flex: 0 0 110px; color: var(--cb-text-muted); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; }
-        .rc-v { flex: 1; color: var(--cb-text); font-size: 13px; word-break: break-all; }
-        .rc-v.big { font-size: 15px; }
+        .rc-k { flex: 0 0 92px; color: var(--cb-text-muted); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+        .rc-v { flex: 1; color: var(--cb-text); font-size: 13.5px; line-height: 1.45; word-break: break-all; }
+        .rc-v.big { font-size: 17px; font-weight: 500; letter-spacing: -0.01em; }
         .rc-mono { font-family: var(--cb-font-mono); font-size: 12px; }
         .rc-accent { color: var(--cb-accent); }
         .rc-muted { color: var(--cb-text-muted); }
