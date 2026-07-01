@@ -38,7 +38,7 @@ export default function ExplorerPage() {
         body: JSON.stringify({ messages: next.map((m) => ({ role: m.role, content: m.content })) }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Something went wrong'); setLoading(false); return; }
+      if (!res.ok) { setError([data.error, data.detail].filter(Boolean).join(' — ') || 'Something went wrong'); setLoading(false); return; }
       setMessages((m) => [...m, { role: 'assistant', content: data.answer, tools: data.tools_used }]);
     } catch {
       setError('Network error — try again.');

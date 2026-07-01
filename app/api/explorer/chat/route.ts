@@ -24,6 +24,7 @@ Rules:
 - You can chain tools: e.g. look up an address, then inspect a transaction from its history, or trace funds from a txid across hops.
 - If a lookup errors or returns nothing, say so plainly.
 - Stay in the Bitcoin on-chain domain. No price predictions or financial advice.
+- Write plain prose. No emoji, no markdown tables — the reply renders as plain text.
 - Keep replies to a few sentences unless the user explicitly asks for more depth.`;
 
 async function checkRateLimit(request: NextRequest): Promise<{ allowed: boolean; remaining: number; isAuth: boolean }> {
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
   try {
     for (let i = 0; i < MAX_ITERATIONS; i++) {
       const resp = await anthropic.messages.create({
-        model: 'claude-opus-4-8',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: SYSTEM_PROMPT,
         tools: NODE_TOOLS,
@@ -127,6 +128,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('Explorer chat error:', err);
-    return jsonErr('The on-chain analyst hit an error. Try again.', 502);
+    const detail =
+      err instanceof Anthropic.APIError
+        ? `${err.status ?? ''} ${err.message}`.trim()
+        : err instanceof Error ? err.message : 'unknown error';
+    return new Response(
+      JSON.stringify({ error: 'The on-chain analyst hit an error. Try again.', detail }),
+      { status: 502, headers: { 'Content-Type': 'application/json' } },
+    );
   }
 }
