@@ -26,7 +26,7 @@ export default function ConverterPage() {
 
   return (
     <ToolPage
-      breadcrumb="Converter"
+      slug="converter"
       title="Sats Converter"
       subtitle="Convert between USD and satoshis at the live exchange rate."
     >

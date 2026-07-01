@@ -1,8 +1,6 @@
 'use client';
 
-import { useTheme } from '@/contexts/ThemeContext';
-import SiteNav from '@/components/SiteNav';
-import SiteFooter from '@/components/SiteFooter';
+import InfraShell from '@/components/infra/InfraShell';
 
 const API_ENDPOINTS = [
   { method: 'GET', path: '/api/v1/price', description: 'BTC price, 24h change, market cap, volume' },
@@ -47,58 +45,9 @@ const CREDIT_COMPONENTS = [
 ];
 
 export default function AgentsPage() {
-  const { isLightMode } = useTheme();
-
   return (
     <>
       <style jsx global>{`
-        .agents-page {
-          background: var(--cb-bg);
-          color: var(--cb-text);
-          font-family: var(--cb-font-mono);
-          font-size: 13px;
-          line-height: 1.7;
-          min-height: 100vh;
-        }
-        .agents-header {
-          max-width: 720px;
-          margin: 0 auto;
-          padding: 80px 48px 0;
-        }
-        .agents-label {
-          font-size: 10px;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--cb-accent);
-          margin-bottom: 16px;
-        }
-        .agents-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
-          font-size: clamp(2rem, 4vw, 3rem);
-          font-weight: 400;
-          letter-spacing: -0.02em;
-          line-height: 1.15;
-          color: var(--cb-text);
-          margin-bottom: 12px;
-        }
-        .agents-subtitle {
-          font-size: 13px;
-          color: var(--cb-text-muted);
-          max-width: 600px;
-          line-height: 1.6;
-        }
-        .agents-divider {
-          width: 100%;
-          height: 1px;
-          background: var(--cb-border);
-          margin-top: 32px;
-        }
-        .agents-content {
-          max-width: 720px;
-          margin: 0 auto;
-          padding: 48px 48px 96px;
-        }
-
         .agents-section {
           margin-bottom: 56px;
         }
@@ -291,8 +240,6 @@ export default function AgentsPage() {
         }
 
         @media (max-width: 768px) {
-          .agents-header { padding: 72px 24px 0; }
-          .agents-content { padding: 32px 24px 64px; }
           .agents-tool-grid { grid-template-columns: 1fr; }
           .agents-grid-row { flex-direction: column; gap: 2px; }
           .agents-path { min-width: auto; }
@@ -302,19 +249,12 @@ export default function AgentsPage() {
         }
       `}</style>
 
-      <div className={`agents-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/infra" />
-
-        <div className="agents-header">
-          <div className="agents-label">Agent Infrastructure</div>
-          <h1 className="agents-title">Built for Agents</h1>
-          <p className="agents-subtitle">
-            APIs, MCP tools, service discovery, and a credit system — everything an AI agent needs to access Bitcoin intelligence and build a verifiable track record.
-          </p>
-          <div className="agents-divider" />
-        </div>
-
-        <div className="agents-content">
+      <InfraShell
+        slug="agents"
+        title="Built for Agents"
+        subtitle="APIs, MCP tools, service discovery, and a credit system — everything an AI agent needs to access Bitcoin intelligence and build a verifiable track record."
+      >
+        <div>
 
           {/* Quick Start */}
           <div className="agents-section">
@@ -480,8 +420,7 @@ GET https://contrabxnd.io/.well-known/ai-plugin`}</div>
           </div>
 
         </div>
-        <SiteFooter />
-      </div>
+      </InfraShell>
     </>
   );
 }

@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
-import SiteNav from '@/components/SiteNav';
-import SiteFooter from '@/components/SiteFooter';
+import InfraShell from '@/components/infra/InfraShell';
 
 interface LnInfo {
   configured: boolean;
@@ -22,7 +20,6 @@ const fmtSats = (s: number) => `${s.toLocaleString('en-US')} sats`;
 const fmtBtc = (s: number) => `${(s / 1e8).toLocaleString('en-US', { maximumFractionDigits: 8 })} BTC`;
 
 export default function LightningPage() {
-  const { isLightMode } = useTheme();
   const [info, setInfo] = useState<LnInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -41,16 +38,6 @@ export default function LightningPage() {
   return (
     <>
       <style jsx global>{`
-        .tool-page { background: var(--cb-bg); color: var(--cb-text); font-family: var(--cb-font-mono); font-size: 13px; line-height: 1.7; min-height: 100vh; overflow-x: hidden; }
-        .page-header { max-width: 760px; margin: 0 auto; padding: 80px 48px 0; }
-        .page-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cb-accent); margin-bottom: 16px; }
-        .page-label a { color: var(--cb-text-muted); text-decoration: none; transition: color 0.15s ease; }
-        .page-label a:hover { color: var(--cb-text); }
-        .page-title { font-family: var(--cb-font-display, 'Inter', serif); font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 12px; }
-        .page-subtitle { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--cb-text-muted); max-width: 600px; }
-        .page-divider { width: 100%; height: 1px; background: var(--cb-border); margin-top: 32px; }
-        .tool-content { max-width: 760px; margin: 0 auto; padding: 40px 48px 96px; }
-
         .ln-status { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cb-text-muted); margin-bottom: 24px; }
         .ln-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cb-text-muted); }
         .ln-dot.online { background: var(--cb-accent); }
@@ -74,23 +61,16 @@ export default function LightningPage() {
         .ln-note { font-size: 11px; color: var(--cb-text-muted); margin-top: 8px; }
 
         @media (max-width: 768px) {
-          .page-header { padding: 72px 24px 0; }
-          .tool-content { padding: 28px 24px 64px; }
           .ln-key { flex-basis: 110px; }
         }
       `}</style>
 
-      <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/infra" />
-
-        <div className="page-header">
-          <div className="page-label"><a href="/infra">INFRA</a> / LIGHTNING</div>
-          <h1 className="page-title">Lightning</h1>
-          <p className="page-subtitle">Connect to the Contrabxnd Lightning node — open a channel, view capacity, and pay invoices over the Lightning Network.</p>
-          <div className="page-divider" />
-        </div>
-
-        <div className="tool-content">
+      <InfraShell
+        slug="lightning"
+        title="Lightning"
+        subtitle="Connect to the Contrabxnd Lightning node — open a channel, view capacity, and pay invoices over the Lightning Network."
+      >
+        <div>
           {loading ? (
             <div style={{ color: 'var(--cb-text-muted)' }}>Loading node status…</div>
           ) : !info?.configured || !info?.online ? (
@@ -139,9 +119,7 @@ export default function LightningPage() {
             </>
           )}
         </div>
-
-        <SiteFooter />
-      </div>
+      </InfraShell>
     </>
   );
 }

@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
-import SiteNav from '@/components/SiteNav';
-import SiteFooter from '@/components/SiteFooter';
+import InfraShell from '@/components/infra/InfraShell';
 import { createBrowserClient } from '@supabase/ssr';
 
 interface ApiKey {
@@ -34,7 +32,6 @@ function useAuth() {
 }
 
 export default function McpPage() {
-  const { isLightMode } = useTheme();
   const { user, loading: authLoading } = useAuth();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -101,62 +98,6 @@ export default function McpPage() {
   return (
     <>
       <style jsx global>{`
-        .tool-page {
-          background: var(--cb-bg);
-          color: var(--cb-text);
-          font-family: var(--cb-font-mono);
-          font-size: 13px;
-          line-height: 1.7;
-          min-height: 100vh;
-          overflow-x: hidden;
-        }
-        .page-header {
-          max-width: 720px;
-          margin: 0 auto;
-          padding: 80px 48px 0;
-        }
-        .page-label {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 10px;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: var(--cb-accent);
-          margin-bottom: 16px;
-        }
-        .page-label a {
-          color: var(--cb-text-muted);
-          text-decoration: none;
-          transition: color 0.15s ease;
-        }
-        .page-label a:hover { color: var(--cb-text); }
-        .page-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
-          font-size: clamp(2rem, 4vw, 3rem);
-          font-weight: 400;
-          letter-spacing: -0.02em;
-          line-height: 1.15;
-          color: var(--cb-text);
-          margin-bottom: 12px;
-        }
-        .page-subtitle {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 13px;
-          color: var(--cb-text-muted);
-          max-width: 600px;
-          line-height: 1.6;
-        }
-        .page-divider {
-          width: 100%;
-          height: 1px;
-          background: var(--cb-border);
-          margin-top: 32px;
-        }
-        .tool-content {
-          max-width: 720px;
-          margin: 0 auto;
-          padding: 48px 48px 96px;
-        }
-
         .mcp-section {
           margin-bottom: 48px;
         }
@@ -397,8 +338,6 @@ export default function McpPage() {
         }
 
         @media (max-width: 768px) {
-          .page-header { padding: 72px 24px 0; }
-          .tool-content { padding: 32px 24px 64px; }
           .mcp-tools-grid { grid-template-columns: 1fr; }
           .mcp-roadmap-tool { flex-direction: column; gap: 2px; }
           .mcp-roadmap-tool-name { min-width: auto; }
@@ -410,21 +349,12 @@ export default function McpPage() {
         }
       `}</style>
 
-      <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/infra" />
-
-        <div className="page-header">
-          <div className="page-label">
-            <a href="/infra">INFRA</a> / MCP SERVER
-          </div>
-          <h1 className="page-title">MCP Server</h1>
-          <p className="page-subtitle">
-            Connect any AI client to live Contrabxnd intelligence data via the Model Context Protocol.
-          </p>
-          <div className="page-divider" />
-        </div>
-
-        <div className="tool-content">
+      <InfraShell
+        slug="mcp"
+        title="MCP Server"
+        subtitle="Connect any AI client to live Contrabxnd intelligence and node data via the Model Context Protocol."
+      >
+        <div>
           {/* Available Tools */}
           <div className="mcp-section">
             <div className="mcp-section-title">Available Tools</div>
@@ -645,9 +575,7 @@ Accept: application/json, text/event-stream</div>
             </div>
           </div>
         </div>
-
-        <SiteFooter />
-      </div>
+      </InfraShell>
     </>
   );
 }

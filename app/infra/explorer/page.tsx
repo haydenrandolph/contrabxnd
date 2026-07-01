@@ -1,9 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { useTheme } from '@/contexts/ThemeContext';
-import SiteNav from '@/components/SiteNav';
-import SiteFooter from '@/components/SiteFooter';
+import InfraShell from '@/components/infra/InfraShell';
 
 // ── mempool.space API shapes (subset we use) ──
 interface AddrStats {
@@ -82,7 +80,6 @@ function detectType(q: string): ResultType | null {
 }
 
 export default function ExplorerPage() {
-  const { isLightMode } = useTheme();
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,16 +145,6 @@ export default function ExplorerPage() {
   return (
     <>
       <style jsx global>{`
-        .tool-page { background: var(--cb-bg); color: var(--cb-text); font-family: var(--cb-font-mono); font-size: 13px; line-height: 1.7; min-height: 100vh; overflow-x: hidden; }
-        .page-header { max-width: 860px; margin: 0 auto; padding: 80px 48px 0; }
-        .page-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--cb-accent); margin-bottom: 16px; }
-        .page-label a { color: var(--cb-text-muted); text-decoration: none; transition: color 0.15s ease; }
-        .page-label a:hover { color: var(--cb-text); }
-        .page-title { font-family: var(--cb-font-display, 'Inter', serif); font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 12px; }
-        .page-subtitle { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--cb-text-muted); max-width: 600px; }
-        .page-divider { width: 100%; height: 1px; background: var(--cb-border); margin-top: 32px; }
-        .tool-content { max-width: 860px; margin: 0 auto; padding: 40px 48px 96px; }
-
         .ex-search { display: flex; gap: 8px; }
         .ex-input { flex: 1; background: var(--cb-bg); border: 1px solid var(--cb-border); border-radius: 2px; color: var(--cb-text); font-family: var(--cb-font-mono); font-size: 13px; padding: 12px 14px; outline: none; transition: border-color 0.15s ease; }
         .ex-input:focus { border-color: var(--cb-accent); }
@@ -194,43 +181,32 @@ export default function ExplorerPage() {
         .ex-txlist-item:last-child { border-bottom: none; }
 
         @media (max-width: 768px) {
-          .page-header { padding: 72px 24px 0; }
-          .tool-content { padding: 28px 24px 64px; }
           .ex-key { flex-basis: 96px; }
         }
       `}</style>
 
-      <div className={`tool-page ${isLightMode ? 'light-mode' : ''}`}>
-        <SiteNav activePath="/infra" />
+      <InfraShell
+        slug="explorer"
+        title="Block Explorer"
+        subtitle="Look up any Bitcoin address, transaction, or block — served live from the Contrabxnd sovereign node."
+      >
+        <form className="ex-search" onSubmit={onSubmit}>
+          <input
+            className="ex-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Address · txid · block height · block hash"
+            spellCheck={false}
+            autoComplete="off"
+          />
+          <button className="ex-btn" type="submit" disabled={loading}>{loading ? '…' : 'Search'}</button>
+        </form>
+        <div className="ex-hint">Try a block height like <span className="ex-link" onClick={() => lookup('840000')}>840000</span>, or the genesis coinbase address <span className="ex-link" onClick={() => lookup('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')}>1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span>.</div>
 
-        <div className="page-header">
-          <div className="page-label"><a href="/infra">INFRA</a> / BLOCK EXPLORER</div>
-          <h1 className="page-title">Block Explorer</h1>
-          <p className="page-subtitle">Look up any Bitcoin address, transaction, or block — served live from the Contrabxnd sovereign node.</p>
-          <div className="page-divider" />
-        </div>
+        {error && <div className="ex-error">{error}</div>}
 
-        <div className="tool-content">
-          <form className="ex-search" onSubmit={onSubmit}>
-            <input
-              className="ex-input"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Address · txid · block height · block hash"
-              spellCheck={false}
-              autoComplete="off"
-            />
-            <button className="ex-btn" type="submit" disabled={loading}>{loading ? '…' : 'Search'}</button>
-          </form>
-          <div className="ex-hint">Try a block height like <span className="ex-link" onClick={() => lookup('840000')}>840000</span>, or the genesis coinbase address <span className="ex-link" onClick={() => lookup('1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa')}>1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span>.</div>
-
-          {error && <div className="ex-error">{error}</div>}
-
-          {result && <ResultView result={result} lookup={lookup} />}
-        </div>
-
-        <SiteFooter />
-      </div>
+        {result && <ResultView result={result} lookup={lookup} />}
+      </InfraShell>
     </>
   );
 }

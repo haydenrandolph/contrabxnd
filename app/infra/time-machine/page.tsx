@@ -26,7 +26,7 @@ export default function TimeMachinePage() {
 
   return (
     <ToolPage
-      breadcrumb="Time Machine"
+      slug="time-machine"
       title="Time Machine"
       subtitle="See what your money would be worth if you had bought Bitcoin."
     >

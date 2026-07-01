@@ -26,7 +26,7 @@ export default function DCAPage() {
 
   return (
     <ToolPage
-      breadcrumb="DCA Calculator"
+      slug="dca"
       title="DCA Calculator"
       subtitle="Simulate dollar-cost averaging returns over any historical period."
     >
