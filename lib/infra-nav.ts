@@ -14,14 +14,6 @@ export const INFRA_NAV: InfraNavSection[] = [
   },
   { title: 'Intelligence', items: [{ slug: 'mcp', title: 'MCP Server' }] },
   { title: 'Agents', items: [{ slug: 'agents', title: 'Agent Registry' }] },
-  {
-    title: 'Tools',
-    items: [
-      { slug: 'converter', title: 'Sats Converter' },
-      { slug: 'dca', title: 'DCA Calculator' },
-      { slug: 'time-machine', title: 'Time Machine' },
-    ],
-  },
 ];
 
 export function infraHref(slug: string): string {

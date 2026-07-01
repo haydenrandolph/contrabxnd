@@ -16,9 +16,6 @@ const TOOLS: ToolCard[] = [
   { title: 'Lightning', description: 'Connect to the Contrabxnd Lightning node — view channels, capacity, and generate invoices.', category: 'Node', href: '/infra/lightning' },
   { title: 'MCP Server', description: 'Connect any AI client to live Contrabxnd intelligence and node data via the Model Context Protocol.', category: 'API', href: '/infra/mcp' },
   { title: 'Agent Registry', description: 'Service discovery, credit scoring, and verifiable predictions — infrastructure built for AI agents.', category: 'Agents', href: '/infra/agents' },
-  { title: 'Sats Converter', description: 'Convert between USD and satoshis at the live exchange rate.', category: 'Tool', href: '/infra/converter' },
-  { title: 'DCA Calculator', description: 'Simulate dollar-cost averaging returns over any historical period.', category: 'Tool', href: '/infra/dca' },
-  { title: 'Time Machine', description: 'See what your money would be worth if you had bought Bitcoin.', category: 'Tool', href: '/infra/time-machine' },
   { title: 'Wallets', description: 'Create a Contrabxnd wallet for autonomous Bitcoin — on-chain and Lightning.', category: 'Node', comingSoon: true },
   { title: 'Trading', description: 'Buy and sell Bitcoin through Contrabxnd wallets via Coinbase. AI-driven DCA and limit orders.', category: 'Exchange', comingSoon: true },
 ];

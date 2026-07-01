@@ -58,11 +58,11 @@ const NAV_LINKS: NavLink[] = [
     label: 'Infra',
     dropdown: [
       {
-        label: 'Tool₿ox',
+        label: 'Node',
         children: [
-          { href: '/infra/converter', label: 'Sats Converter' },
-          { href: '/infra/dca', label: 'DCA Calculator' },
-          { href: '/infra/time-machine', label: 'Time Machine' },
+          { href: '/infra/explorer', label: 'Block Explorer' },
+          { href: '/infra/lightning', label: 'Lightning' },
+          { label: 'Wallets', comingSoon: true },
         ],
       },
       {
@@ -71,8 +71,12 @@ const NAV_LINKS: NavLink[] = [
           { href: '/infra/agents', label: 'Registry' },
           { href: '/infra/mcp', label: 'MCP Server' },
           { label: 'Marketplace', comingSoon: true },
-          { label: 'Indexer', comingSoon: true },
-          { label: 'Lightning', comingSoon: true },
+        ],
+      },
+      {
+        label: 'Docs',
+        children: [
+          { href: '/docs', label: 'Documentation' },
         ],
       },
     ],
