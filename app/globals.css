@@ -27,6 +27,7 @@
   --cb-text-muted: #8a8a8a;
   --cb-text-dim: #5a5a5a;
   --cb-accent: #F7931A;
+  --cb-accent-subtle: rgba(247, 147, 26, 0.12);
   --cb-radius: 2px;
   --cb-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --cb-font-display: 'Inter', system-ui, sans-serif;
@@ -43,6 +44,7 @@ html.light-mode {
   --cb-text: #111111;
   --cb-text-muted: #6b6b6b;
   --cb-text-dim: #a0a0a0;
+  --cb-accent-subtle: rgba(247, 147, 26, 0.09);
 }
 
 @theme inline {
@@ -88,6 +90,63 @@ html.light-mode .grid-bg {
 /* Pulsing live-data dot */
 @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .pulse-dot { animation: pulse-dot 2.5s ease-in-out infinite; }
+
+/* ── FML shared layout primitives (cohesion layer used across pages) ────── */
+.fml-page { background: var(--cb-bg); color: var(--cb-text); min-height: 100vh; font-family: var(--cb-font-sans); overflow-x: hidden; }
+.fml-container { max-width: 1080px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+.fml-narrow { max-width: 760px; margin: 0 auto; padding-left: 32px; padding-right: 32px; }
+.fml-hero { padding-top: 132px; padding-bottom: 72px; }
+
+.fml-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cb-text-muted); }
+.fml-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cb-accent); }
+.fml-display { font-family: var(--cb-font-display); font-weight: 300; letter-spacing: -0.03em; line-height: 1.02; font-size: clamp(2.6rem, 6vw, 4.5rem); color: var(--cb-text); margin: 0; }
+.fml-h2 { font-family: var(--cb-font-display); font-weight: 400; letter-spacing: -0.01em; font-size: clamp(1.5rem, 3vw, 2rem); color: var(--cb-text); margin: 0; }
+.fml-lead { font-size: 1.05rem; font-weight: 300; color: var(--cb-text-muted); line-height: 1.7; max-width: 560px; }
+
+.fml-section { border-top: 1px solid var(--cb-border); }
+.fml-section-inner { max-width: 1080px; margin: 0 auto; padding: 96px 32px; }
+.fml-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 48px; }
+.fml-label { font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cb-text-muted); }
+.fml-dim { font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.16em; color: var(--cb-text-dim); }
+
+/* Numbered bordered rows — the FML directory/list pattern */
+.fml-rows { display: flex; flex-direction: column; }
+.fml-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 24px 4px; border-top: 1px solid var(--cb-border); text-decoration: none; color: var(--cb-text); transition: border-color 0.15s ease, background 0.15s ease; }
+.fml-row:last-child { border-bottom: 1px solid var(--cb-border); }
+a.fml-row:hover { border-color: var(--cb-border-hover); }
+.fml-row-main { display: flex; align-items: flex-start; gap: 24px; min-width: 0; }
+.fml-row-num { font-family: var(--cb-font-mono); font-size: 10px; color: var(--cb-text-dim); margin-top: 5px; flex-shrink: 0; }
+.fml-row-title { font-size: 1.05rem; color: var(--cb-text); }
+.fml-row-desc { font-size: 0.86rem; color: var(--cb-text-muted); margin-top: 4px; max-width: 540px; line-height: 1.55; }
+.fml-row-meta { display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+.fml-row-tag { font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cb-text-dim); }
+.fml-arrow { color: var(--cb-text-dim); transition: color 0.15s ease; flex-shrink: 0; }
+a.fml-row:hover .fml-arrow { color: var(--cb-accent); }
+.fml-row-soon { opacity: 0.45; }
+
+/* Flat bordered card */
+.fml-card { border: 1px solid var(--cb-border); border-radius: var(--cb-radius); background: var(--cb-surface); padding: 20px; transition: border-color 0.15s ease; }
+a.fml-card { text-decoration: none; color: var(--cb-text); display: block; }
+a.fml-card:hover { border-color: var(--cb-border-hover); }
+
+/* Accent-subtle callout */
+.fml-callout { border: 1px solid var(--cb-accent); border-radius: var(--cb-radius); background: var(--cb-accent-subtle); padding: 16px 18px; }
+
+/* Buttons */
+.fml-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--cb-text); color: var(--cb-bg); border: none; border-radius: var(--cb-radius); font-family: var(--cb-font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 20px; cursor: pointer; text-decoration: none; transition: opacity 0.15s ease; }
+.fml-btn:hover { opacity: 0.85; }
+.fml-btn-accent { background: var(--cb-accent); color: #fff; }
+.fml-btn-ghost { background: transparent; color: var(--cb-text); border: 1px solid var(--cb-border); }
+.fml-btn-ghost:hover { border-color: var(--cb-border-hover); opacity: 1; }
+
+@media (max-width: 768px) {
+  .fml-container, .fml-narrow { padding-left: 20px; padding-right: 20px; }
+  .fml-hero { padding-top: 104px; padding-bottom: 48px; }
+  .fml-section-inner { padding: 64px 20px; }
+  .fml-section-head { margin-bottom: 32px; }
+  .fml-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .fml-row-meta { margin-left: 40px; }
+}
 
 /* Theme is driven by a `light-mode` class on <html> (set pre-hydration by an
    inline script in the root layout and toggled at runtime by ThemeContext).
