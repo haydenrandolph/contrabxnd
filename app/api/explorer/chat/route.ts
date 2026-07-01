@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { NODE_TOOLS, runNodeTool } from '@/lib/node/agent-tools';
+import { NODE_TOOLS } from '@/lib/node/agent-tools';
+import { runAgentStream } from '@/lib/node/agent-run';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,51 +91,37 @@ export async function POST(request: NextRequest) {
     content: m.content,
   }));
 
-  const toolsUsed: string[] = [];
-  try {
-    for (let i = 0; i < MAX_ITERATIONS; i++) {
-      const resp = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        tools: NODE_TOOLS,
-        messages: convo,
-      });
-      convo.push({ role: 'assistant', content: resp.content });
-
-      if (resp.stop_reason !== 'tool_use') {
-        const answer = resp.content
-          .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-          .map((b) => b.text)
-          .join('\n')
-          .trim();
-        return new Response(JSON.stringify({ answer: answer || '(no response)', tools_used: toolsUsed, remaining: rate.remaining }), {
-          headers: { 'Content-Type': 'application/json' },
-        });
+  const encoder = new TextEncoder();
+  const readable = new ReadableStream({
+    async start(controller) {
+      const send = (obj: unknown) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+      try {
+        await runAgentStream(
+          anthropic,
+          { model: 'claude-sonnet-4-6', system: SYSTEM_PROMPT, tools: NODE_TOOLS, messages: convo, maxIterations: MAX_ITERATIONS },
+          {
+            onText: (delta) => send({ type: 'text', text: delta }),
+            onTool: (name) => send({ type: 'tool', name }),
+            onToolResult: (name, data) => send({ type: 'tool_result', name, data }),
+          },
+        );
+        send({ type: 'done', remaining: rate.remaining });
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
+      } catch (err) {
+        console.error('Explorer chat error:', err);
+        const detail =
+          err instanceof Anthropic.APIError
+            ? `${err.status ?? ''} ${err.message}`.trim()
+            : err instanceof Error ? err.message : 'unknown error';
+        send({ type: 'error', error: 'The on-chain analyst hit an error. Try again.', detail });
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+        controller.close();
       }
+    },
+  });
 
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-      for (const block of resp.content) {
-        if (block.type === 'tool_use') {
-          toolsUsed.push(block.name);
-          const result = await runNodeTool(block.name, block.input as Record<string, unknown>);
-          toolResults.push({ type: 'tool_result', tool_use_id: block.id, content: result });
-        }
-      }
-      convo.push({ role: 'user', content: toolResults });
-    }
-    return new Response(JSON.stringify({ answer: 'That query needed too many lookups — try narrowing it.', tools_used: toolsUsed, remaining: rate.remaining }), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    console.error('Explorer chat error:', err);
-    const detail =
-      err instanceof Anthropic.APIError
-        ? `${err.status ?? ''} ${err.message}`.trim()
-        : err instanceof Error ? err.message : 'unknown error';
-    return new Response(
-      JSON.stringify({ error: 'The on-chain analyst hit an error. Try again.', detail }),
-      { status: 502, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
+  return new Response(readable, {
+    headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive' },
+  });
 }

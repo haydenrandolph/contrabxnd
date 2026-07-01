@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { NODE_TOOLS } from '@/lib/node/agent-tools';
+import { runAgentStream } from '@/lib/node/agent-run';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -74,11 +76,14 @@ SIGNAL MODEL:
 - Fear & Greed: 0-25 extreme fear, 75-100 extreme greed.
 - Polymarket = prediction market probabilities for Bitcoin price targets, reserve policy, etc. Higher avg "Yes" = market expects bullish catalysts.
 
+ON-CHAIN TOOLS: You can query the Contrabxnd sovereign Bitcoin node directly. When the user asks about a specific address, transaction, block, the mempool, fees, fund flows, or a script, call the provided tools to fetch real data — never invent balances, txids, or block details. Use them alongside the macro data above.
+
 RULES:
 - 2-4 sentences for simple questions. Short paragraph max for complex analysis.
 - Reference specific numbers from the data. If data is null, say so.
 - No hedging. State analysis with conviction qualified by data.
-- Stay in your domain: Bitcoin, macro, markets.`;
+- No emoji or markdown tables — replies render as plain text.
+- Stay in your domain: Bitcoin, macro, markets, and on-chain data.`;
 }
 
 async function checkRateLimit(
@@ -184,41 +189,27 @@ export async function POST(request: NextRequest) {
   const ctx = await fetchSignalContext(baseUrl);
   const systemPrompt = buildSystemPrompt(ctx);
 
-  const stream = anthropic.messages.stream({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 512,
-    system: systemPrompt,
-    messages: messages.slice(-10).map((m: { role: string; content: string }) => ({
-      role: m.role as 'user' | 'assistant',
-      content: m.content,
-    })),
-  });
+  const convo: Anthropic.MessageParam[] = messages.slice(-10).map((m: { role: string; content: string }) => ({
+    role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+    content: m.content,
+  }));
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
+      const enc = (obj: unknown) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
       try {
-        for await (const event of stream) {
-          if (
-            event.type === 'content_block_delta' &&
-            event.delta.type === 'text_delta'
-          ) {
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify({ text: event.delta.text })}\n\n`)
-            );
-          }
-        }
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ remaining: rateCheck.remaining })}\n\n`)
+        await runAgentStream(
+          anthropic,
+          { model: 'claude-haiku-4-5-20251001', system: systemPrompt, tools: NODE_TOOLS, messages: convo, maxTokens: 700 },
+          { onText: (delta) => enc({ text: delta }) },
         );
+        enc({ remaining: rateCheck.remaining });
         controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
       } catch (err) {
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ error: err instanceof Error ? err.message : 'Stream error' })}\n\n`
-          )
-        );
+        enc({ error: err instanceof Error ? err.message : 'Stream error' });
+        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
         controller.close();
       }
     },

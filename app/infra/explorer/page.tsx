@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import InfraShell from '@/components/infra/InfraShell';
+import ResultCard from '@/components/explorer/ResultCard';
 
-interface Msg { role: 'user' | 'assistant'; content: string; tools?: string[] }
+interface CardData { tool: string; data: Record<string, unknown> }
+interface Msg { role: 'user' | 'assistant'; content: string; tools?: string[]; card?: CardData }
 
 const EXAMPLES = [
   "What's the balance of 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?",
@@ -11,6 +13,8 @@ const EXAMPLES = [
   "Show me block 840000",
   "What are recommended fees right now?",
 ];
+
+const CARD_TOOLS = new Set(['query_address', 'query_transaction', 'query_block', 'get_mempool', 'decode_script']);
 
 export default function ExplorerPage() {
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -27,21 +31,54 @@ export default function ExplorerPage() {
     const q = text.trim();
     if (!q || loading) return;
     setError(null);
-    const next: Msg[] = [...messages, { role: 'user', content: q }];
-    setMessages(next);
+    const base: Msg[] = [...messages, { role: 'user', content: q }];
+    setMessages([...base, { role: 'assistant', content: '', tools: [] }]);
     setInput('');
     setLoading(true);
+
+    const patch = (fn: (m: Msg) => Msg) =>
+      setMessages((prev) => { const c = [...prev]; c[c.length - 1] = fn(c[c.length - 1]); return c; });
+
     try {
       const res = await fetch('/api/explorer/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next.map((m) => ({ role: m.role, content: m.content })) }),
+        body: JSON.stringify({ messages: base.map((m) => ({ role: m.role, content: m.content })) }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError([data.error, data.detail].filter(Boolean).join(' — ') || 'Something went wrong'); setLoading(false); return; }
-      setMessages((m) => [...m, { role: 'assistant', content: data.answer, tools: data.tools_used }]);
+      if (!res.ok || !res.body) {
+        const d = await res.json().catch(() => ({}));
+        setError([d.error, d.detail].filter(Boolean).join(' — ') || 'Something went wrong');
+        setMessages((prev) => prev.slice(0, -1));
+        setLoading(false);
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n\n');
+        buf = lines.pop() ?? '';
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6);
+          if (payload === '[DONE]') continue;
+          let ev: { type?: string; text?: string; name?: string; data?: Record<string, unknown>; error?: string; detail?: string };
+          try { ev = JSON.parse(payload); } catch { continue; }
+          if (ev.type === 'text' && ev.text) patch((a) => ({ ...a, content: a.content + ev.text }));
+          else if (ev.type === 'tool' && ev.name) patch((a) => ({ ...a, tools: [...(a.tools ?? []), ev.name!] }));
+          else if (ev.type === 'tool_result' && ev.name && CARD_TOOLS.has(ev.name) && ev.data && !ev.data.error) {
+            patch((a) => ({ ...a, card: { tool: ev.name!, data: ev.data! } }));
+          } else if (ev.type === 'error') {
+            setError([ev.error, ev.detail].filter(Boolean).join(' — '));
+          }
+        }
+      }
     } catch {
       setError('Network error — try again.');
+      setMessages((prev) => (prev[prev.length - 1]?.content ? prev : prev.slice(0, -1)));
     }
     setLoading(false);
   }, [messages, loading]);
@@ -62,6 +99,7 @@ export default function ExplorerPage() {
         .cx-role { font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cb-text-dim); margin-bottom: 6px; }
         .cx-role.you { color: var(--cb-accent); }
         .cx-body { font-size: 14.5px; line-height: 1.7; color: var(--cb-text); white-space: pre-wrap; word-break: break-word; }
+        .cx-caret { display: inline-block; width: 7px; height: 15px; background: var(--cb-accent); margin-left: 2px; vertical-align: text-bottom; animation: pulse-dot 1s ease-in-out infinite; }
         .cx-tools { margin-top: 8px; font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.04em; color: var(--cb-text-dim); }
         .cx-tools code { color: var(--cb-text-muted); }
 
@@ -96,22 +134,23 @@ export default function ExplorerPage() {
               </div>
             )}
 
-            {messages.map((m, i) => (
-              <div className="cx-msg" key={i}>
-                <div className={`cx-role ${m.role === 'user' ? 'you' : ''}`}>{m.role === 'user' ? 'You' : 'Analyst'}</div>
-                <div className="cx-body">{m.content}</div>
-                {m.tools && m.tools.length > 0 && (
-                  <div className="cx-tools">queried: <code>{[...new Set(m.tools)].join(', ')}</code></div>
-                )}
-              </div>
-            ))}
-
-            {loading && (
-              <div className="cx-msg">
-                <div className="cx-role">Analyst</div>
-                <div className="cx-thinking"><span className="cx-dot" /> querying the node…</div>
-              </div>
-            )}
+            {messages.map((m, i) => {
+              const streaming = loading && i === messages.length - 1 && m.role === 'assistant';
+              return (
+                <div className="cx-msg" key={i}>
+                  <div className={`cx-role ${m.role === 'user' ? 'you' : ''}`}>{m.role === 'user' ? 'You' : 'Analyst'}</div>
+                  {m.role === 'assistant' && !m.content && streaming ? (
+                    <div className="cx-thinking"><span className="cx-dot" /> querying the node…</div>
+                  ) : (
+                    <div className="cx-body">{m.content}{streaming && <span className="cx-caret" />}</div>
+                  )}
+                  {m.card && <ResultCard tool={m.card.tool} data={m.card.data} />}
+                  {m.tools && m.tools.length > 0 && (
+                    <div className="cx-tools">queried: <code>{[...new Set(m.tools)].join(', ')}</code></div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {error && <div className="cx-error" style={{ marginTop: 16 }}>{error}</div>}
