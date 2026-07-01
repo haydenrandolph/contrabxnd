@@ -173,9 +173,10 @@ export default function ArticleLayout({
 
         .article-title {
           font-family: 'Inter', serif;
-          font-size: 3rem;
-          font-weight: 400;
-          line-height: 1.1;
+          font-size: clamp(1.6rem, 3vw, 2.25rem);
+          font-weight: 500;
+          letter-spacing: -0.02em;
+          line-height: 1.15;
           margin-bottom: 0;
           color: #e8e4dc;
           flex: 1;
@@ -187,9 +188,9 @@ export default function ArticleLayout({
 
         .article-subtitle {
           font-family: 'Inter', serif;
-          font-size: 1.5rem;
+          font-size: 1.05rem;
           font-weight: 400;
-          line-height: 1.4;
+          line-height: 1.5;
           color: #8a8a8a;
           font-style: italic;
           margin-bottom: 2rem;
@@ -210,7 +211,7 @@ export default function ArticleLayout({
 
         .article-content > p:first-of-type::first-letter {
           font-family: 'Inter', serif;
-          font-size: 4rem;
+          font-size: 3rem;
           float: left;
           line-height: 1;
           margin-right: 0.75rem;
@@ -345,7 +346,7 @@ export default function ArticleLayout({
           }
 
           .article-title {
-            font-size: 2rem;
+            font-size: 1.5rem;
           }
         }
 

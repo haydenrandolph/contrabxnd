@@ -310,9 +310,10 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         /* Section Dividers */
         .lesson-content h2 {
           font-family: 'Inter', serif;
-          font-size: 1.75rem;
-          font-weight: 400;
-          margin: 3rem 0 1.5rem;
+          font-size: 1.4rem;
+          font-weight: 500;
+          letter-spacing: -0.01em;
+          margin: 2.5rem 0 1.25rem;
           color: #f7f7f8;
           padding-top: 2rem;
           border-top: 1px solid #1a1a1a;
@@ -426,8 +427,9 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         .lesson-title {
           font-family: 'Inter', serif;
-          font-size: clamp(2rem, 5vw, 3rem);
-          font-weight: 400;
+          font-size: clamp(1.6rem, 3vw, 2.25rem);
+          font-weight: 500;
+          letter-spacing: -0.02em;
           line-height: 1.2;
           margin-bottom: 0;
           flex: 1;
@@ -439,7 +441,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         .lesson-subtitle {
           font-family: 'Inter', serif;
-          font-size: 1.25rem;
+          font-size: 1.05rem;
           font-style: italic;
           color: #8a8a8a;
         }
@@ -452,9 +454,9 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         .lesson-content p {
           font-family: 'Inter', serif;
-          font-size: 1.25rem;
-          line-height: 1.9;
-          margin-bottom: 1.75rem;
+          font-size: 1.0625rem;
+          line-height: 1.75;
+          margin-bottom: 1.35rem;
           color: #e8e4dc;
         }
 
@@ -463,7 +465,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-content > p:first-of-type::first-letter {
-          font-size: 4rem;
+          font-size: 3rem;
           float: left;
           line-height: 1;
           margin-right: 0.75rem;
@@ -482,7 +484,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         .lesson-content h3 {
           font-family: 'Inter', serif;
-          font-size: 1.35rem;
+          font-size: 1.15rem;
           font-weight: 400;
           margin: 2.5rem 0 1rem;
           color: #f7f7f8;
