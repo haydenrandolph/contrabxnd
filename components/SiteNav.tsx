@@ -520,6 +520,43 @@ export default function SiteNav({
           color: #F7931A;
         }
 
+        .mobile-nav-sub {
+          background: rgba(255, 255, 255, 0.02);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+          padding-bottom: 8px;
+        }
+        .mobile-overlay.light .mobile-nav-sub {
+          background: rgba(0, 0, 0, 0.02);
+          border-bottom-color: rgba(0, 0, 0, 0.04);
+        }
+        .mobile-nav-subhead {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: #6a6a6a;
+          padding: 12px 24px 4px 40px;
+        }
+        .mobile-nav-sublink {
+          display: block;
+          padding: 10px 24px 10px 40px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 12px;
+          letter-spacing: 0.06em;
+          color: #b8b4ac;
+          text-decoration: none;
+        }
+        .mobile-overlay.light .mobile-nav-sublink {
+          color: #3a3a3a;
+        }
+        .mobile-nav-sublink:active {
+          color: #F7931A;
+        }
+        .mobile-nav-sublink.soon {
+          color: #6a6a6a;
+          opacity: 0.6;
+        }
+
         .mobile-footer {
           padding: 16px 24px;
           border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -649,19 +686,50 @@ export default function SiteNav({
           </button>
         </div>
         <nav className="mobile-nav">
-          {NAV_LINKS.filter((link) => !link.comingSoon).map((link) => (
-            <Link
-              key={link.dropdown ? link.href : link.href!}
-              href={link.dropdown ? link.href : link.href!}
-              className={`mobile-nav-link${activePath === (link.dropdown ? link.href : link.href) ? ' active' : ''}`}
-              onClick={() => setMenuOpen(false)}
-            >
-              {link.label}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </Link>
-          ))}
+          {NAV_LINKS.filter((link) => !link.comingSoon).map((link) =>
+            link.dropdown ? (
+              <div key={link.href}>
+                <Link
+                  href={link.href}
+                  className={`mobile-nav-link${activePath === link.href ? ' active' : ''}`}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </Link>
+                <div className="mobile-nav-sub">
+                  {link.dropdown.map((group) => (
+                    <div key={group.label}>
+                      <div className="mobile-nav-subhead">{group.label}</div>
+                      {group.children.map((child) =>
+                        child.href && !child.comingSoon ? (
+                          <Link key={child.label} href={child.href} className="mobile-nav-sublink" onClick={() => setMenuOpen(false)}>
+                            {child.label}
+                          </Link>
+                        ) : (
+                          <span key={child.label} className="mobile-nav-sublink soon">{child.label} · soon</span>
+                        ),
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <Link
+                key={link.href!}
+                href={link.href!}
+                className={`mobile-nav-link${activePath === link.href ? ' active' : ''}`}
+                onClick={() => setMenuOpen(false)}
+              >
+                {link.label}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </Link>
+            ),
+          )}
         </nav>
         <div className="mobile-footer">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
