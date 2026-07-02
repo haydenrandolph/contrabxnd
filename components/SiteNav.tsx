@@ -520,6 +520,20 @@ export default function SiteNav({
           color: #F7931A;
         }
 
+        button.mobile-nav-link {
+          width: 100%;
+          background: none;
+          text-align: left;
+          cursor: pointer;
+          border: none;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .mobile-overlay.light button.mobile-nav-link {
+          border-bottom-color: rgba(0, 0, 0, 0.04);
+        }
+        .mobile-nav-link svg { transition: transform 0.2s ease; }
+        .mobile-nav-link svg.open { transform: rotate(90deg); }
+
         .mobile-nav-sub {
           background: rgba(255, 255, 255, 0.02);
           border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -689,16 +703,18 @@ export default function SiteNav({
           {NAV_LINKS.filter((link) => !link.comingSoon).map((link) =>
             link.dropdown ? (
               <div key={link.href}>
-                <Link
-                  href={link.href}
-                  className={`mobile-nav-link${activePath === link.href ? ' active' : ''}`}
-                  onClick={() => setMenuOpen(false)}
+                <button
+                  type="button"
+                  className={`mobile-nav-link${activePath.startsWith(link.href) ? ' active' : ''}`}
+                  onClick={() => toggleGroup(link.label)}
+                  aria-expanded={!!expandedGroups[link.label]}
                 >
                   {link.label}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <svg className={expandedGroups[link.label] ? 'open' : ''} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <path d="M9 18l6-6-6-6" />
                   </svg>
-                </Link>
+                </button>
+                {expandedGroups[link.label] && (
                 <div className="mobile-nav-sub">
                   {link.dropdown.map((group) => (
                     <div key={group.label}>
@@ -715,6 +731,7 @@ export default function SiteNav({
                     </div>
                   ))}
                 </div>
+                )}
               </div>
             ) : (
               <Link
