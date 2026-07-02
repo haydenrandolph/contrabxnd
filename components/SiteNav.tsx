@@ -705,7 +705,7 @@ export default function SiteNav({
               <div key={link.href}>
                 <button
                   type="button"
-                  className={`mobile-nav-link${activePath.startsWith(link.href) ? ' active' : ''}`}
+                  className={`mobile-nav-link${activePath?.startsWith(link.href) ? ' active' : ''}`}
                   onClick={() => toggleGroup(link.label)}
                   aria-expanded={!!expandedGroups[link.label]}
                 >
