@@ -1,4 +1,5 @@
 import LessonLayout from '@/components/LessonLayout';
+import FeeLab from '@/components/labs/FeeLab';
 
 export default function BoardingPassLessonSendingAndReceiving() {
   return (
@@ -61,6 +62,8 @@ export default function BoardingPassLessonSendingAndReceiving() {
             <li><strong>High priority:</strong> Expensive but fast (next block, ~10 minutes). Use for time-sensitive payments.</li>
           </ul>
           <p>To check current fee rates, visit <strong>mempool.space</strong>—a website showing the Bitcoin mempool in real-time. It recommends optimal fees based on how fast you want confirmation.</p>
+
+          <FeeLab />
 
           <h2>Confirmations: When Is It Final?</h2>
           <p>A Bitcoin transaction isn't truly final until it's buried under multiple blocks. Here's what each confirmation level means:</p>

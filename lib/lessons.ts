@@ -1,3 +1,5 @@
+import { hasLab } from '@/lib/labs';
+
 // Single source of truth for the Boarding Pass course.
 //
 // Previously every lesson page hard-coded its own number, week, duration,
@@ -119,6 +121,7 @@ export function lessonSidebarSections(activeSlug: string) {
       title: `${l.number} · ${l.title}`,
       href: `${COURSE.href}/${l.slug}`,
       active: l.slug === activeSlug,
+      lab: hasLab(l.slug),
     })),
   }));
   return [overview, ...weeks];

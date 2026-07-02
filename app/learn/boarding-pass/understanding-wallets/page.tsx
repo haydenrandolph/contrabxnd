@@ -1,4 +1,5 @@
 import LessonLayout from '@/components/LessonLayout';
+import AddressTypeLab from '@/components/labs/AddressTypeLab';
 
 export default function BoardingPassLesson() {
   return (
@@ -8,6 +9,8 @@ export default function BoardingPassLesson() {
       <h2>What Is a Wallet, Really?</h2>
       <p>Despite the name, a Bitcoin wallet doesn't "hold" your bitcoin the way a leather wallet holds cash. Your bitcoin never leaves the blockchain. What a wallet actually stores is your private keys—the cryptographic passwords that prove ownership and allow you to spend your bitcoin.</p>
       <p>Think of it this way: the blockchain is a vast public ledger showing who owns what. Your wallet is the keyring that lets you unlock and move your portion of that ledger. Without the keys, you can't access your bitcoin. With the keys, you have absolute control.</p>
+
+      <AddressTypeLab />
 
       <h2>The Four Categories of Wallets</h2>
       <p>Bitcoin wallets are typically classified along two dimensions: connectivity (hot vs. cold) and control (custodial vs. non-custodial). Understanding these distinctions helps you choose the right tool for your needs.</p>
