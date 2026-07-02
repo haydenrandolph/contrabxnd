@@ -1,4 +1,5 @@
 import LessonLayout from '@/components/LessonLayout';
+import AddressLookupLab from '@/components/labs/AddressLookupLab';
 
 export default function BoardingPassLessonTheRoadToSelfCustody() {
   return (
@@ -18,6 +19,8 @@ export default function BoardingPassLessonTheRoadToSelfCustody() {
           <p><strong>Exchanges are honeypots.</strong> A database with billions in bitcoin is an attractive target. Even well-run exchanges get hacked.</p>
 
           <p><strong>Not your keys, not your coins.</strong> This isn't a slogan—it's a description of how Bitcoin works. If you don't have the keys, you have a promise from someone who does.</p>
+
+          <AddressLookupLab />
 
           <h3>The Self-Custody Spectrum</h3>
 

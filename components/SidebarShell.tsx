@@ -5,7 +5,7 @@ import { ReactNode, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 
-export interface ShellNavItem { title: string; href: string; active?: boolean }
+export interface ShellNavItem { title: string; href: string; active?: boolean; lab?: boolean }
 export interface ShellNavSection { title: string; items: ShellNavItem[] }
 
 /**
@@ -56,6 +56,9 @@ export default function SidebarShell({
         .sb-link { display: block; font-size: 13px; color: var(--cb-text-muted); text-decoration: none; padding: 6px 12px; border-left: 2px solid transparent; margin-left: -2px; transition: color 0.12s ease, border-color 0.12s ease; }
         .sb-link:hover { color: var(--cb-text); }
         .sb-link.active { color: var(--cb-accent); border-left-color: var(--cb-accent); }
+        .sb-link.haslab { display: flex; align-items: center; gap: 8px; }
+        .sb-lab-pill { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 4px; font-family: var(--cb-font-mono); font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--cb-accent); border: 1px solid var(--cb-accent); border-radius: 3px; padding: 1px 4px; line-height: 1.4; }
+        .sb-lab-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--cb-accent); animation: pulse-dot 2s ease-in-out infinite; }
 
         .sb-main { flex: 1 1 auto; min-width: 0; padding: 56px 56px 96px; max-width: 860px; }
         .sb-main.bare { padding: 0; max-width: none; }
@@ -106,10 +109,14 @@ export default function SidebarShell({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`sb-link ${item.active ? 'active' : ''}`}
+                    className={`sb-link ${item.active ? 'active' : ''} ${item.lab ? 'haslab' : ''}`}
                     onClick={() => setOpen(false)}
+                    title={item.lab ? `${item.title} — includes a live lab` : undefined}
                   >
-                    {item.title}
+                    <span style={{ flex: 1, minWidth: 0 }}>{item.title}</span>
+                    {item.lab && (
+                      <span className="sb-lab-pill"><span className="sb-lab-dot" /> Lab</span>
+                    )}
                   </Link>
                 ))}
               </div>

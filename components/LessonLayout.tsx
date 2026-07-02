@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getLessonNav, lessonSidebarSections } from '@/lib/lessons';
+import { hasLab, LAB_ANCHOR } from '@/lib/labs';
 import SidebarShell from '@/components/SidebarShell';
 import SiteFooter from '@/components/SiteFooter';
 import BookmarkButton from '@/components/BookmarkButton';
@@ -395,6 +396,51 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         .lesson-page.light-mode .lesson-title {
           color: #0a0a0a;
+        }
+
+        .lesson-lab-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 1rem;
+          padding: 5px 12px;
+          border: 1px solid #F7931A;
+          border-radius: var(--cb-radius);
+          background: rgba(247, 147, 26, 0.08);
+          color: #F7931A;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          text-decoration: none;
+          cursor: pointer;
+          transition: background 0.15s ease;
+        }
+
+        .lesson-lab-badge:hover {
+          background: rgba(247, 147, 26, 0.16);
+        }
+
+        .lesson-lab-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #F7931A;
+          animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .lesson-lab-hint {
+          color: #8a8a8a;
+          letter-spacing: 0.04em;
+          text-transform: none;
+        }
+
+        .lesson-page.light-mode .lesson-lab-hint {
+          color: #6b6b6b;
+        }
+
+        @media (max-width: 600px) {
+          .lesson-lab-hint { display: none; }
         }
 
         .lesson-subtitle {
@@ -975,6 +1021,19 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
             <h1 className="lesson-title">{lesson.title}</h1>
             <BookmarkButton contentType="lesson" contentSlug={slug} />
           </div>
+          {hasLab(slug) && (
+            <a
+              className="lesson-lab-badge"
+              href={`#${LAB_ANCHOR}`}
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById(LAB_ANCHOR)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
+            >
+              <span className="lesson-lab-dot" /> Live Lab
+              <span className="lesson-lab-hint">interact with the live network in this lesson</span>
+            </a>
+          )}
           <p className="lesson-subtitle">{lesson.subtitle}</p>
         </header>
 

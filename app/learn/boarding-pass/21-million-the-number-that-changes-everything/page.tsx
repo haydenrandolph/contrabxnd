@@ -1,4 +1,5 @@
 import LessonLayout from '@/components/LessonLayout';
+import SupplyClockLab from '@/components/labs/SupplyClockLab';
 
 export default function BoardingPassLesson() {
   return (
@@ -51,6 +52,8 @@ export default function BoardingPassLesson() {
       <h3>The Halvings</h3>
 
       <p>The halving events are milestones in Bitcoin's history. As of 2024, about 19.5 million bitcoin have already been created—over 93% of all the bitcoin that will ever exist. The remaining 1.5 million will trickle out over the next 116 years.</p>
+
+      <SupplyClockLab />
 
       <h3>Why Can't They Just Change It?</h3>
 
