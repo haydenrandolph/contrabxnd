@@ -8,7 +8,9 @@
 export const LAB_SLUGS: ReadonlySet<string> = new Set([
   'how-the-network-works',
   '21-million-the-number-that-changes-everything',
+  'understanding-wallets',
   'sending-and-receiving',
+  'the-seed-phrase-your-master-key',
   'the-road-to-self-custody',
 ]);
 

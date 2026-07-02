@@ -1031,7 +1031,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
               }}
             >
               <span className="lesson-lab-dot" /> Live Lab
-              <span className="lesson-lab-hint">interact with the live network in this lesson</span>
+              <span className="lesson-lab-hint">hands-on — try it yourself in this lesson</span>
             </a>
           )}
           <p className="lesson-subtitle">{lesson.subtitle}</p>

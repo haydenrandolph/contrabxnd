@@ -1,4 +1,5 @@
 import LessonLayout from '@/components/LessonLayout';
+import SeedPhraseLab from '@/components/labs/SeedPhraseLab';
 
 export default function BoardingPassLesson() {
   return (
@@ -13,6 +14,8 @@ export default function BoardingPassLesson() {
 
       <h2>How Seed Phrases Work</h2>
       <p>The seed phrase is based on a technical standard called <strong>BIP39</strong> (Bitcoin Improvement Proposal 39). This standard defines a list of 2,048 carefully chosen words. Your wallet randomly selects 12 or 24 words from this list to create your seed.</p>
+
+      <SeedPhraseLab />
       <p>These words encode a very large random number—your "master seed." From this seed, your wallet can mathematically derive billions of private keys, each corresponding to a different Bitcoin address. So those 12 simple words unlock an entire universe of addresses and keys.</p>
       <p>The beauty (and danger) of this system: anyone with your seed phrase can regenerate all your private keys and thus control all your bitcoin. That's why seed phrase security is paramount.</p>
 
