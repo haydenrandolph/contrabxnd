@@ -1,4 +1,5 @@
 import LessonLayout from '@/components/LessonLayout';
+import LiveBlockLab from '@/components/labs/LiveBlockLab';
 
 export default function BoardingPassLesson() {
   return (
@@ -83,6 +84,8 @@ export default function BoardingPassLesson() {
       <p>This chain structure is what makes the ledger tamper-proof. If you change anything in block 799,999, it changes that block's hash, which breaks the reference in block 800,000, which breaks every block after it. You can't edit history without rebuilding everything that came after.</p>
 
       <p>And since the network is constantly adding new blocks, you're not just racing against history—you're racing against the present.</p>
+
+      <LiveBlockLab />
 
       <h3>Putting It Together</h3>
 
