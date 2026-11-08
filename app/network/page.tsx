@@ -61,8 +61,9 @@ interface UserLocation {
 export default function NetworkPage() {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [businesses, setBusinesses] = useState<NetworkBusiness[]>([]);
-  const [filteredBusinesses, setFilteredBusinesses] = useState<NetworkBusiness[]>([]);
+  const [matchingBusinesses, setMatchingBusinesses] = useState<NetworkBusiness[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedCountry, setSelectedCountry] = useState<string>('All');
@@ -74,51 +75,46 @@ export default function NetworkPage() {
   const [searchMode, setSearchMode] = useState<'global' | 'nearby'>('global');
   const [visibleBusinessIds, setVisibleBusinessIds] = useState<string[] | null>(null);
   const [viewportSyncEnabled, setViewportSyncEnabled] = useState(true);
+  const [listLimit, setListLimit] = useState(100);
   const listRef = useRef<HTMLDivElement>(null);
   const { isLightMode } = useTheme();
 
   // Handle map bounds change - filter list to show only visible businesses
   const handleBoundsChange = useCallback((bounds: MapBounds, visibleIds: string[]) => {
-    if (viewportSyncEnabled) {
-      setVisibleBusinessIds(visibleIds);
-    }
-  }, [viewportSyncEnabled]);
-
-  // Fetch businesses with optional location parameters
-  const fetchBusinesses = useCallback(async (location?: { lat: number; lon: number }, radius?: number) => {
-    setIsLoading(true);
-    try {
-      let url = '/api/network';
-      if (location && searchMode === 'nearby') {
-        url += `?lat=${location.lat}&lon=${location.lon}&radius=${radius || searchRadius}`;
-      }
-
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setBusinesses(data.businesses || []);
-        setFilteredBusinesses(data.businesses || []);
-      }
-    } catch (error) {
-      console.error('Failed to fetch businesses:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [searchMode, searchRadius]);
-
-  // Initial fetch - global first
-  useEffect(() => {
-    fetchBusinesses();
+    setVisibleBusinessIds(visibleIds);
   }, []);
 
-  // Refetch when search mode or radius changes (and we have location)
+  // Fetch businesses with optional location parameters
+  const [refreshKey, setRefreshKey] = useState(0);
   useEffect(() => {
-    if (searchMode === 'nearby' && userLocation) {
-      fetchBusinesses(userLocation, searchRadius);
-    } else if (searchMode === 'global') {
-      fetchBusinesses();
-    }
-  }, [searchMode, searchRadius, userLocation]);
+    const controller = new AbortController();
+    setIsLoading(true);
+    setFetchError('');
+    const fetchBusinesses = async () => {
+      try {
+        let url = '/api/network';
+        if (userLocation && searchMode === 'nearby') {
+          url += `?lat=${userLocation.lat}&lon=${userLocation.lon}&radius=${searchRadius}`;
+        }
+
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error('Could not load merchants. Please try again.');
+        const data = await response.json();
+        if (controller.signal.aborted) return;
+        setBusinesses(data.businesses || []);
+        setSelectedBusiness(null);
+        setVisibleBusinessIds(null);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setFetchError(error instanceof Error ? error.message : 'Could not load merchants.');
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+    fetchBusinesses();
+    return () => controller.abort();
+  }, [searchMode, searchRadius, userLocation, refreshKey]);
 
   // Auto-detect user location on initial load
   useEffect(() => {
@@ -195,14 +191,15 @@ export default function NetworkPage() {
       });
     }
 
-    // Filter by visible map viewport if enabled
-    if (viewportSyncEnabled && visibleBusinessIds !== null) {
-      const visibleSet = new Set(visibleBusinessIds);
-      filtered = filtered.filter(b => visibleSet.has(b.id));
-    }
+    setMatchingBusinesses(filtered);
+    setListLimit(100);
+  }, [businesses, selectedCategory, selectedCountry, searchQuery, userLocation, sortByDistance]);
 
-    setFilteredBusinesses(filtered);
-  }, [businesses, selectedCategory, selectedCountry, searchQuery, userLocation, sortByDistance, viewportSyncEnabled, visibleBusinessIds]);
+  const visibleSet = viewportSyncEnabled && visibleBusinessIds !== null ? new Set(visibleBusinessIds) : null;
+  const filteredBusinesses = visibleSet
+    ? matchingBusinesses.filter(b => !b.location || visibleSet.has(b.id))
+    : matchingBusinesses;
+  const displayedCount = Math.max(listLimit, selectedBusiness ? filteredBusinesses.findIndex(b => b.id === selectedBusiness.id) + 1 : 0);
 
   // Scroll list to selected business when selected from map
   useEffect(() => {
@@ -239,9 +236,9 @@ export default function NetworkPage() {
         }
 
         .page-header {
-          max-width: 1100px;
+          max-width: 1600px;
           margin: 0 auto;
-          padding: 80px 48px 0;
+          padding: 80px 32px 0;
         }
 
         .page-label {
@@ -279,9 +276,9 @@ export default function NetworkPage() {
         }
 
         .page-content {
-          max-width: 1100px;
+          max-width: 1600px;
           margin: 0 auto;
-          padding: 48px 48px 96px;
+          padding: 24px 32px 96px;
         }
 
         .join-btn {
@@ -313,8 +310,8 @@ export default function NetworkPage() {
         }
 
         .network-controls {
-          padding: 0 48px 32px;
-          max-width: 1100px;
+          padding: 0 32px 24px;
+          max-width: 1600px;
           margin: 0 auto;
         }
 
@@ -454,7 +451,7 @@ export default function NetworkPage() {
 
         .split-view {
           display: flex;
-          height: calc(100vh - 200px);
+          height: clamp(520px, 72vh, 900px);
           min-height: 500px;
           max-width: 1600px;
           margin: 0 auto;
@@ -549,9 +546,10 @@ export default function NetworkPage() {
 
         .business-name {
           font-family: var(--cb-font-display, 'Inter', serif);
-          font-size: 1.4rem;
+          font-size: 1.15rem;
           font-weight: 400;
           margin-right: 16px;
+          overflow-wrap: anywhere;
         }
 
         .business-badge {
@@ -594,6 +592,7 @@ export default function NetworkPage() {
         .payment-methods {
           display: flex;
           gap: 8px;
+          flex-wrap: wrap;
         }
 
         .payment-tag {
@@ -649,12 +648,17 @@ export default function NetworkPage() {
           font-size: 13px;
         }
 
+        .sort-toggle:disabled { opacity: 0.45; cursor: not-allowed; }
+        .fetch-error { max-width: 1536px; margin: 0 auto 20px; padding: 16px 24px; border: 1px solid var(--cb-accent); color: var(--cb-text); }
+        .fetch-error button { margin-left: 16px; color: var(--cb-accent); cursor: pointer; }
+        .business-card:focus-visible { outline: 2px solid var(--cb-accent); outline-offset: -2px; }
+
         @media (max-width: 768px) {
           .page-header { padding: 72px 24px 0; }
           .page-content { padding: 32px 24px 64px; }
 
           .network-controls {
-            padding: 0 32px 32px;
+            padding: 0 16px 24px;
           }
 
           .controls-row {
@@ -679,7 +683,7 @@ export default function NetworkPage() {
           }
 
           .map-container {
-            height: 300px;
+            height: 380px;
             flex: none;
           }
 
@@ -718,11 +722,13 @@ export default function NetworkPage() {
               type="text"
               className="search-input"
               placeholder="Search businesses, cities, countries..."
+              aria-label="Search merchants"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <select
               className="category-select"
+              aria-label="Merchant category"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
@@ -734,6 +740,7 @@ export default function NetworkPage() {
             {availableCountries.length > 0 && (
               <select
                 className="category-select"
+                aria-label="Merchant country"
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
               >
@@ -793,6 +800,7 @@ export default function NetworkPage() {
             {searchMode === 'nearby' && userLocation && (
               <select
                 className="category-select"
+                aria-label="Nearby search radius"
                 value={searchRadius}
                 onChange={(e) => setSearchRadius(parseInt(e.target.value))}
               >
@@ -821,11 +829,8 @@ export default function NetworkPage() {
               className={`sort-toggle ${viewportSyncEnabled ? 'active' : ''}`}
               onClick={() => {
                 setViewportSyncEnabled(!viewportSyncEnabled);
-                if (viewportSyncEnabled) {
-                  // When disabling, reset to show all businesses
-                  setVisibleBusinessIds(null);
-                }
               }}
+              aria-pressed={viewportSyncEnabled}
               title={viewportSyncEnabled ? 'List synced with map view' : 'Show all businesses'}
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -838,13 +843,15 @@ export default function NetworkPage() {
           </div>
         </section>
 
+        {fetchError && <div className="fetch-error" role="alert">{fetchError}<button onClick={() => setRefreshKey(key => key + 1)}>Retry</button></div>}
+
         <section className="split-view">
           <div className="map-container">
-            {isLoading ? (
+            {isLoading && businesses.length === 0 ? (
               <div className="loading-state">Loading map...</div>
             ) : (
               <NetworkMap
-                businesses={businesses}
+                businesses={matchingBusinesses}
                 selectedBusiness={selectedBusiness}
                 onSelectBusiness={setSelectedBusiness}
                 onBoundsChange={handleBoundsChange}
@@ -886,11 +893,21 @@ export default function NetworkPage() {
               </div>
             ) : (
               <div className="business-cards" ref={listRef}>
-                {filteredBusinesses.map((business) => (
+                {filteredBusinesses.slice(0, displayedCount).map((business) => (
                   <div
                     key={business.id}
                     id={`business-${business.id}`}
                     className={`business-card ${selectedBusiness?.id === business.id ? 'selected' : ''}`}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Show ${business.name} on map`}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return;
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setSelectedBusiness(business);
+                      }
+                    }}
                     onClick={() => setSelectedBusiness(business)}
                   >
                     <div className="business-header">
@@ -933,7 +950,7 @@ export default function NetworkPage() {
                           </span>
                         ))}
                       </div>
-                      {business.website && (
+                      {business.website && /^https?:\/\//i.test(business.website) && (
                         <a
                           href={business.website}
                           target="_blank"
@@ -952,6 +969,11 @@ export default function NetworkPage() {
                     </div>
                   </div>
                 ))}
+                {filteredBusinesses.length > displayedCount && (
+                  <button className="sort-toggle" onClick={() => setListLimit(displayedCount + 100)}>
+                    Show more ({filteredBusinesses.length - displayedCount} remaining)
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -965,8 +987,7 @@ export default function NetworkPage() {
         onClose={() => setShowJoinModal(false)}
         onSuccess={() => {
           setShowJoinModal(false);
-          // Optionally refresh the list
-          fetchBusinesses();
+          setRefreshKey(key => key + 1);
         }}
       />
     </>

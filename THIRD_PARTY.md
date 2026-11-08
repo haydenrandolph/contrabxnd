@@ -20,6 +20,10 @@ All external services Contrabxnd relies on. Keep this updated as new integration
 | **X/Twitter API** | Social sentiment, tweet embeds | `X_BEARER_TOKEN` | Basic | $100/mo |
 | **Barchart** | FedWatch / futures data (pending approval) | `BARCHART_API_KEY` | TBD | TBD |
 
+## Merchant Map
+
+The merchant directory uses BTCMap data and Leaflet with standard OpenStreetMap raster tiles (no map key required). Tiles load directly in the browser with visible attribution and normal browser caching. Do not add tile prefetching or offline downloads. OpenStreetMap is best-effort, not an SLA-backed commercial service; follow its [tile usage policy](https://operations.osmfoundation.org/policies/tiles/). For higher traffic, configure a dedicated raster provider with `NEXT_PUBLIC_MAP_TILE_URL` and `NEXT_PUBLIC_MAP_TILE_ATTRIBUTION`, then rebuild. Both settings are public browser configuration. The map applies a muted light/dark treatment to the raster layer.
+
 ## AI
 
 | Service | Purpose | Env Vars | Tier | Cost |

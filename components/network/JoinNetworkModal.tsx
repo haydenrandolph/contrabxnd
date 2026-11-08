@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useEffectEvent, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { BUSINESS_CATEGORIES } from '@/lib/network/types';
 
@@ -27,12 +27,23 @@ export default function JoinNetworkModal({
   const [success, setSuccess] = useState(false);
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const stableClose = useCallback(() => handleClose(), []);  // eslint-disable-line react-hooks/exhaustive-deps
+  const closeModal = () => {
+    setBusinessName('');
+    setWebsite('');
+    setCategory('');
+    setDescription('');
+    setContactEmail('');
+    setPaymentMethod('');
+    setError('');
+    setSuccess(false);
+    onClose();
+  };
+  const handleClose = useEffectEvent(() => closeModal());
 
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { stableClose(); return; }
+      if (e.key === 'Escape') { handleClose(); return; }
       if (e.key === 'Tab' && contentRef.current) {
         const focusable = contentRef.current.querySelectorAll<HTMLElement>(
           'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -46,7 +57,7 @@ export default function JoinNetworkModal({
     document.addEventListener('keydown', handleKeyDown);
     contentRef.current?.querySelector<HTMLElement>('button, input')?.focus();
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, stableClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -88,22 +99,6 @@ export default function JoinNetworkModal({
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const resetForm = () => {
-    setBusinessName('');
-    setWebsite('');
-    setCategory('');
-    setDescription('');
-    setContactEmail('');
-    setPaymentMethod('');
-    setError('');
-    setSuccess(false);
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
   };
 
   return (
@@ -417,11 +412,11 @@ export default function JoinNetworkModal({
         }
       `}</style>
 
-      <div className="modal-overlay" onClick={handleClose}>
+      <div className="modal-overlay" onClick={closeModal}>
         <div className="modal-content" ref={contentRef} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
             <h2 className="modal-title">Join the Network</h2>
-            <button className="modal-close" onClick={handleClose}>
+            <button className="modal-close" onClick={closeModal}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>

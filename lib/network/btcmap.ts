@@ -1,7 +1,6 @@
 import type { NetworkBusiness, PaymentMethod, Location } from './types';
 
 const BTCMAP_API_V2 = 'https://api.btcmap.org/v2';
-const BTCMAP_API_V3 = 'https://api.btcmap.org/v3';
 
 // Cache by country code (or 'global' for all)
 const cache: Map<string, { businesses: NetworkBusiness[]; timestamp: number }> = new Map();
@@ -30,16 +29,15 @@ interface BTCMapArea {
   id: string;
   tags: {
     name?: string;
-    'btcmap:id'?: number;
+    geo_json?: {
+      type: 'Polygon';
+      coordinates: number[][][];
+    } | {
+      type: 'MultiPolygon';
+      coordinates: number[][][][];
+    };
     [key: string]: unknown;
   };
-}
-
-interface BTCMapAreaElement {
-  id: number;
-  area_id: number;
-  element_id: number;
-  updated_at: string;
 }
 
 function categorizePlace(osmTags: Record<string, string>, btcmapCategory?: string): string {
@@ -135,51 +133,27 @@ function mapToNetworkBusiness(element: BTCMapElement): NetworkBusiness | null {
   };
 }
 
-// Get BTCMap area ID for a country code
-async function getAreaId(countryCode: string): Promise<number | null> {
-  try {
-    const response = await fetch(`${BTCMAP_API_V2}/areas/${countryCode.toLowerCase()}`);
-    if (response.ok) {
-      const area: BTCMapArea = await response.json();
-      return area.tags['btcmap:id'] || null;
+function isInRing(lat: number, lon: number, ring: number[][]): boolean {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) {
+      inside = !inside;
     }
-  } catch (error) {
-    console.error(`Failed to get area for ${countryCode}:`, error);
   }
-  return null;
-}
-
-// Get element IDs for an area
-async function getAreaElementIds(areaId: number): Promise<number[]> {
-  try {
-    const response = await fetch(
-      `${BTCMAP_API_V3}/area-elements?updated_since=2020-01-01T00:00:00Z&limit=10000`
-    );
-    if (response.ok) {
-      const areaElements: BTCMapAreaElement[] = await response.json();
-      return areaElements
-        .filter(ae => ae.area_id === areaId)
-        .map(ae => ae.element_id);
-    }
-  } catch (error) {
-    console.error('Failed to get area elements:', error);
-  }
-  return [];
+  return inside;
 }
 
 // Fetch all elements (for global view or when we need full data)
 async function fetchAllElements(limit: number = 10000): Promise<BTCMapElement[]> {
-  try {
-    const response = await fetch(`${BTCMAP_API_V2}/elements?limit=${limit}`, {
-      headers: { 'Accept': 'application/json' },
-    });
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.error('Failed to fetch elements:', error);
+  const response = await fetch(`${BTCMAP_API_V2}/elements?limit=${limit}`, {
+    headers: { 'Accept': 'application/json' },
+  });
+  if (!response.ok) {
+    throw new Error(`BTCMap elements request failed (${response.status})`);
   }
-  return [];
+  return await response.json();
 }
 
 // Main function to fetch businesses, optionally filtered by country
@@ -195,54 +169,42 @@ export async function fetchBTCMapBusinesses(countryCode?: string): Promise<Netwo
   }
 
   try {
-    let elements: BTCMapElement[];
+    let businesses: NetworkBusiness[];
+    let timestamp: number;
 
     if (countryCode) {
-      // Get area-specific elements
-      const areaId = await getAreaId(countryCode);
-      if (areaId) {
-        const elementIds = await getAreaElementIds(areaId);
-        console.log(`Found ${elementIds.length} element IDs for ${countryCode} (area ${areaId})`);
-
-        if (elementIds.length > 0) {
-          // Fetch all elements and filter by IDs
-          // (BTCMap doesn't have a batch element endpoint, so we fetch all and filter)
-          const allElements = await fetchAllElements(50000);
-
-          // Create a map of element numeric IDs to elements
-          // Element IDs in v2 are like "node:12345", we need to match the numeric part
-          const elementIdSet = new Set(elementIds);
-          elements = allElements.filter(el => {
-            // Extract numeric ID from element id (e.g., "node:12345" -> 12345)
-            const match = el.id.match(/:(\d+)$/);
-            if (match) {
-              const numId = parseInt(match[1], 10);
-              // Also check v3 internal ID from tags
-              const btcmapId = el.tags?.['btcmap:id'];
-              return elementIdSet.has(numId) || (typeof btcmapId === 'number' && elementIdSet.has(btcmapId));
-            }
-            return false;
-          });
-          console.log(`Matched ${elements.length} elements for ${countryCode}`);
-        } else {
-          elements = [];
-        }
-      } else {
-        console.warn(`No area found for country code: ${countryCode}`);
-        elements = [];
+      const response = await fetch(`${BTCMAP_API_V2}/areas/${encodeURIComponent(countryCode.toLowerCase())}`);
+      if (!response.ok) {
+        throw new Error(`BTCMap country request failed (${response.status})`);
       }
+      const area: BTCMapArea = await response.json();
+      const geometry = area.tags.geo_json;
+      if (area.tags.type !== 'country' || !geometry || !['Polygon', 'MultiPolygon'].includes(geometry.type)) {
+        throw new Error('BTCMap country geometry is unavailable');
+      }
+
+      // v3 relationship IDs are internal IDs, not the OSM IDs returned by v2.
+      const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+      const globalBusinesses = await fetchBTCMapBusinesses();
+      businesses = globalBusinesses.filter(business => {
+        if (!business.location) return false;
+        const { lat, lon } = business.location;
+        return polygons.some(polygon =>
+          polygon.length > 0 && isInRing(lat, lon, polygon[0]) &&
+          !polygon.slice(1).some(hole => isInRing(lat, lon, hole))
+        );
+      });
+      timestamp = cache.get('global')!.timestamp;
     } else {
-      // Global fetch - get more elements
-      elements = await fetchAllElements(50000);
+      const elements = await fetchAllElements(50000);
+      businesses = elements
+        .map(mapToNetworkBusiness)
+        .filter((b): b is NetworkBusiness => b !== null);
+      timestamp = Date.now();
     }
 
-    // Convert to NetworkBusiness
-    const businesses = elements
-      .map(mapToNetworkBusiness)
-      .filter((b): b is NetworkBusiness => b !== null);
-
-    // Update cache
-    cache.set(cacheKey, { businesses, timestamp: now });
+    // Derived results retain the global snapshot's age, including stale fallbacks.
+    cache.set(cacheKey, { businesses, timestamp });
     console.log(`Fetched ${businesses.length} businesses for ${cacheKey}`);
 
     return businesses;
@@ -256,17 +218,17 @@ export async function fetchBTCMapBusinesses(countryCode?: string): Promise<Netwo
       console.warn('Returning stale cache due to error');
       return stale.businesses;
     }
-    return [];
+    throw error;
   }
 }
 
-// Fetch businesses near a location (bounding box approach)
+// Fetch businesses within a great-circle radius, nearest first.
 export async function fetchBusinessesNearLocation(
   lat: number,
   lon: number,
   radiusKm: number = 100
 ): Promise<NetworkBusiness[]> {
-  const cacheKey = `near_${lat.toFixed(2)}_${lon.toFixed(2)}_${radiusKm}`;
+  const cacheKey = `near_${lat}_${lon}_${radiusKm}`;
   const now = Date.now();
 
   // Check cache
@@ -276,50 +238,30 @@ export async function fetchBusinessesNearLocation(
   }
 
   try {
-    // Calculate bounding box (rough approximation)
-    const latDelta = radiusKm / 111; // ~111km per degree latitude
-    const lonDelta = radiusKm / (111 * Math.cos(lat * Math.PI / 180));
+    const globalBusinesses = await fetchBTCMapBusinesses();
+    const radians = Math.PI / 180;
+    const businesses = globalBusinesses
+      .flatMap(business => {
+        if (!business.location) return [];
+        const { lat: businessLat, lon: businessLon } = business.location;
+        const a = Math.sin((businessLat - lat) * radians / 2) ** 2 +
+          Math.cos(lat * radians) * Math.cos(businessLat * radians) *
+          Math.sin((businessLon - lon) * radians / 2) ** 2;
+        const distance = 2 * 6371 * Math.asin(Math.sqrt(Math.min(1, Math.max(0, a))));
+        return distance <= radiusKm ? [{ business, distance }] : [];
+      })
+      .sort((a, b) => a.distance - b.distance)
+      .map(({ business }) => business);
 
-    const minLat = lat - latDelta;
-    const maxLat = lat + latDelta;
-    const minLon = lon - lonDelta;
-    const maxLon = lon + lonDelta;
-
-    // Fetch all elements
-    const elements = await fetchAllElements(50000);
-
-    // Filter by bounding box
-    const nearbyElements = elements.filter(el => {
-      const elLat = el.osm_json?.lat;
-      const elLon = el.osm_json?.lon;
-      if (elLat === undefined || elLon === undefined) return false;
-      return elLat >= minLat && elLat <= maxLat && elLon >= minLon && elLon <= maxLon;
-    });
-
-    const businesses = nearbyElements
-      .map(mapToNetworkBusiness)
-      .filter((b): b is NetworkBusiness => b !== null);
-
-    // Sort by distance
-    businesses.sort((a, b) => {
-      if (!a.location || !b.location) return 0;
-      const distA = Math.sqrt(
-        Math.pow(a.location.lat - lat, 2) + Math.pow(a.location.lon - lon, 2)
-      );
-      const distB = Math.sqrt(
-        Math.pow(b.location.lat - lat, 2) + Math.pow(b.location.lon - lon, 2)
-      );
-      return distA - distB;
-    });
-
-    cache.set(cacheKey, { businesses, timestamp: now });
+    cache.set(cacheKey, { businesses, timestamp: cache.get('global')!.timestamp });
     console.log(`Found ${businesses.length} businesses near (${lat}, ${lon})`);
 
     return businesses;
 
   } catch (error) {
     console.error('Failed to fetch nearby businesses:', error);
-    return [];
+    if (cached) return cached.businesses;
+    throw error;
   }
 }
 

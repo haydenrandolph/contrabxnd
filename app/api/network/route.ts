@@ -80,13 +80,13 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Combine and dedupe by website URL
+    // Keep physical BTCMap branches; dedupe only approved submissions by website.
     const allBusinesses = [...btcmapBusinesses, ...approvedApplications];
     const seenWebsites = new Set<string>();
     const uniqueBusinesses = allBusinesses.filter((business) => {
       if (!business.website) return true;
       const normalizedUrl = business.website.toLowerCase().replace(/\/$/, '');
-      if (seenWebsites.has(normalizedUrl)) return false;
+      if (business.source === 'application' && seenWebsites.has(normalizedUrl)) return false;
       seenWebsites.add(normalizedUrl);
       return true;
     });
