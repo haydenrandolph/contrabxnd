@@ -15,42 +15,53 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
   const [currentTime, setCurrentTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
   const [rate, setRate] = useState(1);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const onCanPlay = () => { setAvailable(true); setLoading(false); };
-    const onError = () => { setAvailable(false); setLoading(false); };
-    const onLoadedMetadata = () => setTotalDuration(audio.duration);
+    const onCanPlay = () => setAvailable(true);
+    const onError = () => { setAvailable(false); setPlaying(false); };
+    const onLoadedMetadata = () => {
+      if (Number.isFinite(audio.duration)) {
+        setTotalDuration(audio.duration);
+        setAvailable(true);
+      }
+    };
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onEnded = () => setPlaying(false);
+    const onPlay = () => setPlaying(true);
+    const onPause = () => setPlaying(false);
 
     audio.addEventListener('canplay', onCanPlay);
     audio.addEventListener('error', onError);
     audio.addEventListener('loadedmetadata', onLoadedMetadata);
     audio.addEventListener('timeupdate', onTimeUpdate);
-    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
+    audio.addEventListener('ended', onPause);
 
     return () => {
       audio.removeEventListener('canplay', onCanPlay);
       audio.removeEventListener('error', onError);
       audio.removeEventListener('loadedmetadata', onLoadedMetadata);
       audio.removeEventListener('timeupdate', onTimeUpdate);
-      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('ended', onPause);
     };
   }, []);
 
-  const toggle = useCallback(() => {
+  const toggle = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
     if (playing) {
       audio.pause();
-      setPlaying(false);
     } else {
-      audio.play();
-      setPlaying(true);
+      try {
+        await audio.play();
+      } catch {
+        setPlaying(false);
+      }
     }
   }, [playing]);
 
@@ -64,7 +75,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
 
   const skip = useCallback((seconds: number) => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || !Number.isFinite(audio.duration)) return;
     audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + seconds));
   }, []);
 
@@ -83,45 +94,16 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
 
   const progress = totalDuration > 0 ? (currentTime / totalDuration) * 100 : 0;
 
-  if (loading) {
-    return (
-      <>
-        <audio ref={audioRef} src={src} preload="metadata" />
-        <style jsx>{`
-          .ap-loading {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            background: #141414;
-            border: 1px solid #1a1a1a;
-            border-radius: var(--cb-radius);
-          }
-          :global(html.light-mode) .ap-loading {
-            background: #ffffff;
-            border-color: #d0d0d1;
-          }
-          .ap-loading-text {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 11px;
-            color: #3a3a3a;
-          }
-          :global(html.light-mode) .ap-loading-text {
-            color: #b0b0b1;
-          }
-        `}</style>
-        <div className="ap-loading">
-          <span className="ap-loading-text">Loading audio...</span>
-        </div>
-      </>
-    );
-  }
-
-  if (!available) return <audio ref={audioRef} src={src} preload="metadata" style={{ display: 'none' }} />;
-
   return (
     <>
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={src} preload="metadata" onLoadStart={() => {
+        setAvailable(false);
+        setPlaying(false);
+        setCurrentTime(0);
+        setTotalDuration(0);
+        setRate(1);
+        if (audioRef.current) audioRef.current.playbackRate = 1;
+      }} />
       <style jsx>{`
         .audio-player {
           display: flex;
@@ -132,6 +114,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
           border: 1px solid #1a1a1a;
           border-radius: var(--cb-radius);
         }
+        .audio-player[hidden] { display: none; }
         :global(html.light-mode) .audio-player {
           background: #ffffff;
           border-color: #d0d0d1;
@@ -174,7 +157,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
         }
 
         .ap-label {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -182,7 +165,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
         }
 
         .ap-title {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-sans);
           font-size: 11px;
           color: #8a8a8a;
           overflow: hidden;
@@ -227,7 +210,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
           background: transparent;
           border: 1px solid #3a3a3a;
           border-radius: var(--cb-radius);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           color: #8a8a8a;
           cursor: pointer;
@@ -249,7 +232,7 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
         }
 
         .ap-time {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           color: #8a8a8a;
           font-variant-numeric: tabular-nums;
@@ -300,13 +283,13 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
         }
       `}</style>
 
-      <div className="audio-player">
+      <div className="audio-player" hidden={!available}>
         <div className="ap-top">
           <button className={`ap-play${playing ? ' active' : ''}`} onClick={toggle} aria-label={playing ? 'Pause' : 'Play'}>
             {playing ? (
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                <rect x="6" y="4" width="4" height="16" fill={playing ? '#fff' : '#8a8a8a'} />
-                <rect x="14" y="4" width="4" height="16" fill={playing ? '#fff' : '#8a8a8a'} />
+                <rect x="6" y="4" width="4" height="16" fill="var(--cb-on-accent)" />
+                <rect x="14" y="4" width="4" height="16" fill="var(--cb-on-accent)" />
               </svg>
             ) : (
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
@@ -326,13 +309,13 @@ export default function AudioPlayer({ src, title, duration }: AudioPlayerProps) 
             <button className="ap-skip" onClick={() => skip(-15)} aria-label="Back 15s">
               <svg viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2">
                 <path d="M1 4v6h6" /><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                <text x="12" y="16" textAnchor="middle" fill="#8a8a8a" stroke="none" fontSize="7" fontFamily="JetBrains Mono">15</text>
+                <text x="12" y="16" textAnchor="middle" fill="#8a8a8a" stroke="none" fontSize="7" fontFamily="var(--cb-font-mono)">15</text>
               </svg>
             </button>
             <button className="ap-skip" onClick={() => skip(30)} aria-label="Forward 30s">
               <svg viewBox="0 0 24 24" fill="none" stroke="#8a8a8a" strokeWidth="2">
                 <path d="M23 4v6h-6" /><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10" />
-                <text x="12" y="16" textAnchor="middle" fill="#8a8a8a" stroke="none" fontSize="7" fontFamily="JetBrains Mono">30</text>
+                <text x="12" y="16" textAnchor="middle" fill="#8a8a8a" stroke="none" fontSize="7" fontFamily="var(--cb-font-mono)">30</text>
               </svg>
             </button>
             <div className="ap-speed">

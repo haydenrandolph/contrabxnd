@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useEffectEvent, useCallback, useDeferredValue, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
@@ -60,68 +60,68 @@ interface UserLocation {
 
 export default function NetworkPage() {
   const [showJoinModal, setShowJoinModal] = useState(false);
-  const [businesses, setBusinesses] = useState<NetworkBusiness[]>([]);
-  const [matchingBusinesses, setMatchingBusinesses] = useState<NetworkBusiness[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState('');
+  const [requestSnapshot, setRequestSnapshot] = useState<{
+    key: string | null;
+    businesses: NetworkBusiness[];
+    error: string;
+  }>({ key: null, businesses: [], error: '' });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedCountry, setSelectedCountry] = useState<string>('All');
   const [sortByDistance, setSortByDistance] = useState(false);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [selectedBusiness, setSelectedBusiness] = useState<NetworkBusiness | null>(null);
+  const [locationStatus, setLocationStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [selection, setSelection] = useState<{ key: string; business: NetworkBusiness | null } | null>(null);
   const [searchRadius, setSearchRadius] = useState<number>(500); // km
   const [searchMode, setSearchMode] = useState<'global' | 'nearby'>('global');
-  const [visibleBusinessIds, setVisibleBusinessIds] = useState<string[] | null>(null);
+  const [viewport, setViewport] = useState<{ businesses: NetworkBusiness[]; ids: string[] } | null>(null);
   const [viewportSyncEnabled, setViewportSyncEnabled] = useState(true);
-  const [listLimit, setListLimit] = useState(100);
   const listRef = useRef<HTMLDivElement>(null);
   const { isLightMode } = useTheme();
 
-  // Handle map bounds change - filter list to show only visible businesses
-  const handleBoundsChange = useCallback((bounds: MapBounds, visibleIds: string[]) => {
-    setVisibleBusinessIds(visibleIds);
-  }, []);
-
   // Fetch businesses with optional location parameters
   const [refreshKey, setRefreshKey] = useState(0);
+  const requestUrl = userLocation && searchMode === 'nearby'
+    ? `/api/network?lat=${userLocation.lat}&lon=${userLocation.lon}&radius=${searchRadius}`
+    : '/api/network';
+  const requestKey = JSON.stringify([requestUrl, refreshKey]);
+  const businesses = requestSnapshot.businesses;
+  const isLoading = requestSnapshot.key !== requestKey;
+  const fetchError = isLoading ? '' : requestSnapshot.error;
+  const receiveBusinesses = useEffectEvent((key: string, results: NetworkBusiness[] | null, error: string) => {
+    // Also reject stale completions before the previous effect has been cleaned up.
+    if (key !== requestKey) return;
+    setRequestSnapshot(previous => ({ key, businesses: results ?? previous.businesses, error }));
+  });
+
   useEffect(() => {
     const controller = new AbortController();
-    setIsLoading(true);
-    setFetchError('');
     const fetchBusinesses = async () => {
       try {
-        let url = '/api/network';
-        if (userLocation && searchMode === 'nearby') {
-          url += `?lat=${userLocation.lat}&lon=${userLocation.lon}&radius=${searchRadius}`;
-        }
-
-        const response = await fetch(url, { signal: controller.signal });
+        const response = await fetch(requestUrl, { signal: controller.signal });
         if (!response.ok) throw new Error('Could not load merchants. Please try again.');
         const data = await response.json();
         if (controller.signal.aborted) return;
-        setBusinesses(data.businesses || []);
-        setSelectedBusiness(null);
-        setVisibleBusinessIds(null);
+        receiveBusinesses(requestKey, data.businesses || [], '');
       } catch (error) {
         if (!controller.signal.aborted) {
-          setFetchError(error instanceof Error ? error.message : 'Could not load merchants.');
+          receiveBusinesses(requestKey, null, error instanceof Error ? error.message : 'Could not load merchants.');
         }
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
     fetchBusinesses();
     return () => controller.abort();
-  }, [searchMode, searchRadius, userLocation, refreshKey]);
+  }, [requestUrl, requestKey]);
 
   // Auto-detect user location on initial load
   useEffect(() => {
+    let active = true;
+    const unavailable = () => { if (active) setLocationStatus('error'); };
+    let unavailableTimer: ReturnType<typeof setTimeout> | undefined;
     if ('geolocation' in navigator) {
-      setLocationStatus('loading');
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          if (!active) return;
           const loc = {
             lat: position.coords.latitude,
             lon: position.coords.longitude,
@@ -132,21 +132,24 @@ export default function NetworkPage() {
           // Auto-switch to nearby mode when location is detected
           setSearchMode('nearby');
         },
-        (error) => {
-          console.log('Geolocation error:', error.message);
-          setLocationStatus('error');
-        },
+        unavailable,
         { timeout: 10000, maximumAge: 300000 }
       );
     } else {
-      setLocationStatus('error');
+      unavailableTimer = setTimeout(unavailable, 0);
     }
+    return () => {
+      active = false;
+      clearTimeout(unavailableTimer);
+    };
   }, []);
 
   // Get unique countries for filter dropdown
-  const availableCountries = getUniqueCountries(businesses);
+  const availableCountries = useMemo(() => getUniqueCountries(businesses), [businesses]);
+  const deferredQuery = useDeferredValue(searchQuery.trim().toLowerCase());
 
-  useEffect(() => {
+  // The global directory can contain 27k merchants; keep typing independent of this work.
+  const matchingBusinesses = useMemo(() => {
     let filtered = businesses;
 
     // Filter by category
@@ -160,8 +163,8 @@ export default function NetworkPage() {
     }
 
     // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    if (deferredQuery) {
+      const query = deferredQuery;
       filtered = filtered.filter(
         (b) =>
           b.name.toLowerCase().includes(query) ||
@@ -191,14 +194,33 @@ export default function NetworkPage() {
       });
     }
 
-    setMatchingBusinesses(filtered);
-    setListLimit(100);
-  }, [businesses, selectedCategory, selectedCountry, searchQuery, userLocation, sortByDistance]);
+    return filtered;
+  }, [businesses, selectedCategory, selectedCountry, deferredQuery, userLocation, sortByDistance]);
 
-  const visibleSet = viewportSyncEnabled && visibleBusinessIds !== null ? new Set(visibleBusinessIds) : null;
-  const filteredBusinesses = visibleSet
-    ? matchingBusinesses.filter(b => !b.location || visibleSet.has(b.id))
-    : matchingBusinesses;
+  const selectedBusiness = selection?.key === requestKey
+    ? matchingBusinesses.find(b => b.id === selection.business?.id) ?? null
+    : null;
+  const setSelectedBusiness = useCallback((business: NetworkBusiness | null) => {
+    setSelection({ key: requestKey, business });
+  }, [requestKey]);
+  const handleBoundsChange = useCallback((_bounds: MapBounds, ids: string[]) => {
+    setViewport(previous => previous?.businesses === matchingBusinesses &&
+      previous.ids.length === ids.length && previous.ids.every((id, i) => id === ids[i])
+      ? previous : { businesses: matchingBusinesses, ids });
+  }, [matchingBusinesses]);
+  const visibleBusinessIds = viewport?.businesses === matchingBusinesses ? viewport.ids : null;
+  const filteredBusinesses = useMemo(() => {
+    if (!viewportSyncEnabled || visibleBusinessIds === null) return matchingBusinesses;
+    const visibleSet = new Set(visibleBusinessIds);
+    return matchingBusinesses.filter(b => !b.location || visibleSet.has(b.id));
+  }, [matchingBusinesses, viewportSyncEnabled, visibleBusinessIds]);
+  const listFilterKey = JSON.stringify([requestKey, selectedCategory, selectedCountry, deferredQuery,
+    userLocation?.lat, userLocation?.lon, sortByDistance, viewportSyncEnabled]);
+  const [pagination, setPagination] = useState({ key: listFilterKey, limit: 100 });
+  if (pagination.key !== listFilterKey) {
+    setPagination({ key: listFilterKey, limit: 100 });
+  }
+  const listLimit = pagination.key === listFilterKey ? pagination.limit : 100;
   const displayedCount = Math.max(listLimit, selectedBusiness ? filteredBusinesses.findIndex(b => b.id === selectedBusiness.id) + 1 : 0);
 
   // Scroll list to selected business when selected from map
@@ -227,7 +249,7 @@ export default function NetworkPage() {
         .network-page {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-sans);
           font-size: 13px;
           line-height: 1.7;
           overflow-x: hidden;
@@ -242,7 +264,7 @@ export default function NetworkPage() {
         }
 
         .page-label {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -251,7 +273,7 @@ export default function NetworkPage() {
         }
 
         .page-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: clamp(2rem, 4vw, 3rem);
           font-weight: 400;
           letter-spacing: -0.02em;
@@ -261,7 +283,7 @@ export default function NetworkPage() {
         }
 
         .page-subtitle {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-sans);
           font-size: 13px;
           color: var(--cb-text-muted);
           max-width: 600px;
@@ -290,7 +312,7 @@ export default function NetworkPage() {
           border: 1px solid var(--cb-border);
           border-radius: var(--cb-radius);
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -330,7 +352,7 @@ export default function NetworkPage() {
           border: 1px solid var(--cb-border);
           border-radius: var(--cb-radius);
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 13px;
           transition: border-color 0.15s ease;
         }
@@ -350,7 +372,7 @@ export default function NetworkPage() {
           border: 1px solid var(--cb-border);
           border-radius: var(--cb-radius);
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 13px;
           cursor: pointer;
           transition: border-color 0.15s ease;
@@ -407,7 +429,7 @@ export default function NetworkPage() {
           border: 1px solid var(--cb-border);
           border-radius: var(--cb-radius);
           color: var(--cb-text-muted);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           cursor: pointer;
           transition: border-color 0.15s ease, color 0.15s ease;
@@ -482,7 +504,7 @@ export default function NetworkPage() {
         }
 
         .list-header h3 {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 1.2rem;
           font-weight: 400;
           margin-bottom: 4px;
@@ -545,7 +567,7 @@ export default function NetworkPage() {
         }
 
         .business-name {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 1.15rem;
           font-weight: 400;
           margin-right: 16px;
@@ -638,7 +660,7 @@ export default function NetworkPage() {
         }
 
         .empty-state-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 1.5rem;
           margin-bottom: 8px;
         }
@@ -970,7 +992,7 @@ export default function NetworkPage() {
                   </div>
                 ))}
                 {filteredBusinesses.length > displayedCount && (
-                  <button className="sort-toggle" onClick={() => setListLimit(displayedCount + 100)}>
+                  <button className="sort-toggle" onClick={() => setPagination({ key: listFilterKey, limit: displayedCount + 100 })}>
                     Show more ({filteredBusinesses.length - displayedCount} remaining)
                   </button>
                 )}

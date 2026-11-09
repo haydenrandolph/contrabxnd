@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import InfraShell from '@/components/infra/InfraShell';
-import { createBrowserClient } from '@supabase/ssr';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ApiKey {
   id: string;
@@ -13,73 +13,116 @@ interface ApiKey {
   revoked_at: string | null;
 }
 
-function useAuth() {
-  const [user, setUser] = useState<{ id: string; email?: string } | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user ? { id: data.user.id, email: data.user.email } : null);
-      setLoading(false);
-    });
-  }, []);
-
-  return { user, loading };
+export default function McpPage() {
+  const { user } = useAuth();
+  return <McpContent key={user?.id ?? 'anonymous'} />;
 }
 
-export default function McpPage() {
-  const { user, loading: authLoading } = useAuth();
+function McpContent() {
+  const { user, isLoading: authLoading, isConfigured } = useAuth();
+  const userId = user?.id;
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [newKey, setNewKey] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState<string | null>(null);
+  const [keysReady, setKeysReady] = useState(false);
+  const [revision, setRevision] = useState(0);
+  const requestRef = useRef<AbortController | null>(null);
+  const mutationRef = useRef(false);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const fetchKeys = useCallback(async () => {
-    const res = await fetch('/api/keys');
-    if (res.ok) {
-      const data = await res.json();
-      setKeys(data.keys || []);
-    }
+  useEffect(() => {
+    const controller = new AbortController();
+    requestRef.current = controller;
+    return () => {
+      controller.abort();
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+    };
   }, []);
 
   useEffect(() => {
-    if (user) fetchKeys();
-  }, [user, fetchKeys]);
+    if (!userId || authLoading || !isConfigured) return;
+    const controller = new AbortController();
+    fetch('/api/keys', { signal: controller.signal })
+      .then(async res => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Unable to load API keys');
+        if (!controller.signal.aborted) {
+          setKeys(data.keys || []);
+          setKeysReady(true);
+        }
+      })
+      .catch(error => {
+        if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Unable to load API keys');
+      });
+    return () => controller.abort();
+  }, [userId, authLoading, isConfigured, revision]);
 
   const generateKey = async () => {
+    const controller = requestRef.current;
+    if (!userId || authLoading || !isConfigured || !keysReady || mutationRef.current || !controller || controller.signal.aborted) return;
+    mutationRef.current = true;
     setGenerating(true);
     setError(null);
     setNewKey(null);
-    const res = await fetch('/api/keys', { method: 'POST' });
-    const data = await res.json();
-    if (res.ok) {
-      setNewKey(data.key);
-      fetchKeys();
-    } else {
-      setError(data.error);
+    try {
+      const res = await fetch('/api/keys', { method: 'POST', signal: controller.signal });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Unable to generate API key');
+      if (!controller.signal.aborted) {
+        setNewKey(data.key);
+        setKeysReady(false);
+        setRevision(value => value + 1);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Unable to generate API key');
+    } finally {
+      mutationRef.current = false;
+      if (!controller.signal.aborted) setGenerating(false);
     }
-    setGenerating(false);
   };
 
   const revokeKey = async (id: string) => {
-    await fetch('/api/keys', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    });
-    fetchKeys();
-    if (newKey) setNewKey(null);
+    const controller = requestRef.current;
+    if (!userId || authLoading || !isConfigured || !keysReady || mutationRef.current || !controller || controller.signal.aborted) return;
+    mutationRef.current = true;
+    setRevoking(id);
+    setError(null);
+    try {
+      const res = await fetch('/api/keys', {
+        method: 'DELETE',
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error('Unable to revoke API key');
+      if (!controller.signal.aborted) {
+        setKeys(current => current.filter(key => key.id !== id));
+        setNewKey(null);
+        setKeysReady(false);
+        setRevision(value => value + 1);
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) setError(error instanceof Error ? error.message : 'Unable to revoke API key');
+    } finally {
+      mutationRef.current = false;
+      if (!controller.signal.aborted) setRevoking(null);
+    }
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    setTimeout(() => setCopied(null), 2000);
+  const copyToClipboard = async (text: string, label: string) => {
+    const controller = requestRef.current;
+    try {
+      await navigator.clipboard.writeText(text);
+      if (!controller || controller.signal.aborted) return;
+      setCopied(label);
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(null), 2000);
+    } catch {
+      if (controller && !controller.signal.aborted) setError('Unable to copy to clipboard');
+    }
   };
 
   const activeKeys = keys.filter(k => !k.revoked_at);
@@ -102,7 +145,7 @@ export default function McpPage() {
           margin-bottom: 48px;
         }
         .mcp-section-title {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -126,7 +169,7 @@ export default function McpPage() {
           font-size: 12px;
           font-weight: 700;
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
         }
         .mcp-tool-desc {
           font-size: 11px;
@@ -139,7 +182,7 @@ export default function McpPage() {
           border: 1px solid var(--cb-border);
           border-radius: var(--cb-radius);
           padding: 16px 20px;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           line-height: 1.6;
           overflow-x: auto;
@@ -156,7 +199,7 @@ export default function McpPage() {
           border-radius: var(--cb-radius);
           padding: 4px 10px;
           font-size: 10px;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           color: var(--cb-text-muted);
           cursor: pointer;
           text-transform: uppercase;
@@ -185,7 +228,7 @@ export default function McpPage() {
           border: none;
           border-radius: var(--cb-radius);
           padding: 8px 20px;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           letter-spacing: 0.06em;
           text-transform: uppercase;
@@ -216,7 +259,7 @@ export default function McpPage() {
           margin-bottom: 8px;
         }
         .mcp-new-key-value {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           word-break: break-all;
           color: var(--cb-text);
@@ -243,7 +286,7 @@ export default function McpPage() {
           border-radius: var(--cb-radius);
         }
         .mcp-key-prefix {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           color: var(--cb-text);
         }
@@ -329,7 +372,7 @@ export default function McpPage() {
           font-size: 11px;
           font-weight: 700;
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           white-space: nowrap;
           min-width: 160px;
         }
@@ -407,13 +450,14 @@ export default function McpPage() {
                     <button
                       className="mcp-btn"
                       onClick={generateKey}
-                      disabled={generating || activeKeys.length >= 3}
+                      disabled={!keysReady || generating || revoking !== null || activeKeys.length >= 3}
                     >
                       {generating ? 'Generating...' : 'Generate Key'}
                     </button>
                   </div>
 
-                  {error && <div className="mcp-error">{error}</div>}
+                  {error && <div className="mcp-error" role="alert">{error}</div>}
+                  {!keysReady && error && <button className="mcp-btn" onClick={() => { setError(null); setRevision(value => value + 1); }}>Retry loading keys</button>}
 
                   {newKey && (
                     <div className="mcp-new-key">
@@ -443,8 +487,8 @@ export default function McpPage() {
                               {k.last_used_at && ` — Last used ${new Date(k.last_used_at).toLocaleDateString()}`}
                             </div>
                           </div>
-                          <button className="mcp-btn mcp-btn-danger" onClick={() => revokeKey(k.id)}>
-                            Revoke
+                          <button className="mcp-btn mcp-btn-danger" disabled={!keysReady || generating || revoking !== null} onClick={() => revokeKey(k.id)}>
+                            {revoking === k.id ? 'Revoking...' : 'Revoke'}
                           </button>
                         </div>
                       ))}

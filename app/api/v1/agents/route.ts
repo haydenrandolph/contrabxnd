@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const capability = url.searchParams.get('capability');
   const minScore = Number(url.searchParams.get('min_score')) || 0;
-  const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 100);
+  const limit = Math.max(1, Math.min(Math.floor(Number(url.searchParams.get('limit'))) || 50, 100));
 
   let query = admin
     .from('agents')
@@ -63,12 +63,22 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
   if (!admin) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   const { name, description, endpoint, capabilities, pricingModel, pubkey } = body;
 
-  if (!name || !capabilities || !Array.isArray(capabilities)) {
+  if (typeof name !== 'string' || !name.trim() || name.length > 200 || !Array.isArray(capabilities) ||
+      capabilities.length > 50 || capabilities.some(c => typeof c !== 'string' || !c.trim() || c.length > 100)) {
     return NextResponse.json({ error: 'name and capabilities[] required' }, { status: 400 });
   }
+
+  const { count, error: countError } = await admin
+    .from('agents')
+    .select('id', { count: 'exact', head: true })
+    .eq('owner_id', auth.userId)
+    .eq('status', 'active');
+  if (countError || count == null) return NextResponse.json({ error: 'Could not check agent limit' }, { status: 503 });
+  if (count >= 10) return NextResponse.json({ error: 'Maximum 10 active agents per account' }, { status: 400 });
 
   const { data: agent, error } = await admin
     .from('agents')

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cronGuard } from '@/lib/audit-guards';
 import { createAdminClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
@@ -15,15 +16,25 @@ async function fetchFredHistory(
   endDate: string
 ): Promise<Array<{ date: string; value: number }>> {
   const url = `${FRED_BASE}?series_id=${seriesId}&observation_start=${startDate}&observation_end=${endDate}&sort_order=asc&file_type=json&api_key=${apiKey}`;
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10_000) });
   if (!res.ok) throw new Error(`FRED ${seriesId}: ${res.status}`);
   const data = await res.json();
-  return (data.observations || [])
+  if (!Array.isArray(data.observations) || data.observations.length === 0) {
+    throw new Error('Missing FRED observations');
+  }
+  const observations = data.observations
     .filter((o: { value: string }) => o.value !== '.')
     .map((o: { date: string; value: string }) => ({
       date: o.date,
-      value: parseFloat(o.value),
+      value: o.value == null || String(o.value).trim() === ''
+        ? NaN : Number(o.value) * (seriesId === 'M2SL' ? 1_000 : 1),
     }));
+  if (observations.length === 0 || observations.some((o: { date: string; value: number }) =>
+    !/^\d{4}-\d{2}-\d{2}$/.test(o.date) || !Number.isFinite(Date.parse(o.date)) ||
+    !Number.isFinite(o.value) || (seriesId !== 'NFCILEVERAGE' && o.value < 0))) {
+    throw new Error('Invalid FRED observations');
+  }
+  return observations;
 }
 
 async function fetchFredTGA(
@@ -40,53 +51,56 @@ async function fetchNYFedRRP(
 ): Promise<Array<{ date: string; value: number }>> {
   const results: Array<{ date: string; value: number }> = [];
   const url = `${NYFED_RRP}?startDate=${startDate}&endDate=${endDate}`;
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) return results;
+  const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) throw new Error('RRP request failed');
   const data = await res.json();
-  const ops = data?.repo?.operations || [];
+  const ops = data?.repo?.operations;
+  if (!Array.isArray(ops) || ops.length === 0) throw new Error('Missing RRP operations');
 
   for (const op of ops) {
-    const val = parseFloat(op.totalAmtAccepted);
-    if (!isNaN(val) && op.operationDate) {
+    const val = op.totalAmtAccepted == null || String(op.totalAmtAccepted).trim() === ''
+      ? NaN : Number(op.totalAmtAccepted);
+    if (Number.isFinite(val) && val >= 0 && /^\d{4}-\d{2}-\d{2}$/.test(op.operationDate) &&
+      Number.isFinite(Date.parse(op.operationDate))) {
       results.push({ date: op.operationDate, value: val });
     }
   }
 
+  if (results.length === 0) throw new Error('Invalid RRP operations');
   return results;
 }
 
 export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = cronGuard(request);
+  if (denied) return denied;
 
   const fredKey = process.env.FRED_API_KEY;
   if (!fredKey) {
     return NextResponse.json({ error: 'FRED_API_KEY not set' }, { status: 500 });
   }
 
-  const sb = createAdminClient();
-  if (!sb) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-  }
+  const stats = { liquidity: 0, slr: 0, errors: [] as string[] };
   const endDate = new Date().toISOString().slice(0, 10);
   const startDate = '2022-01-01';
-
-  const stats = { liquidity: 0, slr: 0, errors: [] as string[] };
+  // Seed forward fills with observations before the requested history window.
+  const seedDate = '2021-10-01';
 
   try {
+    const sb = createAdminClient();
+    if (!sb) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
     // Fetch all FRED series in parallel
     const [walcl, wresbal, m2, nfci, qbpbs] = await Promise.all([
-      fetchFredHistory('WALCL', fredKey, startDate, endDate),
-      fetchFredHistory('WRESBAL', fredKey, startDate, endDate),
-      fetchFredHistory('M2SL', fredKey, startDate, endDate),
+      fetchFredHistory('WALCL', fredKey, seedDate, endDate),
+      fetchFredHistory('WRESBAL', fredKey, seedDate, endDate),
+      fetchFredHistory('M2SL', fredKey, seedDate, endDate),
       fetchFredHistory('NFCILEVERAGE', fredKey, startDate, endDate),
-      fetchFredHistory('QBPBSLEVK', fredKey, startDate, endDate),
+      fetchFredHistory('QBPBSLEVK', fredKey, seedDate, endDate),
     ]);
 
     // Fetch TGA from FRED (WTREGEN — weekly, in millions)
-    const tga = await fetchFredTGA(fredKey, startDate, endDate);
+    const tga = await fetchFredTGA(fredKey, seedDate, endDate);
 
     // Fetch NY Fed RRP
     const rrp = await fetchNYFedRRP(startDate, endDate);
@@ -133,15 +147,16 @@ export async function POST(request: NextRequest) {
       const bankRes = wresbalFilled.get(date) ?? null;
       const m2Val = m2Filled.get(date) ?? null;
 
-      // FRED data (WALCL, WTREGEN, M2) is in millions; NY Fed RRP is in raw dollars
+      // M2SL was normalized from billions above; other balances are in millions.
       const tgaMillions = tgaBal;
-      const rrpMillions = rrpBal ? rrpBal / 1_000_000 : null;
+      const rrpMillions = rrpBal != null ? rrpBal / 1_000_000 : null;
 
       const netLiquidity =
         fedBs != null && tgaMillions != null && rrpMillions != null
           ? fedBs - tgaMillions - rrpMillions
           : null;
 
+      if (netLiquidity == null) throw new Error('Incomplete historical liquidity');
       liquidityRows.push({
         date,
         fed_balance_sheet: fedBs,
@@ -161,21 +176,23 @@ export async function POST(request: NextRequest) {
       const { error } = await sb
         .from('liquidity_snapshots')
         .upsert(batch, { onConflict: 'date' });
-      if (error) stats.errors.push(`liquidity batch ${i}: ${error.message}`);
+      if (error) stats.errors.push(`liquidity batch ${i}: write failed`);
       else stats.liquidity += batch.length;
     }
 
     // Build SLR snapshots from NFCI leverage data
-    const nfciMap = new Map(nfci.map(d => [d.date, d.value]));
     const qbpbsMap = new Map(qbpbs.map(d => [d.date, d.value]));
+    const tier1Filled = forwardFill(qbpbsMap, [...new Set([
+      ...qbpbsMap.keys(), ...nfci.map(d => d.date),
+    ])].sort());
 
     const slrRows: Array<Record<string, unknown>> = [];
     for (const { date, value } of nfci) {
       slrRows.push({
         date,
         leverage_subindex: value,
-        tier1_leverage_capital: qbpbsMap.get(date) ?? null,
-        policy_signal: 0,
+        tier1_leverage_capital: tier1Filled.get(date) ?? null,
+        policy_signal: null,
         policy_event: null,
         source: 'backfill:fred',
       });
@@ -186,11 +203,11 @@ export async function POST(request: NextRequest) {
       const { error } = await sb
         .from('slr_snapshots')
         .upsert(batch, { onConflict: 'date' });
-      if (error) stats.errors.push(`slr batch ${i}: ${error.message}`);
+      if (error) stats.errors.push(`slr batch ${i}: write failed`);
       else stats.slr += batch.length;
     }
-  } catch (err) {
-    stats.errors.push(err instanceof Error ? err.message : String(err));
+  } catch {
+    stats.errors.push('Backfill failed');
   }
 
   return NextResponse.json({
@@ -201,5 +218,5 @@ export async function POST(request: NextRequest) {
       date_range: `${startDate} to ${endDate}`,
     },
     errors: stats.errors.length > 0 ? stats.errors : undefined,
-  });
+  }, { status: stats.errors.length > 0 ? 503 : 200 });
 }

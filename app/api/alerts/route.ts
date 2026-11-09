@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireUser, readJson } from '@/lib/supabase/auth';
+import { createAdminClient } from '@/lib/supabase/server';
 
 // GET - Fetch all alerts for current user
 export async function GET() {
@@ -25,7 +26,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const auth = await requireUser();
   if (auth.error) return auth.error;
-  const { supabase, user } = auth;
+  const { user } = auth;
 
   const parsed = await readJson<{
     targetPrice?: unknown;
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     notifyPush?: boolean;
   }>(request);
   if (parsed.error) return parsed.error;
-  const { targetPrice, direction, notifyEmail, notifyPush } = parsed.body;
+  const { targetPrice, direction, notifyEmail, notifyPush } = parsed.body ?? {};
 
   if (typeof targetPrice !== 'number' || !Number.isFinite(targetPrice) || targetPrice <= 0) {
     return NextResponse.json({ error: 'Target price must be a positive number' }, { status: 400 });
@@ -44,6 +45,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Direction must be "above" or "below"' }, { status: 400 });
   }
 
+  if ((notifyEmail !== undefined && typeof notifyEmail !== 'boolean') ||
+      (notifyPush !== undefined && typeof notifyPush !== 'boolean')) {
+    return NextResponse.json({ error: 'Notification preferences must be boolean' }, { status: 400 });
+  }
+
+  const supabase = createAdminClient();
+  if (!supabase) return NextResponse.json({ error: 'Alert delivery not configured' }, { status: 503 });
+
   const { data, error } = await supabase
     .from('price_alerts')
     .insert({
@@ -52,7 +61,6 @@ export async function POST(request: Request) {
       direction,
       notify_email: notifyEmail ?? true,
       notify_push: notifyPush ?? false,
-      triggered: false,
     })
     .select()
     .single();

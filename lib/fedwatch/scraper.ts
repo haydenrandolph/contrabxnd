@@ -1,36 +1,9 @@
 import type { FedWatchSnapshot, MeetingForecast, RateProbability } from './types';
+import { FOMC_DATES as ALL_FOMC_DATES } from './calendar';
+import { isFreshDate } from '../etf/math';
 
 const BROWSER_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
-
-// ---------------------------------------------------------------------------
-// 1. FOMC meeting dates (update annually — sourced from federalreserve.gov)
-//    These are the *second day* (decision day) of each two-day FOMC meeting.
-// ---------------------------------------------------------------------------
-
-const FOMC_DATES_2025 = [
-  '2025-01-29',
-  '2025-03-19',
-  '2025-05-07',
-  '2025-06-18',
-  '2025-07-30',
-  '2025-09-17',
-  '2025-10-29',
-  '2025-12-17',
-];
-
-const FOMC_DATES_2026 = [
-  '2026-01-28',
-  '2026-03-18',
-  '2026-04-29',
-  '2026-06-17',
-  '2026-07-29',
-  '2026-09-16',
-  '2026-10-28',
-  '2026-12-16',
-];
-
-const ALL_FOMC_DATES = [...FOMC_DATES_2025, ...FOMC_DATES_2026];
 
 // ---------------------------------------------------------------------------
 // 2. ZQ futures contract month codes
@@ -60,38 +33,44 @@ async function fetchCurrentRate(): Promise<{
   lower: number;
   upper: number;
   midpoint: number;
+  source: 'fred' | 'ny-fed';
 }> {
   const fredKey = process.env.FRED_API_KEY;
 
   if (fredKey) {
-    // Use FRED API for authoritative data
-    const [upperRes, lowerRes] = await Promise.all([
-      fetch(
-        `https://api.stlouisfed.org/fred/series/observations?series_id=DFEDTARU&sort_order=desc&limit=1&file_type=json&api_key=${fredKey}`,
-        { cache: 'no-store' },
-      ),
-      fetch(
-        `https://api.stlouisfed.org/fred/series/observations?series_id=DFEDTARL&sort_order=desc&limit=1&file_type=json&api_key=${fredKey}`,
-        { cache: 'no-store' },
-      ),
-    ]);
+    try {
+      // Use FRED API for authoritative data
+      const [upperRes, lowerRes] = await Promise.all([
+        fetch(
+          `https://api.stlouisfed.org/fred/series/observations?series_id=DFEDTARU&sort_order=desc&limit=1&file_type=json&api_key=${fredKey}`,
+          { cache: 'no-store', signal: AbortSignal.timeout(8000) },
+        ),
+        fetch(
+          `https://api.stlouisfed.org/fred/series/observations?series_id=DFEDTARL&sort_order=desc&limit=1&file_type=json&api_key=${fredKey}`,
+          { cache: 'no-store', signal: AbortSignal.timeout(8000) },
+        ),
+      ]);
 
-    if (upperRes.ok && lowerRes.ok) {
-      const upperData = await upperRes.json();
-      const lowerData = await lowerRes.json();
-      const upper = parseFloat(upperData.observations?.[0]?.value);
-      const lower = parseFloat(lowerData.observations?.[0]?.value);
+      if (upperRes.ok && lowerRes.ok) {
+        const upperData = await upperRes.json();
+        const lowerData = await lowerRes.json();
+        const upper = parseFloat(upperData.observations?.[0]?.value);
+        const lower = parseFloat(lowerData.observations?.[0]?.value);
 
-      if (!isNaN(upper) && !isNaN(lower)) {
-        return { lower, upper, midpoint: (lower + upper) / 2 };
+        if (Number.isFinite(upper) && Number.isFinite(lower) && upper - lower === 0.25 && lower >= 0 &&
+          isFreshDate(upperData.observations?.[0]?.date, 7) && isFreshDate(lowerData.observations?.[0]?.date, 7)) {
+          return { lower, upper, midpoint: (lower + upper) / 2, source: 'fred' };
+        }
       }
+    } catch {
+      // Transport, timeout and JSON failures must also reach the NY Fed fallback.
     }
   }
 
   // Fallback: scrape the NY Fed EFFR page
   const effRes = await fetch(
     'https://markets.newyorkfed.org/api/rates/effr/last/1.json',
-    { headers: { 'User-Agent': BROWSER_UA }, cache: 'no-store' },
+    { headers: { 'User-Agent': BROWSER_UA }, cache: 'no-store', signal: AbortSignal.timeout(8000) },
   );
 
   if (effRes.ok) {
@@ -100,11 +79,13 @@ async function fetchCurrentRate(): Promise<{
     if (rate) {
       const targetUpper = parseFloat(rate.targetRateUpper ?? rate.targetRateTo);
       const targetLower = parseFloat(rate.targetRateLower ?? rate.targetRateFrom);
-      if (!isNaN(targetUpper) && !isNaN(targetLower)) {
+      if (Number.isFinite(targetUpper) && Number.isFinite(targetLower) && targetUpper - targetLower === 0.25 &&
+          targetLower >= 0 && isFreshDate(rate.effectiveDate, 7)) {
         return {
           lower: targetLower,
           upper: targetUpper,
           midpoint: (targetLower + targetUpper) / 2,
+          source: 'ny-fed',
         };
       }
     }
@@ -148,7 +129,7 @@ async function fetchFuturesPrices(
 
   try {
     const url = `https://ondemand.websol.barchart.com/getQuote.json?apikey=${apiKey}&symbols=${symbols}&fields=lastPrice,previousClose,settlement`;
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
 
     if (!res.ok) {
       console.warn(`Barchart API: HTTP ${res.status}`);
@@ -170,7 +151,8 @@ async function fetchFuturesPrices(
       // Prefer settlement price (EOD), fall back to lastPrice, then previousClose
       const price = quote.settlement ?? quote.lastPrice ?? quote.previousClose ?? null;
 
-      if (price && typeof price === 'number') {
+      if (typeof price === 'number' && Number.isFinite(price) && price > 0 && price <= 100 &&
+          isFreshDate(quote.tradeTimestamp, 4)) {
         results.set(meta.key, {
           symbol: sym,
           year: meta.year,
@@ -192,7 +174,7 @@ async function fetchFuturesPrices(
 // ---------------------------------------------------------------------------
 
 function daysInMonth(year: number, month: number): number {
-  return new Date(year, month, 0).getDate();
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
 }
 
 function dayOfMonth(dateStr: string): number {
@@ -207,21 +189,26 @@ function dayOfMonth(dateStr: string): number {
  *   R_post = (totalDays * avgRate - daysBefore * R_pre) / daysAfter
  *   P(25bp move) = |R_post - R_pre| / 0.25
  */
-function calculateMeetingProbabilities(
+export function calculateMeetingProbabilities(
   meetingDate: string,
   startRate: number,
   meetingMonthRate: number,
   priorMonthRate: number | null,
+  targetLower = startRate - 0.125,
 ): { endRate: number; probabilities: RateProbability[] } {
   const date = new Date(meetingDate);
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth() + 1;
   const meetingDay = dayOfMonth(meetingDate);
   const totalDays = daysInMonth(year, month);
+  if (!Number.isFinite(date.getTime()) || ![startRate, meetingMonthRate, targetLower].every(Number.isFinite) ||
+      (priorMonthRate !== null && !Number.isFinite(priorMonthRate)) || meetingDay === totalDays) {
+    throw new Error('Invalid or underdetermined meeting inputs');
+  }
 
   // Days before the meeting (rate hasn't changed yet)
-  const daysBefore = meetingDay - 1;
-  // Days from the meeting through month-end (new rate in effect)
+  const daysBefore = meetingDay;
+  // The new rate takes effect the day after the decision.
   const daysAfter = totalDays - daysBefore;
 
   // Determine the pre-meeting rate for this month
@@ -246,25 +233,25 @@ function calculateMeetingProbabilities(
   const endRate = Math.max(0, postMeetingRate);
 
   // Calculate implied change in basis points
-  const changeBps = Math.round((endRate - preMeetingRate) * 10000) / 100;
+  const changeBps = Math.round((endRate - startRate) * 10000) / 100;
 
   // Determine which 25bp outcomes are implied
   const changeIn25bpUnits = changeBps / 25;
   const floorMoves = Math.floor(changeIn25bpUnits);
-  const ceilMoves = floorMoves + (changeBps >= 0 ? 1 : -1);
+  const ceilMoves = floorMoves + 1;
 
-  // Probability of the further move
-  const fracPart = Math.abs(changeIn25bpUnits) - Math.abs(Math.trunc(changeIn25bpUnits));
+  // Weight on the upper bracketing outcome, for either sign of the move.
+  const fracPart = changeIn25bpUnits - floorMoves;
 
   // Current rate in bps (lower bound of target range)
-  const currentLowerBps = Math.round(preMeetingRate * 100);
+  const currentLowerBps = Math.round(targetLower * 100);
   // Snap to nearest 25bp
   const snappedBps = Math.round(currentLowerBps / 25) * 25;
 
   // Build probabilities for the two bracketing outcomes
   const probabilities: RateProbability[] = [];
 
-  if (Math.abs(changeBps) < 1) {
+  if (changeBps === 0) {
     // Essentially no change implied
     probabilities.push({
       lower_bps: snappedBps,
@@ -279,7 +266,7 @@ function calculateMeetingProbabilities(
     const p2 = Math.min(1, Math.max(0, fracPart));
     const p1 = 1 - p2;
 
-    if (p1 > 0.001) {
+    if (p1 > 0) {
       probabilities.push({
         lower_bps: outcome1Bps,
         upper_bps: outcome1Bps + 25,
@@ -287,7 +274,7 @@ function calculateMeetingProbabilities(
         probability: Math.round(p1 * 10000) / 10000,
       });
     }
-    if (p2 > 0.001) {
+    if (p2 > 0) {
       probabilities.push({
         lower_bps: outcome2Bps,
         upper_bps: outcome2Bps + 25,
@@ -320,6 +307,15 @@ export async function scrapeFedWatch(): Promise<FedWatchSnapshot> {
 
   // 1. Fetch current fed funds rate
   const currentRate = await fetchCurrentRate();
+  const effrRes = await fetch('https://markets.newyorkfed.org/api/rates/effr/last/1.json', { cache: 'no-store', signal: AbortSignal.timeout(8000) });
+  if (!effrRes.ok) throw new Error('Current EFFR unavailable');
+  const effr = (await effrRes.json())?.refRates?.[0];
+  const effectiveRate = Number.parseFloat(effr?.percentRate);
+  if (!Number.isFinite(effectiveRate) || !isFreshDate(effr?.effectiveDate, 7)) {
+    throw new Error('Current EFFR missing or stale');
+  }
+  // ZQ prices imply EFFR. Translate to target-midpoint units using today's spread.
+  const targetSpread = currentRate.midpoint - effectiveRate;
 
   // 2. Determine which contract months we need
   const neededMonths = new Set<string>();
@@ -341,13 +337,7 @@ export async function scrapeFedWatch(): Promise<FedWatchSnapshot> {
 
   // 3. Fetch futures prices
   const prices = await fetchFuturesPrices(monthsToFetch);
-  const sources: string[] = ['barchart'];
-
-  if (process.env.FRED_API_KEY) {
-    sources.push('fred');
-  } else {
-    sources.push('ny-fed');
-  }
+  const sources: string[] = [...new Set(['barchart', 'ny-fed', currentRate.source])];
 
   // 4. Calculate probabilities for each meeting
   const meetings: MeetingForecast[] = [];
@@ -363,12 +353,12 @@ export async function scrapeFedWatch(): Promise<FedWatchSnapshot> {
 
     const meetingMonthFutures = prices.get(meetingYm);
     if (!meetingMonthFutures) {
-      console.warn(`No futures data for ${meetingYm}, skipping ${meetingDate}`);
-      continue;
+      console.warn(`No futures data for ${meetingYm}; stopping before ${meetingDate}`);
+      break;
     }
 
     // Check if prior month had an FOMC meeting (Type 1 vs Type 2)
-    const priorMonthHadMeeting = upcomingMeetings.some(m => {
+    const priorMonthHadMeeting = ALL_FOMC_DATES.some(m => {
       const md = new Date(m);
       return (
         md.getUTCFullYear() === priorDate.getFullYear() &&
@@ -381,15 +371,16 @@ export async function scrapeFedWatch(): Promise<FedWatchSnapshot> {
     if (!priorMonthHadMeeting) {
       const priorFutures = prices.get(priorYm);
       if (priorFutures) {
-        priorMonthRate = priorFutures.impliedRate;
+        priorMonthRate = priorFutures.impliedRate + targetSpread;
       }
     }
 
     const { endRate, probabilities } = calculateMeetingProbabilities(
       meetingDate,
-      runningRate,
-      meetingMonthFutures.impliedRate,
-      priorMonthRate,
+      currentRate.midpoint,
+      meetingMonthFutures.impliedRate + targetSpread,
+      priorMonthRate ?? runningRate,
+      currentRate.lower,
     );
 
     // Classify probabilities
@@ -415,7 +406,7 @@ export async function scrapeFedWatch(): Promise<FedWatchSnapshot> {
       current_rate_bps: snappedCurrentBps,
       current_rate_upper_bps: snappedCurrentBps + 25,
       probabilities,
-      implied_rate: Math.round(meetingMonthFutures.impliedRate * 10000) / 10000,
+      implied_rate: Math.round(endRate * 10000) / 10000,
       cut_probability: Math.round(cutProb * 10000) / 10000,
       hold_probability: Math.round(holdProb * 10000) / 10000,
       hike_probability: Math.round(hikeProb * 10000) / 10000,

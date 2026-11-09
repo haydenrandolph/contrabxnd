@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -8,17 +8,19 @@ export default function UserMenu() {
   const { user, profile, signOut, setShowAuthModal, isLoading, isConfigured } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuId = useId();
 
   // Close menu when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: PointerEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
   }, []);
 
   // Hide if still loading or auth not configured
@@ -38,7 +40,7 @@ export default function UserMenu() {
           }
 
           .auth-btn {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--cb-font-mono);
             font-size: 11px;
             letter-spacing: 0.1em;
             text-transform: uppercase;
@@ -62,7 +64,7 @@ export default function UserMenu() {
           .auth-btn-primary {
             background: #F7931A;
             border: none;
-            color: #fff;
+            color: var(--cb-on-accent);
           }
 
           .auth-btn-primary:hover {
@@ -103,7 +105,7 @@ export default function UserMenu() {
           align-items: center;
           gap: 0.75rem;
           background: transparent;
-          border: 1px solid #2a2a2a;
+          border: 1px solid var(--cb-border);
           border-radius: 4px;
           padding: 0.375rem 0.75rem;
           cursor: pointer;
@@ -124,13 +126,13 @@ export default function UserMenu() {
           justify-content: center;
           font-size: 10px;
           font-weight: 700;
-          color: #fff;
+          color: var(--cb-on-accent);
           letter-spacing: 0.05em;
         }
 
         .user-name {
           font-size: 12px;
-          color: #e8e4dc;
+          color: var(--cb-text);
           max-width: 100px;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -140,7 +142,7 @@ export default function UserMenu() {
         .user-menu-chevron {
           width: 16px;
           height: 16px;
-          stroke: #5a5a5a;
+          stroke: var(--cb-text-muted);
           transition: transform 0.2s ease;
         }
 
@@ -152,10 +154,14 @@ export default function UserMenu() {
           position: absolute;
           top: calc(100% + 0.5rem);
           right: 0;
-          background: #0d0d0d;
-          border: 1px solid #2a2a2a;
+          display: flex;
+          flex-direction: column;
+          padding: 4px;
+          background: var(--cb-surface);
+          border: 1px solid var(--cb-border);
           border-radius: 4px;
-          min-width: 200px;
+          width: 240px;
+          max-width: calc(100vw - 32px);
           z-index: 100;
           animation: dropdownFadeIn 0.15s ease;
         }
@@ -165,41 +171,48 @@ export default function UserMenu() {
           to { opacity: 1; transform: translateY(0); }
         }
 
-        .user-menu-item {
+        /* Link renders its anchor without styled-jsx's scope class. */
+        .user-menu-dropdown :global(.user-menu-item) {
           display: block;
           width: 100%;
           padding: 0.75rem 1rem;
-          font-family: 'JetBrains Mono', monospace;
+          min-height: 44px;
+          flex-shrink: 0;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
-          color: #8a8a8a;
+          line-height: 1.5;
+          color: var(--cb-text-muted);
           text-decoration: none;
           text-align: left;
           background: transparent;
           border: none;
           cursor: pointer;
-          transition: all 0.2s ease;
+          border-radius: 2px;
+          transition: background 0.15s ease, color 0.15s ease;
         }
 
-        .user-menu-item:hover {
-          background: #141414;
-          color: #e8e4dc;
+        .user-menu-dropdown :global(.user-menu-item:hover),
+        .user-menu-dropdown :global(.user-menu-item:focus-visible) {
+          background: var(--cb-bg-surface);
+          color: var(--cb-text);
         }
 
-        .user-menu-item:first-child {
+        .user-menu-dropdown :global(.user-menu-item:first-child) {
           border-radius: 4px 4px 0 0;
         }
 
-        .user-menu-item:last-child {
+        .user-menu-dropdown :global(.user-menu-item:last-child) {
           border-radius: 0 0 4px 4px;
         }
 
         .user-menu-divider {
           height: 1px;
-          background: #1a1a1a;
+          background: var(--cb-border);
+          flex-shrink: 0;
           margin: 0.25rem 0;
         }
 
-        .user-menu-item.danger:hover {
+        .user-menu-dropdown :global(.user-menu-item.danger:hover) {
           color: #ef4444;
         }
 
@@ -216,13 +229,6 @@ export default function UserMenu() {
           background: #ffffff;
           border-color: rgba(0, 0, 0, 0.12);
         }
-        :global(html.light-mode) .user-menu-item {
-          color: #6a6a6a;
-        }
-        :global(html.light-mode) .user-menu-item:hover {
-          background: #f7f7f8;
-          color: #0a0a0a;
-        }
         :global(html.light-mode) .user-menu-divider {
           background: rgba(0, 0, 0, 0.08);
         }
@@ -234,9 +240,28 @@ export default function UserMenu() {
         }
       `}</style>
 
-      <div className="user-menu-container" ref={menuRef}>
+      <div
+        className="user-menu-container"
+        ref={menuRef}
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape' && isOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsOpen(false);
+            triggerRef.current?.focus();
+          }
+        }}
+      >
         <button
+          type="button"
+          ref={triggerRef}
           className="user-menu-trigger"
+          aria-label={`Account menu for ${displayName}`}
+          aria-expanded={isOpen}
+          aria-controls={menuId}
           onClick={() => setIsOpen(!isOpen)}
           data-open={isOpen}
         >
@@ -248,7 +273,7 @@ export default function UserMenu() {
         </button>
 
         {isOpen && (
-          <div className="user-menu-dropdown">
+          <div className="user-menu-dropdown" id={menuId}>
             <Link href="/account" className="user-menu-item" onClick={() => setIsOpen(false)}>
               My Account
             </Link>

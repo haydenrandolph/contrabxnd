@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/contexts/ThemeContext';
 
+export const SEARCH_OPEN_EVENT = 'contraband-search-open';
+
 interface SearchItem {
   type: string;
   title: string;
@@ -54,6 +56,7 @@ export default function SearchModal() {
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const { isLightMode } = useTheme();
 
@@ -100,23 +103,28 @@ export default function SearchModal() {
       }
     };
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener(SEARCH_OPEN_EVENT, open);
+    return () => {
+      window.removeEventListener('keydown', handler);
+      window.removeEventListener(SEARCH_OPEN_EVENT, open);
+    };
   }, [isOpen, open, close]);
 
-  // Focus the input when the modal opens
+  // Native modal dialogs contain focus and make the rest of the page inert.
   useEffect(() => {
-    if (isOpen) {
-      // Small delay so the DOM is ready
-      requestAnimationFrame(() => {
-        inputRef.current?.focus();
-      });
-    }
+    const dialog = dialogRef.current;
+    if (!isOpen || !dialog) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const overflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = 'hidden';
+    inputRef.current?.focus();
+    return () => {
+      dialog.close();
+      document.body.style.overflow = overflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
   }, [isOpen]);
-
-  // Reset active index when results change
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [query]);
 
   // Scroll active result into view
   useEffect(() => {
@@ -125,9 +133,10 @@ export default function SearchModal() {
     if (active) {
       active.scrollIntoView({ block: 'nearest' });
     }
-  }, [activeIndex]);
+  }, [activeIndex, query, isOpen]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing) return;
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
@@ -135,7 +144,7 @@ export default function SearchModal() {
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setActiveIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1));
+        setActiveIndex((prev) => (prev > 0 ? prev - 1 : Math.max(0, results.length - 1)));
         break;
       case 'Enter':
         e.preventDefault();
@@ -156,6 +165,12 @@ export default function SearchModal() {
     <>
       <style jsx>{`
         .search-overlay {
+          border: 0;
+          margin: 0;
+          width: 100%;
+          max-width: none;
+          height: 100%;
+          max-height: none;
           position: fixed;
           inset: 0;
           background: rgba(0, 0, 0, 0.8);
@@ -163,7 +178,7 @@ export default function SearchModal() {
           display: flex;
           align-items: flex-start;
           justify-content: center;
-          padding-top: 15vh;
+          padding: 15vh 0 0;
           animation: searchFadeIn 0.15s ease-out;
         }
 
@@ -217,7 +232,7 @@ export default function SearchModal() {
         }
 
         .search-input {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 14px;
           background: none;
           border: none;
@@ -240,7 +255,8 @@ export default function SearchModal() {
         }
 
         .search-hint {
-          font-family: 'JetBrains Mono', monospace;
+          cursor: pointer;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           color: #6a6a6a;
           background: #1a1a1a;
@@ -258,7 +274,7 @@ export default function SearchModal() {
         }
 
         .search-results {
-          max-height: 400px;
+          max-height: min(400px, 55dvh);
           overflow-y: auto;
           padding: 0.5rem 0;
         }
@@ -296,7 +312,7 @@ export default function SearchModal() {
         }
 
         .search-result-badge {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -315,7 +331,7 @@ export default function SearchModal() {
         }
 
         .search-result-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.1rem;
           font-weight: 400;
           color: #e8e4dc;
@@ -327,7 +343,7 @@ export default function SearchModal() {
         }
 
         .search-result-excerpt {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           color: #6a6a6a;
           margin-top: 2px;
@@ -340,7 +356,7 @@ export default function SearchModal() {
         .search-empty {
           padding: 2rem 1.25rem;
           text-align: center;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 13px;
           color: #6a6a6a;
         }
@@ -352,7 +368,7 @@ export default function SearchModal() {
           gap: 1rem;
           padding: 0.6rem 1.25rem;
           border-top: 1px solid #3a3a3a;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           color: #6a6a6a;
         }
@@ -382,18 +398,26 @@ export default function SearchModal() {
         }
       `}</style>
 
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div
+      <dialog
+        ref={dialogRef}
+        id="site-search-dialog"
+        aria-label="Search lessons and writings"
+        aria-modal="true"
         className={`search-overlay ${isLightMode ? 'light-mode' : ''}`}
+        onCancel={(e) => { e.preventDefault(); close(); }}
+        onKeyDown={(event) => {
+          if (event.key !== 'Tab') return;
+          const first = inputRef.current;
+          const last = dialogRef.current?.querySelector<HTMLButtonElement>('.search-hint');
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }}
         onClick={(e) => {
           if (e.target === e.currentTarget) close();
         }}
       >
         <div
           className={`search-modal ${isLightMode ? 'light-mode' : ''}`}
-          role="dialog"
-          aria-label="Search"
-          onKeyDown={handleKeyDown}
         >
           <div className="search-input-wrapper">
             <svg
@@ -412,21 +436,30 @@ export default function SearchModal() {
               ref={inputRef}
               className="search-input"
               type="text"
+              role="combobox"
+              aria-label="Search lessons and writings"
+              aria-autocomplete="list"
+              aria-expanded="true"
+              aria-controls="site-search-results"
+              aria-activedescendant={results[activeIndex] ? `site-search-result-${activeIndex}` : undefined}
+              onKeyDown={handleKeyDown}
               placeholder="Search lessons and writings..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setActiveIndex(0); }}
             />
-            <span className="search-hint">ESC</span>
+            <button type="button" className="search-hint" onClick={close} aria-label="Close search">ESC</button>
           </div>
 
-          <div className="search-results" ref={resultsRef}>
+          <div className="search-results" ref={resultsRef} id="site-search-results" role="listbox" aria-label="Search results">
             {results.length > 0 ? (
               results.map((item, i) => (
                 <div
                   key={item.href}
+                  id={`site-search-result-${i}`}
                   className={`search-result ${i === activeIndex ? 'active' : ''}`}
                   data-active={i === activeIndex}
                   onClick={() => navigate(item.href)}
+                  onMouseDown={(event) => event.preventDefault()}
                   onMouseEnter={() => setActiveIndex(i)}
                   role="option"
                   aria-selected={i === activeIndex}
@@ -459,7 +492,7 @@ export default function SearchModal() {
             </div>
           </div>
         </div>
-      </div>
+      </dialog>
     </>
   );
 }

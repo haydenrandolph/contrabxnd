@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireUser, readJson } from '@/lib/supabase/auth';
+import { validPushEndpoint } from '@/lib/push/validation';
 
 interface PushSubscriptionBody {
   subscription?: {
@@ -16,10 +17,19 @@ export async function POST(request: Request) {
 
   const parsed = await readJson<PushSubscriptionBody>(request);
   if (parsed.error) return parsed.error;
-  const { subscription } = parsed.body;
+  const subscription = parsed.body?.subscription;
 
-  if (!subscription?.endpoint || !subscription.keys?.p256dh || !subscription.keys?.auth) {
+  if (typeof subscription?.endpoint !== 'string' || subscription.endpoint.length > 4096 ||
+      typeof subscription.keys?.p256dh !== 'string' || !/^[A-Za-z0-9_-]{1,256}={0,2}$/.test(subscription.keys.p256dh) ||
+      typeof subscription.keys?.auth !== 'string' || !/^[A-Za-z0-9_-]{1,128}={0,2}$/.test(subscription.keys.auth)) {
     return NextResponse.json({ error: 'Invalid subscription data' }, { status: 400 });
+  }
+  try {
+    const endpoint = new URL(subscription.endpoint);
+    if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.hash ||
+        !validPushEndpoint(subscription.endpoint)) throw new Error();
+  } catch {
+    return NextResponse.json({ error: 'Invalid subscription endpoint' }, { status: 400 });
   }
 
   const { error } = await supabase
@@ -30,11 +40,12 @@ export async function POST(request: Request) {
       p256dh: subscription.keys.p256dh,
       auth: subscription.keys.auth,
     }, {
-      onConflict: 'user_id,endpoint',
+      // endpoint is globally unique. RLS blocks updating another user's row.
+      onConflict: 'endpoint',
     });
 
   if (error) {
-    console.error('Failed to save push subscription:', error.message);
+    console.error('Failed to save push subscription');
     return NextResponse.json({ error: 'Failed to save subscription' }, { status: 500 });
   }
 
@@ -49,9 +60,9 @@ export async function DELETE(request: Request) {
 
   const parsed = await readJson<{ endpoint?: string }>(request);
   if (parsed.error) return parsed.error;
-  const { endpoint } = parsed.body;
+  const endpoint = parsed.body?.endpoint;
 
-  if (!endpoint) {
+  if (typeof endpoint !== 'string' || !endpoint || endpoint.length > 4096) {
     return NextResponse.json({ error: 'Missing endpoint' }, { status: 400 });
   }
 
@@ -62,7 +73,7 @@ export async function DELETE(request: Request) {
     .eq('endpoint', endpoint);
 
   if (error) {
-    console.error('Failed to delete push subscription:', error.message);
+    console.error('Failed to delete push subscription');
     return NextResponse.json({ error: 'Failed to delete subscription' }, { status: 500 });
   }
 

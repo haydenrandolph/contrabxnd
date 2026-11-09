@@ -1,10 +1,13 @@
 import type { NetworkBusiness, PaymentMethod, Location } from './types';
+import { validNearbyLocation } from '../audit-guards';
 
 const BTCMAP_API_V2 = 'https://api.btcmap.org/v2';
 
 // Cache by country code (or 'global' for all)
 const cache: Map<string, { businesses: NetworkBusiness[]; timestamp: number }> = new Map();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const MAX_COUNTRY_CACHE_ENTRIES = 32;
+let globalRefresh: Promise<NetworkBusiness[]> | null = null;
 
 // BTCMap v2 element structure
 interface BTCMapElement {
@@ -110,7 +113,7 @@ function mapToNetworkBusiness(element: BTCMapElement): NetworkBusiness | null {
   const lon = element.osm_json?.lon;
 
   let location: Location | undefined;
-  if (lat !== undefined && lon !== undefined) {
+  if (lat !== undefined && lon !== undefined && validNearbyLocation(lat, lon, 1)) {
     location = {
       lat,
       lon,
@@ -149,15 +152,19 @@ function isInRing(lat: number, lon: number, ring: number[][]): boolean {
 async function fetchAllElements(limit: number = 10000): Promise<BTCMapElement[]> {
   const response = await fetch(`${BTCMAP_API_V2}/elements?limit=${limit}`, {
     headers: { 'Accept': 'application/json' },
+    signal: AbortSignal.timeout(15_000),
   });
   if (!response.ok) {
     throw new Error(`BTCMap elements request failed (${response.status})`);
   }
-  return await response.json();
+  const elements = await response.json();
+  if (!Array.isArray(elements)) throw new Error('Invalid BTCMap elements');
+  return elements.slice(0, limit);
 }
 
 // Main function to fetch businesses, optionally filtered by country
 export async function fetchBTCMapBusinesses(countryCode?: string): Promise<NetworkBusiness[]> {
+  if (countryCode !== undefined && !/^[a-zA-Z]{2}$/.test(countryCode)) throw new Error('Invalid country code');
   const cacheKey = countryCode?.toUpperCase() || 'global';
   const now = Date.now();
 
@@ -173,7 +180,7 @@ export async function fetchBTCMapBusinesses(countryCode?: string): Promise<Netwo
     let timestamp: number;
 
     if (countryCode) {
-      const response = await fetch(`${BTCMAP_API_V2}/areas/${encodeURIComponent(countryCode.toLowerCase())}`);
+      const response = await fetch(`${BTCMAP_API_V2}/areas/${encodeURIComponent(countryCode.toLowerCase())}`, { signal: AbortSignal.timeout(15_000) });
       if (!response.ok) {
         throw new Error(`BTCMap country request failed (${response.status})`);
       }
@@ -196,14 +203,23 @@ export async function fetchBTCMapBusinesses(countryCode?: string): Promise<Netwo
       });
       timestamp = cache.get('global')!.timestamp;
     } else {
-      const elements = await fetchAllElements(50000);
-      businesses = elements
+      if (globalRefresh) return await globalRefresh;
+      globalRefresh = fetchAllElements(50000).then(elements => elements
         .map(mapToNetworkBusiness)
-        .filter((b): b is NetworkBusiness => b !== null);
+        .filter((b): b is NetworkBusiness => b !== null));
+      try {
+        businesses = await globalRefresh;
+      } finally {
+        globalRefresh = null;
+      }
       timestamp = Date.now();
     }
 
     // Derived results retain the global snapshot's age, including stale fallbacks.
+    if (countryCode && !cache.has(cacheKey) && cache.size >= MAX_COUNTRY_CACHE_ENTRIES + 1) {
+      const oldestCountry = [...cache.keys()].find(key => key !== 'global');
+      if (oldestCountry) cache.delete(oldestCountry);
+    }
     cache.set(cacheKey, { businesses, timestamp });
     console.log(`Fetched ${businesses.length} businesses for ${cacheKey}`);
 
@@ -228,48 +244,32 @@ export async function fetchBusinessesNearLocation(
   lon: number,
   radiusKm: number = 100
 ): Promise<NetworkBusiness[]> {
-  const cacheKey = `near_${lat}_${lon}_${radiusKm}`;
-  const now = Date.now();
+  if (!validNearbyLocation(lat, lon, radiusKm)) throw new Error('Invalid nearby coordinates or radius');
+  const globalBusinesses = await fetchBTCMapBusinesses();
+  const radians = Math.PI / 180;
+  const businesses = globalBusinesses
+    .flatMap(business => {
+      if (!business.location) return [];
+      const { lat: businessLat, lon: businessLon } = business.location;
+      const a = Math.sin((businessLat - lat) * radians / 2) ** 2 +
+        Math.cos(lat * radians) * Math.cos(businessLat * radians) *
+        Math.sin((businessLon - lon) * radians / 2) ** 2;
+      const distance = 2 * 6371 * Math.asin(Math.sqrt(Math.min(1, Math.max(0, a))));
+      return distance <= radiusKm ? [{ business, distance }] : [];
+    })
+    .sort((a, b) => a.distance - b.distance)
+    .map(({ business }) => business);
 
-  // Check cache
-  const cached = cache.get(cacheKey);
-  if (cached && now - cached.timestamp < CACHE_DURATION) {
-    return cached.businesses;
-  }
+  console.log(`Found ${businesses.length} businesses near (${lat}, ${lon})`);
 
-  try {
-    const globalBusinesses = await fetchBTCMapBusinesses();
-    const radians = Math.PI / 180;
-    const businesses = globalBusinesses
-      .flatMap(business => {
-        if (!business.location) return [];
-        const { lat: businessLat, lon: businessLon } = business.location;
-        const a = Math.sin((businessLat - lat) * radians / 2) ** 2 +
-          Math.cos(lat * radians) * Math.cos(businessLat * radians) *
-          Math.sin((businessLon - lon) * radians / 2) ** 2;
-        const distance = 2 * 6371 * Math.asin(Math.sqrt(Math.min(1, Math.max(0, a))));
-        return distance <= radiusKm ? [{ business, distance }] : [];
-      })
-      .sort((a, b) => a.distance - b.distance)
-      .map(({ business }) => business);
-
-    cache.set(cacheKey, { businesses, timestamp: cache.get('global')!.timestamp });
-    console.log(`Found ${businesses.length} businesses near (${lat}, ${lon})`);
-
-    return businesses;
-
-  } catch (error) {
-    console.error('Failed to fetch nearby businesses:', error);
-    if (cached) return cached.businesses;
-    throw error;
-  }
+  return businesses;
 }
 
 // Get available countries that have businesses
 export async function getAvailableCountries(): Promise<Array<{ code: string; name: string; count: number }>> {
   try {
     // Fetch areas that are countries
-    const response = await fetch(`${BTCMAP_API_V2}/areas?limit=500`);
+    const response = await fetch(`${BTCMAP_API_V2}/areas?limit=500`, { signal: AbortSignal.timeout(15_000) });
     if (!response.ok) return [];
 
     const areas: BTCMapArea[] = await response.json();

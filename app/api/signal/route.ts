@@ -3,11 +3,13 @@ import { createAdminClient } from '@/lib/supabase/server';
 import type { MeetingForecast } from '@/lib/fedwatch/types';
 import { getMiningIntelligence } from '@/lib/hashrate';
 import { getBitcoinPrice } from '@/lib/price';
+import { etfFlowDollars, isFreshDate, scoreEtfFlow } from '@/lib/etf/math';
+import { currentBullishMarkets } from '@/lib/polymarket/math';
+import { liquidityInputsFresh } from '@/lib/liquidity/math';
+import { validMeetingForecast } from '@/lib/fedwatch/math';
+import { FOMC_DATES } from '@/lib/fedwatch/calendar';
 
 export const dynamic = 'force-dynamic';
-
-let cache: { data: Record<string, unknown>; fetchedAt: number } | null = null;
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
 /* ---------------------------------------------------------------------------
  * Scoring helpers
@@ -52,10 +54,6 @@ interface ComponentResult {
  * -------------------------------------------------------------------------*/
 
 export async function GET() {
-  if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
-    return NextResponse.json(cache.data);
-  }
-
   const supabase = createAdminClient();
   if (!supabase) {
     return NextResponse.json({
@@ -89,7 +87,7 @@ export async function GET() {
       weight: number,
       result: PromiseSettledResult<ComponentResult | null>,
     ) => {
-      if (result.status === 'fulfilled' && result.value != null) {
+      if (result.status === 'fulfilled' && result.value != null && Number.isFinite(result.value.score)) {
         components[key] = { ...result.value, weight };
         totalActiveWeight += weight;
       }
@@ -114,12 +112,13 @@ export async function GET() {
       }
     }
 
-    // If no components have data, return null score
-    if (totalActiveWeight === 0) {
+    // Require at least three components and half of the configured weight.
+    if (Object.keys(components).length < 3 || totalActiveWeight < 1.25 * 0.5) {
       return NextResponse.json({
         score: null,
         label: null,
-        components: {},
+        components,
+        coverage: totalActiveWeight / 1.25,
         timestamp: new Date().toISOString(),
       });
     }
@@ -139,14 +138,13 @@ export async function GET() {
       score,
       label,
       components,
+      coverage: totalActiveWeight / 1.25,
       timestamp: new Date().toISOString(),
     };
 
-    cache = { data: result, fetchedAt: Date.now() };
     return NextResponse.json(result);
   } catch (err) {
     console.error('Signal API error:', err);
-    if (cache) return NextResponse.json(cache.data);
     return NextResponse.json(
       { score: null, label: null, components: {}, timestamp: new Date().toISOString() },
       { status: 500 },
@@ -173,15 +171,17 @@ async function fetchEtfData(supabase: any): Promise<ComponentResult | null> {
   if (uniqueDates.length < 2) return null;
 
   const [today, yesterday] = uniqueDates;
+  if (!isFreshDate(today, 5) || !isFreshDate(yesterday, 9) ||
+      Date.parse(String(today)) - Date.parse(String(yesterday)) > 5 * 86_400_000) return null;
 
   const { data: snapshots, error: snapErr } = await supabase
     .from('etf_snapshots')
-    .select('ticker, date, nav_per_share, shares_outstanding')
+    .select('ticker, date, nav_per_share, shares_outstanding, total_net_assets')
     .in('date', [today, yesterday]);
 
   if (snapErr || !snapshots?.length) return null;
 
-  type Row = { ticker: string; date: string; nav_per_share: number; shares_outstanding: number };
+  type Row = { ticker: string; date: string; nav_per_share: number; shares_outstanding: number; total_net_assets: number };
   const byTickerDate = new Map<string, Row>();
   for (const s of snapshots as Row[]) {
     byTickerDate.set(`${s.ticker}:${s.date}`, s);
@@ -189,18 +189,21 @@ async function fetchEtfData(supabase: any): Promise<ComponentResult | null> {
 
   const tickers = [...new Set((snapshots as Row[]).map((s) => s.ticker))];
   let netFlow = 0;
+  let pairs = 0;
   for (const ticker of tickers) {
     const curr = byTickerDate.get(`${ticker}:${today}`);
     const prev = byTickerDate.get(`${ticker}:${yesterday}`);
     if (curr && prev) {
-      netFlow += (curr.shares_outstanding - prev.shares_outstanding) * curr.nav_per_share;
+      const flow = etfFlowDollars(curr, prev);
+      if (flow !== null) { netFlow += flow; pairs++; }
     }
   }
 
   // Scale: +500M = +100, -500M = -100
-  const score = clamp(linearMap(netFlow, -500, 500, -100, 100));
+  if (pairs < 2 || pairs !== tickers.length) return null;
+  const score = scoreEtfFlow(netFlow);
   const sign = netFlow >= 0 ? '+' : '';
-  const detail = `${sign}${formatMillions(netFlow)} net inflow`;
+  const detail = `${sign}${formatMillions(netFlow / 1_000_000)} net flow (${pairs} tracked funds)`;
 
   return { score, weight: 0, detail };
 }
@@ -209,12 +212,13 @@ async function fetchEtfData(supabase: any): Promise<ComponentResult | null> {
 async function fetchLiquidityData(supabase: any): Promise<ComponentResult | null> {
   const { data: latest } = await supabase
     .from('liquidity_snapshots')
-    .select('date, net_liquidity')
+    .select('date, net_liquidity, raw_data')
     .order('date', { ascending: false })
     .limit(1)
     .single();
 
-  if (!latest || latest.net_liquidity == null) return null;
+  if (!latest || !Number.isFinite(latest.net_liquidity) || !isFreshDate(latest.date, 10) ||
+      !liquidityInputsFresh(latest.raw_data)) return null;
 
   // Get 13-week-ago row
   const latestDate = new Date(latest.date);
@@ -224,13 +228,14 @@ async function fetchLiquidityData(supabase: any): Promise<ComponentResult | null
 
   const { data: oldRow } = await supabase
     .from('liquidity_snapshots')
-    .select('net_liquidity')
+    .select('date, net_liquidity')
     .lte('date', momentumDateStr)
     .order('date', { ascending: false })
     .limit(1)
     .single();
 
-  if (!oldRow || oldRow.net_liquidity == null || oldRow.net_liquidity === 0) return null;
+  if (!oldRow || !Number.isFinite(oldRow.net_liquidity) || oldRow.net_liquidity === 0 ||
+      !isFreshDate(oldRow.date, 14, momentumDate.getTime())) return null;
 
   const momentum = (latest.net_liquidity - oldRow.net_liquidity) / Math.abs(oldRow.net_liquidity);
 
@@ -246,17 +251,21 @@ async function fetchLiquidityData(supabase: any): Promise<ComponentResult | null
 async function fetchFedwatchData(supabase: any): Promise<ComponentResult | null> {
   const { data: row } = await supabase
     .from('fedwatch_snapshots')
-    .select('meetings')
+    .select('date, meetings')
     .order('date', { ascending: false })
     .limit(1)
     .single();
 
-  if (!row || !row.meetings) return null;
+  if (!row || !row.meetings || !isFreshDate(row.date, 4)) return null;
 
   const meetings = row.meetings as MeetingForecast[];
   if (meetings.length === 0) return null;
 
-  const first = meetings[0];
+  const first = meetings.filter(m => m.meeting_date > new Date().toISOString().slice(0, 10))
+    .sort((a, b) => a.meeting_date.localeCompare(b.meeting_date))[0];
+  if (!first || !validMeetingForecast(first) ||
+      first.meeting_date !== FOMC_DATES.find(d => d > new Date().toISOString().slice(0, 10))) return null;
+  if (!first || !Number.isFinite(first.cut_probability) || first.cut_probability < 0 || first.cut_probability > 1) return null;
   const cutProb = first.cut_probability;
 
   // Scale: cut_prob 1.0 = +100, 0.0 = -100, 0.5 = 0
@@ -279,8 +288,9 @@ async function fetchFearGreedData(): Promise<ComponentResult | null> {
     const entry = data?.data?.[0];
     if (!entry) return null;
 
-    const value = parseInt(entry.value, 10);
-    if (isNaN(value)) return null;
+    const value = Number(entry.value);
+    if (entry.value == null || String(entry.value).trim() === '' || !Number.isFinite(value) || value < 0 || value > 100 ||
+        !isFreshDate(new Date(Number(entry.timestamp) * 1000).toISOString(), 2)) return null;
 
     // CONTRARIAN: low fear = buy signal
     // value 0 = +100, value 50 = 0, value 100 = -100
@@ -298,15 +308,19 @@ async function fetchFearGreedData(): Promise<ComponentResult | null> {
 async function fetchSlrData(supabase: any): Promise<ComponentResult | null> {
   const { data: row } = await supabase
     .from('slr_snapshots')
-    .select('policy_signal, leverage_subindex')
+    .select('date, policy_signal, leverage_subindex, raw_data')
     .order('date', { ascending: false })
     .limit(1)
     .single();
 
-  if (!row) return null;
+  if (!row || !isFreshDate(row.date, 14) || !Number.isFinite(row.policy_signal) ||
+      ![-1, 0, 1].includes(row.policy_signal) || !Number.isFinite(row.leverage_subindex) ||
+      !isFreshDate(row.raw_data?.fred?.nfci_leverage_date, 14)) return null;
+  const entries = row.raw_data?.rss_entries as Array<{ pubDate: string }> | undefined;
+  if (!entries?.some(entry => isFreshDate(entry.pubDate, 30))) return null;
 
-  const policySignal = row.policy_signal ?? 0;
-  const leverageSubindex = row.leverage_subindex ?? 0;
+  const policySignal = row.policy_signal;
+  const leverageSubindex = row.leverage_subindex;
 
   // policy_signal * 50 + leverage_subindex * -50 (negative subindex = loose = bullish)
   const score = clamp(policySignal * 50 + leverageSubindex * -50);
@@ -332,17 +346,20 @@ async function fetchHashRibbonData(): Promise<ComponentResult | null> {
 async function fetchOnchainData(supabase: any): Promise<ComponentResult | null> {
   const { data: row } = await supabase
     .from('onchain_snapshots')
-    .select('realized_cap, total_supply')
+    .select('date, realized_cap, total_supply')
     .order('date', { ascending: false })
     .limit(1)
     .maybeSingle();
-  if (!row?.realized_cap || !row?.total_supply) return null; // indexer hasn't run
+  if (!row?.realized_cap || !row?.total_supply || !isFreshDate(row.date, 2)) return null;
 
   const priceResult = await getBitcoinPrice();
   const price = priceResult?.data.price;
-  if (!price) return null;
+  if (!price || priceResult?.stale) return null;
 
-  const mvrv = (price * Number(row.total_supply)) / Number(row.realized_cap);
+  const supply = Number(row.total_supply);
+  const realizedCap = Number(row.realized_cap);
+  if (![supply, realizedCap].every(v => Number.isFinite(v) && v > 0)) return null;
+  const mvrv = (price * supply) / realizedCap;
   // MVRV ~0.8 = deep value (bullish), ~3.5 = cycle-top territory (bearish).
   const score = clamp(linearMap(mvrv, 0.8, 3.5, 100, -100));
   let label = 'fair value';
@@ -356,22 +373,15 @@ async function fetchOnchainData(supabase: any): Promise<ComponentResult | null> 
 async function fetchPolymarketData(supabase: any): Promise<ComponentResult | null> {
   const { data: rows } = await supabase
     .from('polymarket_snapshots')
-    .select('question, outcome_yes, volume, slug')
+    .select('date, market_id, question, outcome_yes, volume, liquidity, slug, active, raw_data')
     .order('date', { ascending: false })
-    .limit(20);
+    .limit(200);
 
   if (!rows?.length) return null;
 
-  // Dedupe by slug (take most recent per market)
-  const seen = new Set<string>();
-  const markets: Array<{ question: string; outcome_yes: number; volume: number }> = [];
-  for (const r of rows as Array<{ question: string; outcome_yes: number; volume: number; slug: string }>) {
-    if (seen.has(r.slug)) continue;
-    seen.add(r.slug);
-    markets.push(r);
-  }
+  const markets = currentBullishMarkets(rows);
 
-  if (markets.length === 0) return null;
+  if (markets.length < 2) return null;
 
   // Volume-weighted average of "Yes" probabilities for bullish Bitcoin markets
   let totalVol = 0;
@@ -397,12 +407,13 @@ async function fetchPolymarketData(supabase: any): Promise<ComponentResult | nul
 async function deriveTgaComponent(supabase: any): Promise<ComponentResult | null> {
   const { data: latest } = await supabase
     .from('liquidity_snapshots')
-    .select('date, tga_balance')
+    .select('date, tga_balance, raw_data')
     .order('date', { ascending: false })
     .limit(1)
     .single();
 
-  if (!latest || latest.tga_balance == null) return null;
+  if (!latest || !Number.isFinite(latest.tga_balance) || !isFreshDate(latest.date, 5) ||
+      !isFreshDate(latest.raw_data?.tga?.record_date, 5)) return null;
 
   // Get row from ~7 days ago
   const latestDate = new Date(latest.date);
@@ -412,13 +423,14 @@ async function deriveTgaComponent(supabase: any): Promise<ComponentResult | null
 
   const { data: weekRow } = await supabase
     .from('liquidity_snapshots')
-    .select('tga_balance')
+    .select('date, tga_balance')
     .lte('date', trendDateStr)
     .order('date', { ascending: false })
     .limit(1)
     .single();
 
-  if (!weekRow || weekRow.tga_balance == null || weekRow.tga_balance === 0) return null;
+  if (!weekRow || !Number.isFinite(weekRow.tga_balance) || weekRow.tga_balance === 0 ||
+      !isFreshDate(weekRow.date, 5, trendDate.getTime())) return null;
 
   const change = (latest.tga_balance - weekRow.tga_balance) / Math.abs(weekRow.tga_balance);
   let trend: string;

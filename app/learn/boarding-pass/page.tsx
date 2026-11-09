@@ -10,24 +10,32 @@ import SiteFooter from '@/components/SiteFooter';
 import ShareProgressButton from '@/components/ShareProgressButton';
 
 export default function BoardingPassCoursePage() {
+  const { user } = useAuth();
+  return <BoardingPassCourseContent key={user?.id ?? 'anonymous'} />;
+}
+
+function BoardingPassCourseContent() {
   const { isLightMode } = useTheme();
   const { user } = useAuth();
+  const userId = user?.id;
   const [completedSlugs, setCompletedSlugs] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!user) return;
-    fetch('/api/progress')
-      .then(r => r.json())
+    if (!userId) return;
+    const controller = new AbortController();
+    fetch('/api/progress', { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error('Unable to load progress'); return r.json(); })
       .then(data => {
         const slugs = new Set<string>(
           (data.progress ?? [])
             .filter((p: { course_slug: string; completed: boolean }) => p.course_slug === 'boarding-pass' && p.completed)
             .map((p: { lesson_slug: string }) => p.lesson_slug)
         );
-        setCompletedSlugs(slugs);
+        if (!controller.signal.aborted) setCompletedSlugs(slugs);
       })
       .catch(() => {});
-  }, [user]);
+    return () => controller.abort();
+  }, [userId]);
 
   const outcomes = COURSE.outcomes;
   const weeks = WEEKS;

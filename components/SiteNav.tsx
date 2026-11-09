@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTheme } from '@/contexts/ThemeContext';
 import { UserMenu } from '@/components/auth';
 import StreakBadge from '@/components/StreakBadge';
+import { SEARCH_OPEN_EVENT } from '@/components/SearchModal';
 
 function ThemeToggleBtn({ isLight, onToggle }: { isLight: boolean; onToggle: () => void }) {
   return (
-    <button className="nav-theme-btn" onClick={onToggle} aria-label="Toggle theme">
+    <button className="nav-theme-btn" onClick={onToggle} aria-label={isLight ? 'Switch to dark theme' : 'Switch to light theme'}>
       {isLight ? (
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
@@ -96,12 +97,34 @@ export default function SiteNav({
 }: SiteNavProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const navId = useId();
+  const menuRef = useRef<HTMLDialogElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const { isLightMode, toggleTheme } = useTheme();
   const light = isLightMode ? ' light' : '';
 
   const toggleGroup = (label: string) => {
     setExpandedGroups(prev => ({ ...prev, [label]: !prev[label] }));
   };
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const dialog = menuRef.current;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : menuTriggerRef.current;
+    const overflow = document.body.style.overflow;
+    dialog?.showModal();
+    document.body.style.overflow = 'hidden';
+    menuRef.current?.querySelector<HTMLButtonElement>('.mobile-close')?.focus();
+    const query = window.matchMedia('(min-width: 769px)');
+    const closeOnDesktop = () => { if (query.matches) setMenuOpen(false); };
+    query.addEventListener('change', closeOnDesktop);
+    return () => {
+      query.removeEventListener('change', closeOnDesktop);
+      dialog?.close();
+      document.body.style.overflow = overflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [menuOpen]);
 
   return (
     <>
@@ -119,7 +142,7 @@ export default function SiteNav({
           z-index: 100;
           background: #0a0a0a;
           border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           line-height: 1;
         }
@@ -151,7 +174,7 @@ export default function SiteNav({
           opacity: 0.4;
         }
         .logo-badge {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           font-weight: 700;
           letter-spacing: 0.12em;
@@ -159,7 +182,7 @@ export default function SiteNav({
           line-height: 1;
         }
         .logo-text {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           font-weight: 400;
           letter-spacing: 0.2em;
@@ -207,11 +230,12 @@ export default function SiteNav({
           cursor: pointer;
           background: none;
           border: none;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           line-height: 1;
         }
         .nav-links a:hover,
-        .nav-dropdown-wrap:hover .nav-dropdown-trigger {
+        .nav-dropdown-wrap:hover .nav-dropdown-trigger,
+        .nav-dropdown-wrap:focus-within .nav-dropdown-trigger {
           color: #e8e4dc;
         }
         .nav-links a.active,
@@ -224,7 +248,8 @@ export default function SiteNav({
           color: #6a6a6a;
         }
         .site-nav.light .nav-links a:hover,
-        .site-nav.light .nav-dropdown-wrap:hover .nav-dropdown-trigger {
+        .site-nav.light .nav-dropdown-wrap:hover .nav-dropdown-trigger,
+        .site-nav.light .nav-dropdown-wrap:focus-within .nav-dropdown-trigger {
           color: #0a0a0a;
         }
         .site-nav.light .nav-links a.active,
@@ -261,7 +286,8 @@ export default function SiteNav({
           background: #ffffff;
           border-color: rgba(0, 0, 0, 0.08);
         }
-        .nav-dropdown-wrap:hover .nav-dropdown {
+        .nav-dropdown-wrap:hover .nav-dropdown,
+        .nav-dropdown-wrap:focus-within .nav-dropdown {
           opacity: 1;
           visibility: visible;
         }
@@ -300,7 +326,7 @@ export default function SiteNav({
           justify-content: space-between;
           width: 100%;
           padding: 8px 16px;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           font-weight: 700;
           letter-spacing: 0.12em;
@@ -425,6 +451,14 @@ export default function SiteNav({
         }
 
         .mobile-overlay {
+          border: 0;
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          max-width: none;
+          height: 100%;
+          max-height: none;
+          color: var(--cb-text);
           position: fixed;
           top: 0;
           left: 0;
@@ -444,6 +478,7 @@ export default function SiteNav({
         .mobile-overlay.open {
           opacity: 1;
           visibility: visible;
+          transition: opacity 0.2s ease;
         }
 
         .mobile-header {
@@ -492,7 +527,7 @@ export default function SiteNav({
           align-items: center;
           justify-content: space-between;
           padding: 16px 24px;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -544,7 +579,7 @@ export default function SiteNav({
           border-bottom-color: rgba(0, 0, 0, 0.04);
         }
         .mobile-nav-subhead {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           letter-spacing: 0.14em;
           text-transform: uppercase;
@@ -554,7 +589,7 @@ export default function SiteNav({
         .mobile-nav-sublink {
           display: block;
           padding: 10px 24px 10px 40px;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           letter-spacing: 0.06em;
           color: #b8b4ac;
@@ -580,7 +615,7 @@ export default function SiteNav({
           border-top-color: rgba(0, 0, 0, 0.08);
         }
         .mobile-footer-badge {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -606,7 +641,7 @@ export default function SiteNav({
         }
       `}</style>
 
-      <nav className={`site-nav${light}${blendMode ? ' blend' : ''}`}>
+      <nav aria-label="Primary navigation" className={`site-nav${light}${blendMode ? ' blend' : ''}`}>
         {backLink ? (
           <Link href={backLink.href} className="back-link">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -631,22 +666,24 @@ export default function SiteNav({
               </span>
             ) : link.dropdown ? (
               <div key={link.href} className={`nav-dropdown-wrap${activePath?.startsWith(link.href) ? ' active' : ''}`}>
-                <Link href={link.href} className="nav-dropdown-trigger">
+                <Link href={link.href} className="nav-dropdown-trigger" aria-label={`${link.label} overview and navigation`} aria-controls={`${navId}-${link.label}`}>
                   {link.label}
                 </Link>
-                <div className="nav-dropdown">
+                <div className="nav-dropdown" id={`${navId}-${link.label}`}>
                   {link.dropdown.map((group) => (
                     <div key={group.label} className="dd-group">
                       <button
                         className={`dd-group-trigger${expandedGroups[group.label] ? ' open' : ''}`}
                         onClick={() => toggleGroup(group.label)}
+                        aria-expanded={!!expandedGroups[group.label]}
+                        aria-controls={`${navId}-${link.label}-${group.label}`}
                       >
                         {group.label}
                         <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M9 18l6-6-6-6" />
                         </svg>
                       </button>
-                      <div className={`dd-group-children${expandedGroups[group.label] ? ' open' : ''}`}>
+                      <div id={`${navId}-${link.label}-${group.label}`} className={`dd-group-children${expandedGroups[group.label] ? ' open' : ''}`}>
                         {group.children.map((child) =>
                           child.comingSoon ? (
                             <span key={child.label} className="dd-coming-soon">{child.label}</span>
@@ -668,6 +705,9 @@ export default function SiteNav({
         </div>
 
         <div className="nav-right">
+          <button type="button" className="nav-theme-btn" aria-label="Search lessons and writings" aria-haspopup="dialog" aria-controls="site-search-dialog" title="Search (Ctrl/Cmd+K)" onClick={() => window.dispatchEvent(new Event(SEARCH_OPEN_EVENT))}>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+          </button>
           {liveIndicator && (
             <div className="live-indicator">
               <span className="live-dot" style={{ background: liveIndicator.connected ? '#22c55e' : '#f59e0b' }} />
@@ -678,16 +718,29 @@ export default function SiteNav({
           <StreakBadge />
           {showUserMenu && <UserMenu />}
           <button
+            ref={menuTriggerRef}
             className={`mobile-menu-btn${menuOpen ? ' open' : ''}`}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+            aria-controls={`${navId}-mobile`}
           >
             <span /><span /><span />
           </button>
         </div>
       </nav>
 
-      <div className={`mobile-overlay${light}${menuOpen ? ' open' : ''}`}>
+      <dialog
+        ref={menuRef}
+        id={`${navId}-mobile`}
+        className={`mobile-overlay${light}${menuOpen ? ' open' : ''}`}
+        inert={!menuOpen}
+        aria-hidden={!menuOpen ? true : undefined}
+        role={menuOpen ? 'dialog' : undefined}
+        aria-modal={menuOpen ? true : undefined}
+        aria-label="Navigation menu"
+        onCancel={(event) => { event.preventDefault(); setMenuOpen(false); }}
+      >
         <div className="mobile-header">
           <Link href="/" className="logo-link" onClick={() => setMenuOpen(false)}>
             <Image src="/contraband-logo-v3.png" alt="Contrabxnd logo" width={24} height={24} />
@@ -699,7 +752,7 @@ export default function SiteNav({
             </svg>
           </button>
         </div>
-        <nav className="mobile-nav">
+        <nav className="mobile-nav" aria-label="Mobile navigation">
           {NAV_LINKS.filter((link) => !link.comingSoon).map((link) =>
             link.dropdown ? (
               <div key={link.href}>
@@ -756,7 +809,7 @@ export default function SiteNav({
             <ThemeToggleBtn isLight={isLightMode} onToggle={toggleTheme} />
           </div>
         </div>
-      </div>
+      </dialog>
     </>
   );
 }

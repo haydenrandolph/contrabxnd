@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
 import { hashPrediction } from '@/lib/agent-credit';
+import { validPredictionTarget } from '@/lib/audit-guards';
 
 // GET: list predictions for an agent
 export async function GET(req: Request) {
@@ -10,7 +11,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const agentId = url.searchParams.get('agent_id');
   const outcome = url.searchParams.get('outcome');
-  const limit = Math.min(Number(url.searchParams.get('limit')) || 50, 200);
+  const limit = Math.max(1, Math.min(Math.floor(Number(url.searchParams.get('limit'))) || 50, 200));
 
   if (!agentId) return NextResponse.json({ error: 'agent_id required' }, { status: 400 });
 
@@ -37,17 +38,20 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   const { agentId, predictionText, confidence, category, targetDate } = body;
 
-  if (!agentId || !predictionText || confidence == null || !targetDate) {
+  if (typeof agentId !== 'string' || !agentId || typeof predictionText !== 'string' ||
+      !predictionText.trim() || predictionText.length > 10_000 || !validPredictionTarget(targetDate) ||
+      (category != null && (typeof category !== 'string' || category.length > 100))) {
     return NextResponse.json(
       { error: 'agentId, predictionText, confidence (0-1), and targetDate required' },
       { status: 400 },
     );
   }
 
-  if (confidence < 0 || confidence > 1) {
+  if (typeof confidence !== 'number' || !Number.isFinite(confidence) || confidence < 0 || confidence > 1) {
     return NextResponse.json({ error: 'confidence must be between 0 and 1' }, { status: 400 });
   }
 
@@ -65,6 +69,9 @@ export async function POST(req: Request) {
   if (agent.owner_id !== user.id) return NextResponse.json({ error: 'Not your agent' }, { status: 403 });
 
   const timestamp = new Date().toISOString();
+  if (!validPredictionTarget(targetDate, Date.parse(timestamp))) {
+    return NextResponse.json({ error: 'targetDate must be a valid future UTC date' }, { status: 400 });
+  }
   const predictionHash = hashPrediction(predictionText, agentId, timestamp);
 
   const { data: prediction, error } = await admin
@@ -76,6 +83,7 @@ export async function POST(req: Request) {
       confidence,
       category: category || 'general',
       target_date: targetDate,
+      submitted_at: timestamp,
       outcome: 'pending',
     })
     .select('id, prediction_hash, prediction_text, confidence, target_date, submitted_at')

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface BookmarkButtonProps {
@@ -11,42 +11,53 @@ interface BookmarkButtonProps {
 
 export default function BookmarkButton({ contentType, contentSlug, className }: BookmarkButtonProps) {
   const { user } = useAuth();
+  if (!user) return null;
+  return <UserBookmarkButton key={`${user.id}:${contentType}:${contentSlug}`} contentType={contentType} contentSlug={contentSlug} className={className} />;
+}
+
+function UserBookmarkButton({ contentType, contentSlug, className }: BookmarkButtonProps) {
   const [bookmarked, setBookmarked] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const requestRef = useRef<AbortController | null>(null);
+  const mutationRef = useRef(false);
 
   useEffect(() => {
-    if (!user) return;
-
-    fetch('/api/bookmarks')
-      .then(r => r.json())
+    const readController = new AbortController();
+    requestRef.current = readController;
+    fetch('/api/bookmarks', { signal: readController.signal })
+      .then(r => { if (!r.ok) throw new Error('Unable to load bookmarks'); return r.json(); })
       .then(data => {
         const match = data.bookmarks?.find(
           (b: { content_type: string; content_slug: string }) =>
             b.content_type === contentType && b.content_slug === contentSlug
         );
-        if (match) setBookmarked(true);
+        if (!readController.signal.aborted) setBookmarked(Boolean(match));
       })
-      .catch(() => {});
-  }, [user, contentType, contentSlug]);
+      .catch(() => {})
+      .finally(() => { if (!readController.signal.aborted) setLoading(false); });
+    return () => readController.abort();
+  }, [contentType, contentSlug]);
 
   const toggle = useCallback(async () => {
-    if (loading) return;
+    const controller = requestRef.current;
+    if (loading || mutationRef.current || !controller || controller.signal.aborted) return;
+    mutationRef.current = true;
     setLoading(true);
 
     try {
       const method = bookmarked ? 'DELETE' : 'POST';
       const res = await fetch('/api/bookmarks', {
         method,
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contentType, contentSlug }),
       });
-      if (res.ok) setBookmarked(!bookmarked);
+      if (res.ok && !controller.signal.aborted) setBookmarked(!bookmarked);
     } catch { /* ignore */ }
 
-    setLoading(false);
+    mutationRef.current = false;
+    if (!controller.signal.aborted) setLoading(false);
   }, [loading, bookmarked, contentType, contentSlug]);
-
-  if (!user) return null;
 
   return (
     <>
@@ -87,6 +98,7 @@ export default function BookmarkButton({ contentType, contentSlug, className }: 
         disabled={loading}
         title={bookmarked ? 'Remove bookmark' : 'Bookmark this'}
         aria-label={bookmarked ? 'Remove bookmark' : 'Bookmark this'}
+        aria-pressed={bookmarked}
       >
         <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path

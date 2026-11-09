@@ -18,8 +18,8 @@ export interface SlrSnapshot {
   leverage_subindex: number | null;
   /** Tier 1 Leverage Capital, all FDIC-insured institutions (quarterly) */
   tier1_leverage_capital: number | null;
-  /** Policy signal: +1 easing, -1 tightening, 0 neutral */
-  policy_signal: number;
+  /** Policy signal: +1 easing, -1 tightening, 0 neutral, null unknown */
+  policy_signal: number | null;
   /** Description of the most recent relevant policy event, if any */
   policy_event: string | null;
   /** Data source identifier */

@@ -23,4 +23,5 @@ export interface GammaMarket {
   active: boolean;
   closed: boolean;
   end_date_iso: string;
+  endDate?: string;
 }

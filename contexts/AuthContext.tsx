@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import type { User, Session, Provider } from '@supabase/supabase-js';
 import type { Profile } from '@/lib/supabase/types';
@@ -30,79 +30,88 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(isSupabaseConfigured);
   const [showAuthModal, setShowAuthModal] = useState<'signin' | 'signup' | null>(null);
+  const [identityRevision, setIdentityRevision] = useState(0);
+  const authRevision = useRef(0);
+  const authIdentity = useRef<string | undefined>(undefined);
 
   const isConfigured = isSupabaseConfigured();
   const supabase = createClient();
 
-  // Fetch user profile from database
-  const fetchProfile = async (userId: string) => {
-    if (!supabase) return null;
-
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error fetching profile:', error);
-      return null;
-    }
-    return data as Profile | null;
-  };
-
   useEffect(() => {
-    // If Supabase is not configured, skip auth initialization
-    if (!supabase) {
-      setIsLoading(false);
-      return;
-    }
+    if (!supabase) return;
+    let active = true;
+    let authChanged = false;
+
+    // Keep this callback synchronous: SDK calls here can deadlock auth's lock.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, nextSession) => {
+        if (!active) return;
+        authChanged = true;
+        if (authIdentity.current !== nextSession?.user.id) authRevision.current++;
+        authIdentity.current = nextSession?.user.id;
+        setIdentityRevision(authRevision.current);
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+        setProfile(current => current?.id === nextSession?.user.id ? current : null);
+        setIsLoading(false);
+        if (event === 'SIGNED_IN') setShowAuthModal(null);
+      }
+    );
 
     // Get initial session
     const initializeAuth = async () => {
+      const revision = authRevision.current;
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (session?.user) {
-          const profile = await fetchProfile(session.user.id);
-          setProfile(profile);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        // An auth event is newer than this initial session read.
+        if (active && !authChanged && revision === authRevision.current) {
+          if (authIdentity.current !== session?.user.id) authRevision.current++;
+          authIdentity.current = session?.user.id;
+          setIdentityRevision(authRevision.current);
+          setSession(session);
+          setUser(session?.user ?? null);
+          setProfile(current => current?.id === session?.user.id ? current : null);
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     };
 
     initializeAuth();
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event: string, session: Session | null) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-
-        if (!session?.user) {
-          setProfile(null);
-        } else if (event === 'SIGNED_IN') {
-          // Only (re)fetch the profile on an actual sign-in. Token refreshes
-          // and user-metadata updates keep the profile we already have.
-          const profile = await fetchProfile(session.user.id);
-          setProfile(profile);
-          setShowAuthModal(null);
-        }
-      }
-    );
-
     return () => {
+      active = false;
       subscription.unsubscribe();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [supabase]);
+
+  const userId = user?.id;
+  useEffect(() => {
+    if (!supabase || !userId || authIdentity.current !== userId) return;
+    const controller = new AbortController();
+    const revision = authRevision.current;
+    const fetchProfile = async () => {
+      try {
+        const { data, error } = await supabase.from('profiles').select('*')
+          .eq('id', userId).abortSignal(controller.signal).maybeSingle();
+        if (controller.signal.aborted || revision !== authRevision.current) return;
+        if (error) throw error;
+        setProfile(data as Profile | null);
+      } catch (error) {
+        if (!controller.signal.aborted && revision === authRevision.current) {
+          setProfile(null);
+          console.error('Error fetching profile:', error);
+        }
+      }
+    };
+    void fetchProfile();
+    return () => controller.abort();
+  }, [supabase, userId, identityRevision]);
 
   const signIn = async (email: string, password: string) => {
     if (!supabase) {
@@ -180,9 +189,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    const revision = authRevision.current;
     if (supabase) {
-      await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error signing out:', error);
+        return;
+      }
     }
+    // A newer auth event owns the state, including a sign-in during sign-out.
+    if (revision !== authRevision.current) return;
+    authRevision.current++;
+    authIdentity.current = undefined;
+    setIdentityRevision(authRevision.current);
     setUser(null);
     setProfile(null);
     setSession(null);
@@ -192,7 +211,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        profile,
+        profile: profile?.id === userId ? profile : null,
         session,
         isLoading,
         isConfigured,

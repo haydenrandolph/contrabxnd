@@ -85,10 +85,10 @@ async function fetchValidated<T>(
 ): Promise<{ data: T; source: MiningSource }> {
   // Try the node first; accept only if the payload passes validation.
   try {
-    const { res } = await nodeFetch(path);
+    const { res, source } = await nodeFetch(path);
     if (res.ok) {
       const data = (await res.json()) as T;
-      if (isValid(data)) return { data, source: 'node' };
+      if (isValid(data)) return { data, source };
     }
   } catch {
     /* fall through to public */
@@ -96,13 +96,20 @@ async function fetchValidated<T>(
   // Public mempool.space — correct, complete mining history.
   const r = await fetch(`${PUBLIC}${path}`, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
   if (!r.ok) throw new Error(`mining fetch ${path}: ${r.status}`);
-  return { data: (await r.json()) as T, source: 'public' };
+  const data = (await r.json()) as T;
+  if (!isValid(data)) throw new Error(`Invalid mining data: ${path}`);
+  return { data, source: 'public' };
 }
 
 function validHashrate(d: HashrateResponse): boolean {
   if (!d?.hashrates?.length) return false;
-  const nonZero = d.hashrates.filter((h) => h.avgHashrate > 0).length;
-  return nonZero >= 60; // need at least 60 valid days for the 60d MA
+  const days = [...new Set(d.hashrates.filter(h => Number.isFinite(h.avgHashrate) && h.avgHashrate > 0)
+    .map(h => h.timestamp))].sort((a, b) => a - b);
+  const recent = days.slice(-60);
+  return recent.length === 60 && Date.now() / 1000 - recent[59] <= 3 * 86400 &&
+    recent[59] <= Date.now() / 1000 && recent.every((t, i) => i === 0 || t - recent[i - 1] === 86400) &&
+    Number.isFinite(d.currentHashrate) && d.currentHashrate > 0 && Number.isFinite(d.currentDifficulty) &&
+    d.currentDifficulty > 0 && Array.isArray(d.difficulty);
 }
 
 function validDiffAdj(d: DiffAdjResponse): boolean {
@@ -114,7 +121,10 @@ function validDiffAdj(d: DiffAdjResponse): boolean {
     d.difficultyChange > -25 &&
     d.difficultyChange < 25 &&
     d.remainingBlocks >= 0 &&
-    d.remainingBlocks <= 2016
+    d.remainingBlocks <= 2016 &&
+    Number.isFinite(d.progressPercent) && d.progressPercent >= 0 && d.progressPercent <= 100 &&
+    Number.isFinite(d.estimatedRetargetDate) && d.estimatedRetargetDate > Date.now() - 86_400_000 &&
+    d.estimatedRetargetDate < Date.now() + 30 * 86_400_000
   );
 }
 
@@ -148,7 +158,8 @@ export async function getMiningIntelligence(): Promise<MiningIntelligence> {
     fetchValidated<DiffAdjResponse>('/api/v1/difficulty-adjustment', validDiffAdj),
   ]);
 
-  const series = hr.data.hashrates.filter((h) => h.avgHashrate > 0);
+  const series = [...new Map(hr.data.hashrates.filter(h => Number.isFinite(h.avgHashrate) && h.avgHashrate > 0)
+    .map(h => [h.timestamp, h])).values()].sort((a, b) => a.timestamp - b.timestamp);
   const values = series.map((h) => h.avgHashrate);
   const last = values.length - 1;
 

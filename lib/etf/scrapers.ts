@@ -1,5 +1,13 @@
 import * as cheerio from 'cheerio';
 import type { EtfSnapshot } from './types';
+import { normalizeIssuerDate } from './math';
+
+export function validateEtfSnapshot(snapshot: EtfSnapshot): EtfSnapshot | null {
+  const date = normalizeIssuerDate(snapshot.date);
+  if (!date || ![snapshot.nav_per_share, snapshot.shares_outstanding, snapshot.total_net_assets]
+    .every(v => Number.isFinite(v) && v > 0)) return null;
+  return { ...snapshot, date };
+}
 
 const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 
@@ -7,7 +15,7 @@ export async function scrapeARKB(): Promise<EtfSnapshot | null> {
   try {
     const res = await fetch(
       'https://staging-market-data-api.21shares.com/market-data-api/v4/product_valuation_history/arkb',
-      { headers: { 'Accept': 'application/json', 'User-Agent': BROWSER_UA }, cache: 'no-store' },
+      { headers: { 'Accept': 'application/json', 'User-Agent': BROWSER_UA }, cache: 'no-store', signal: AbortSignal.timeout(8000) },
     );
 
     if (!res.ok) throw new Error(`21Shares API ${res.status}`);
@@ -19,7 +27,7 @@ export async function scrapeARKB(): Promise<EtfSnapshot | null> {
 
     const latest = entries[0];
 
-    return {
+    return validateEtfSnapshot({
       ticker: 'ARKB',
       fund_name: 'ARK 21Shares Bitcoin ETF',
       date: latest.valuation_date ?? latest.date,
@@ -31,7 +39,7 @@ export async function scrapeARKB(): Promise<EtfSnapshot | null> {
       premium_discount: latest.premium_discount ? parseFloat(latest.premium_discount) : null,
       source: '21shares',
       raw_data: latest,
-    };
+    });
   } catch (err) {
     console.error('ARKB scrape failed:', err);
     return null;
@@ -42,7 +50,7 @@ export async function scrapeIBIT(): Promise<EtfSnapshot | null> {
   try {
     const res = await fetch(
       'https://www.ishares.com/us/products/333011/ishares-bitcoin-trust',
-      { headers: { 'User-Agent': BROWSER_UA, 'Accept': 'text/html' }, cache: 'no-store' },
+      { headers: { 'User-Agent': BROWSER_UA, 'Accept': 'text/html' }, cache: 'no-store', signal: AbortSignal.timeout(8000) },
     );
 
     if (!res.ok) throw new Error(`BlackRock page ${res.status}`);
@@ -106,10 +114,10 @@ export async function scrapeIBIT(): Promise<EtfSnapshot | null> {
           try {
             const decoded = raw.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
             const parsed = JSON.parse(decoded);
-            return {
+            return validateEtfSnapshot({
               ticker: 'IBIT',
               fund_name: 'iShares Bitcoin Trust',
-              date: parsed.asOfDate ?? new Date().toISOString().split('T')[0],
+              date: parsed.asOfDate,
               nav_per_share: parseFloat(parsed.navAmount ?? parsed.fundNav?.navAmount),
               shares_outstanding: parseInt(parsed.sharesOutstanding?.toString().replace(/,/g, ''), 10),
               total_net_assets: parseFloat(parsed.totalNetAssetsFundLevel?.toString().replace(/,/g, '')),
@@ -118,7 +126,7 @@ export async function scrapeIBIT(): Promise<EtfSnapshot | null> {
               premium_discount: parsed.premiumDiscountClosingPriceNavPercent ? parseFloat(parsed.premiumDiscountClosingPriceNavPercent) : null,
               source: 'blackrock',
               raw_data: parsed,
-            };
+            });
           } catch { /* continue with partial data */ }
         }
       }
@@ -126,15 +134,18 @@ export async function scrapeIBIT(): Promise<EtfSnapshot | null> {
       if (!navPerShare) throw new Error('Could not extract IBIT NAV');
     }
 
-    const today = new Date().toISOString().split('T')[0];
+    const dateText = extractByDataId('fundHeader-navDate-data')
+      ?? extractText('.fund-header-nav .header-nav-label');
+    const issuerDate = dateText?.match(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}/i)?.[0]
+      ?? dateText?.match(/\d{4}-\d{2}-\d{2}/)?.[0];
 
-    return {
+    return validateEtfSnapshot({
       ticker: 'IBIT',
       fund_name: 'iShares Bitcoin Trust',
-      date: today,
+      date: issuerDate ?? '',
       nav_per_share: navPerShare,
-      shares_outstanding: sharesOutstanding ?? 0,
-      total_net_assets: totalNetAssets ?? (navPerShare * (sharesOutstanding ?? 0)),
+      shares_outstanding: sharesOutstanding ?? NaN,
+      total_net_assets: totalNetAssets ?? NaN,
       market_price: parseNum(priceText),
       volume: parseBigNum(volumeText),
       premium_discount: parseNum(premiumText),
@@ -142,7 +153,7 @@ export async function scrapeIBIT(): Promise<EtfSnapshot | null> {
       raw_data: {
         navText, sharesText, totalAssetsText, priceText, volumeText, premiumText,
       },
-    };
+    });
   } catch (err) {
     console.error('IBIT scrape failed:', err);
     return null;

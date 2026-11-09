@@ -1,8 +1,6 @@
 // Service Worker for Contrabxnd PWA
-const CACHE_NAME = 'contrabxnd-v1';
-
 // Install event
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 

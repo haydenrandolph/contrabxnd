@@ -39,12 +39,14 @@ export function l402Configured(): boolean {
 }
 
 export function mintToken(p: L402Payload): string {
+  if (!l402Configured() || !validPayload(p)) throw new Error('Invalid L402 configuration or payload');
   const body = Buffer.from(JSON.stringify(p)).toString('base64url');
   const sig = crypto.createHmac('sha256', SECRET).update(body).digest('base64url');
   return `${body}.${sig}`;
 }
 
 export function verifyToken(token: string): L402Payload | null {
+  if (!l402Configured() || token.length > 4096 || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(token)) return null;
   const [body, sig] = token.split('.');
   if (!body || !sig) return null;
   const expected = crypto.createHmac('sha256', SECRET).update(body).digest('base64url');
@@ -52,15 +54,22 @@ export function verifyToken(token: string): L402Payload | null {
   if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
   try {
     const p = JSON.parse(Buffer.from(body, 'base64url').toString()) as L402Payload;
-    if (p.exp && Math.floor(Date.now() / 1000) > p.exp) return null;
+    if (!validPayload(p)) return null;
     return p;
   } catch {
     return null;
   }
 }
 
+function validPayload(p: L402Payload): boolean {
+  return !!p && typeof p === 'object' && typeof p.payment_hash === 'string' && /^[0-9a-fA-F]{64}$/.test(p.payment_hash) &&
+    typeof p.resource === 'string' && p.resource.length > 0 && p.resource.length <= 200 &&
+    Number.isSafeInteger(p.price_sats) && p.price_sats > 0 && Number.isSafeInteger(p.exp) && p.exp > Math.floor(Date.now() / 1000);
+}
+
 /** True iff sha256(preimage) === payment_hash (the proof of payment). */
 export function preimageMatches(preimageHex: string, paymentHashHex: string): boolean {
+  if (!/^[0-9a-fA-F]{64}$/.test(preimageHex) || !/^[0-9a-fA-F]{64}$/.test(paymentHashHex)) return false;
   try {
     const pre = Buffer.from(preimageHex, 'hex');
     if (pre.length !== 32) return false;
@@ -75,7 +84,7 @@ export function preimageMatches(preimageHex: string, paymentHashHex: string): bo
 
 /** Parse `Authorization: L402 <token>:<preimage>` (also accepts legacy LSAT). */
 export function parseL402Auth(header: string | null): { token: string; preimage: string } | null {
-  if (!header) return null;
+  if (!header || header.length > 4200) return null;
   const m = header.match(/^(?:L402|LSAT)\s+([A-Za-z0-9_\-=.]+):([0-9a-fA-F]{64})$/);
   if (!m) return null;
   return { token: m[1], preimage: m[2] };

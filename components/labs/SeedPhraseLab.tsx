@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english.js';
 import Lab from './Lab';
@@ -9,14 +9,12 @@ export default function SeedPhraseLab() {
   const [words, setWords] = useState<string[]>([]);
   const [revealed, setRevealed] = useState(false);
 
-  const generate = useCallback(() => {
+  const generate = () => {
     // 128 bits of entropy → a real, valid 12-word BIP39 mnemonic. Generated
     // entirely in your browser and never sent anywhere.
     setWords(generateMnemonic(wordlist, 128).split(' '));
     setRevealed(false);
-  }, []);
-
-  useEffect(() => { generate(); }, [generate]);
+  };
 
   return (
     <Lab
@@ -45,8 +43,8 @@ export default function SeedPhraseLab() {
       `}</style>
 
       <div className={`sp-wrap ${revealed ? '' : 'sp-blur'}`} style={{ position: 'relative' }}>
-        <div className="sp-grid">
-          {words.map((w, i) => (
+        <div className="sp-grid" aria-hidden={!revealed}>
+          {(words.length ? words : Array<string>(12).fill('hidden')).map((w, i) => (
             <div className="sp-word" key={i}>
               <span className="sp-num">{i + 1}</span>
               <span className="sp-txt">{w}</span>
@@ -55,7 +53,10 @@ export default function SeedPhraseLab() {
         </div>
         {!revealed && (
           <div className="sp-cover">
-            <button className="lab-btn" onClick={() => setRevealed(true)}>Reveal phrase</button>
+            <button className="lab-btn" onClick={() => {
+              if (!words.length) generate();
+              setRevealed(true);
+            }}>Reveal phrase</button>
           </div>
         )}
       </div>

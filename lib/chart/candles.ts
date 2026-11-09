@@ -14,7 +14,7 @@ const GRANULARITY: Record<ChartInterval, number> = {
   '1m': 60,
   '15m': 900,
   '1h': 3600,
-  '4h': 21600,  // 6h — closest supported
+  '4h': 3600,   // fetch hourly, aggregate to actual UTC 4h candles
   '1d': 86400,
   '1w': 86400,  // fetch daily, aggregate to weekly
 };
@@ -23,7 +23,7 @@ const CANDLE_COUNT: Record<ChartInterval, number> = {
   '1m': 300,     // 5 hours
   '15m': 192,    // 2 days
   '1h': 168,     // 7 days
-  '4h': 120,     // 30 days of 6h candles
+  '4h': 180,     // 30 days of 4h candles
   '1d': 365,     // 1 year
   '1w': 730,     // fetch 2 years of daily to build ~104 weekly
 };
@@ -41,17 +41,21 @@ function parseCandles(data: number[][]): OHLCCandle[] {
   }));
 }
 
-function aggregateWeekly(daily: OHLCCandle[]): OHLCCandle[] {
+/** Shared with live chart consumers; timestamps are Unix seconds. */
+export function candleBucket(time: number, interval: ChartInterval): number {
+  if (interval !== '1w') {
+    const seconds = interval === '4h' ? 14400 : GRANULARITY[interval];
+    return Math.floor(time / seconds) * seconds;
+  }
+  // Unix epoch was Thursday; anchor weekly buckets to Monday 00:00 UTC.
+  return Math.floor((time - 345600) / 604800) * 604800 + 345600;
+}
+
+export function aggregateCandles(daily: OHLCCandle[], interval: '4h' | '1w'): OHLCCandle[] {
   const weeks: Map<number, OHLCCandle> = new Map();
 
-  for (const c of daily) {
-    const d = new Date(c.time * 1000);
-    const day = d.getUTCDay();
-    const mondayOffset = day === 0 ? 6 : day - 1;
-    const monday = new Date(d);
-    monday.setUTCDate(monday.getUTCDate() - mondayOffset);
-    monday.setUTCHours(0, 0, 0, 0);
-    const weekKey = Math.floor(monday.getTime() / 1000);
+  for (const c of [...daily].sort((a, b) => a.time - b.time)) {
+    const weekKey = candleBucket(c.time, interval);
 
     const existing = weeks.get(weekKey);
     if (!existing) {
@@ -88,10 +92,14 @@ export async function fetchCandles(
   interval: ChartInterval = '1d',
   limit?: number,
 ): Promise<OHLCCandle[]> {
-  const count = limit ?? CANDLE_COUNT[interval];
+  const requested = limit ?? CANDLE_COUNT[interval];
+  if (!Number.isInteger(requested) || requested < 1 || requested > 5000) throw new Error('Invalid candle limit');
+  const count = interval === '4h' ? requested * 4 + 3 : interval === '1w' && limit ? requested * 7 + 6 : requested;
   const granularity = GRANULARITY[interval];
   const revalidate = interval === '1m' ? 15 : interval === '15m' ? 30 : interval === '1h' ? 60 : 300;
-  const end = new Date();
+  // Anchor URLs to source candle boundaries; revalidation updates the live bar
+  // without creating a new cache entry on every request or refresh period.
+  const end = new Date((Math.floor(Date.now() / (granularity * 1000)) + 1) * granularity * 1000);
   const start = new Date(end.getTime() - count * granularity * 1000);
 
   let allCandles: OHLCCandle[];
@@ -123,11 +131,13 @@ export async function fetchCandles(
     return true;
   });
 
-  const sorted = deduped.sort((a, b) => a.time - b.time);
+  const sorted = deduped.filter(c => c.time >= start.getTime() / 1000 && c.time < end.getTime() / 1000)
+    .sort((a, b) => a.time - b.time);
 
-  if (interval === '1w') {
-    return aggregateWeekly(sorted);
+  if (interval === '1w' || interval === '4h') {
+    const aggregated = aggregateCandles(sorted, interval);
+    return limit || interval === '4h' ? aggregated.slice(-requested) : aggregated;
   }
 
-  return sorted;
+  return sorted.slice(-requested);
 }

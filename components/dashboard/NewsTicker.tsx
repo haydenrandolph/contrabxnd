@@ -13,29 +13,42 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
   const [isPaused, setIsPaused] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const tickerRef = useRef<HTMLDivElement>(null);
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    let disposed = false;
+    let controller: AbortController | null = null;
     const fetchNews = async () => {
+      if (disposed || document.hidden || controller) return;
+      controller = new AbortController();
       try {
-        const res = await fetch('/api/news');
+        const res = await fetch('/api/news', { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
-          setNews(data.news || []);
+          if (!disposed) setNews(previous => JSON.stringify(previous) === JSON.stringify(data.news || []) ? previous : data.news || []);
         }
       } catch {
         // silent
       } finally {
-        setIsLoading(false);
+        controller = null;
+        if (!disposed) { setIsLoading(false); setNow(Date.now()); }
       }
     };
 
     fetchNews();
     const interval = setInterval(fetchNews, 3 * 60 * 1000);
-    return () => clearInterval(interval);
+    const onVisibility = () => { if (!document.hidden) void fetchNews(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      disposed = true;
+      clearInterval(interval);
+      controller?.abort();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
   }, []);
 
   const getRelativeTime = (timestamp: number) => {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    const seconds = Math.floor(((now ?? timestamp) - timestamp) / 1000);
     if (seconds < 60) return 'NOW';
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes}m`;
@@ -67,7 +80,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
           display: 'inline-flex',
           alignItems: 'center',
           gap: '6px',
-          fontFamily: "'JetBrains Mono', monospace",
+          fontFamily: 'var(--cb-font-mono)',
           fontSize: '9px',
           letterSpacing: '0.15em',
           textTransform: 'uppercase' as const,
@@ -108,7 +121,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
           gap: 6px;
           padding: 10px 14px;
           border-right: 1px solid ${border};
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -177,6 +190,11 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
           white-space: nowrap;
           transition: opacity 0.15s ease;
           border-right: 1px solid ${textDim};
+          border-top: 0;
+          border-bottom: 0;
+          border-left: 0;
+          background: transparent;
+          text-align: left;
         }
 
         .nw-item:hover {
@@ -184,7 +202,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         }
 
         .nw-item-time {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           letter-spacing: 0.05em;
           color: ${textMuted};
@@ -196,7 +214,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         }
 
         .nw-item-source {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 9px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -205,7 +223,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
         }
 
         .nw-item-title {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           color: ${textPrimary};
         }
@@ -248,6 +266,8 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
           className="nw-scroll-area"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
+          onFocus={() => setIsPaused(true)}
+          onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setIsPaused(false); }}
         >
           <div
             ref={tickerRef}
@@ -258,10 +278,13 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
             }}
           >
             {tickerItems.map((item, index) => {
-              const isRecent = Date.now() - item.timestamp < 1000 * 60 * 30;
+              const isRecent = now !== null && now - item.timestamp < 1000 * 60 * 30;
               return (
-                <div
+                <button
                   key={`${item.id}-${index}`}
+                  type="button"
+                  tabIndex={index >= news.length ? -1 : 0}
+                  aria-hidden={index >= news.length ? true : undefined}
                   className="nw-item"
                   onClick={() => onItemClick(item)}
                 >
@@ -278,7 +301,7 @@ export default function NewsTicker({ onItemClick, isLightMode }: NewsTickerProps
                   <span className="nw-item-title">
                     {item.title.length > 90 ? item.title.substring(0, 90) + '...' : item.title}
                   </span>
-                </div>
+                </button>
               );
             })}
           </div>

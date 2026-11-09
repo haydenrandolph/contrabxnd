@@ -1,12 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 
 export interface ShellNavItem { title: string; href: string; active?: boolean; lab?: boolean }
 export interface ShellNavSection { title: string; items: ShellNavItem[] }
+
+function subscribeMobile(callback: () => void) {
+  const query = window.matchMedia('(max-width: 900px)');
+  query.addEventListener('change', callback);
+  return () => query.removeEventListener('change', callback);
+}
+
+function isMobile() { return window.matchMedia('(max-width: 900px)').matches; }
+function serverMobile() { return false; }
 
 /**
  * Generalized GitBook-style shell: fixed top nav + persistent left sidebar
@@ -39,6 +48,34 @@ export default function SidebarShell({
 }) {
   const { isLightMode } = useTheme();
   const [open, setOpen] = useState(false);
+  const mobile = useSyncExternalStore(subscribeMobile, isMobile, serverMobile);
+  const sidebarId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open || !mobile) return;
+    const sidebar = sidebarRef.current;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : triggerRef.current;
+    const overflow = document.body.style.overflow;
+    // The drawer is nested in the layout, so inert its siblings at each level.
+    const background: Array<[HTMLElement, boolean]> = [];
+    for (let node = sidebar; node?.parentElement; node = node.parentElement) {
+      for (const sibling of node.parentElement.children) {
+        if (!(sibling instanceof HTMLElement) || sibling === node || sibling.classList.contains('sb-scrim')) continue;
+        background.push([sibling, sibling.inert]);
+        sibling.inert = true;
+      }
+      if (node.parentElement === document.body) break;
+    }
+    document.body.style.overflow = 'hidden';
+    sidebar?.querySelector<HTMLElement>('button, a')?.focus();
+    return () => {
+      document.body.style.overflow = overflow;
+      for (const [element, inert] of background) element.inert = inert;
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  }, [open, mobile]);
 
   return (
     <>
@@ -74,15 +111,16 @@ export default function SidebarShell({
         .sb-foott { display: block; margin-top: 4px; color: var(--cb-text); font-size: 14px; }
         .sb-footbtn.nxt { text-align: right; }
 
-        .sb-menu-btn { display: none; }
+        .sb-menu-btn, .sb-close { display: none; }
 
         @media (max-width: 900px) {
           .sb-sidebar {
             position: fixed; top: 0; left: 0; z-index: 210; width: 280px; height: 100vh;
-            background: var(--cb-bg); transform: translateX(-100%); transition: transform 0.2s ease;
+            background: var(--cb-bg); transform: translateX(-100%); visibility: hidden; transition: transform 0.2s ease, visibility 0.2s ease;
             padding-top: 68px;
           }
-          .sb-sidebar.open { transform: translateX(0); }
+          .sb-sidebar.open { transform: translateX(0); visibility: visible; transition: transform 0.2s ease; }
+          .sb-close { display: block; position: absolute; top: 16px; right: 16px; background: var(--cb-surface); color: var(--cb-text); border: 1px solid var(--cb-border); padding: 8px 12px; cursor: pointer; }
           .sb-main { padding: 32px 22px 72px; }
           .sb-menu-btn {
             display: inline-flex; align-items: center; gap: 8px; margin: 60px 0 -8px 22px;
@@ -97,11 +135,32 @@ export default function SidebarShell({
       <div className={`sb-shell ${isLightMode ? 'light-mode' : ''}`}>
         <SiteNav activePath={activePath ?? (label === 'Docs' ? '/docs' : '/infra')} />
 
-        <button className="sb-menu-btn" onClick={() => setOpen(true)}>☰ {label}</button>
-        {open && <div className="sb-scrim" onClick={() => setOpen(false)} />}
+        <button ref={triggerRef} className="sb-menu-btn" aria-expanded={open && mobile} aria-controls={sidebarId} onClick={() => setOpen(true)}>☰ {label}</button>
+        {open && mobile && <div className="sb-scrim" onClick={() => setOpen(false)} />}
 
         <div className="sb-layout">
-          <aside className={`sb-sidebar ${open ? 'open' : ''}`}>
+          <aside
+            ref={sidebarRef}
+            id={sidebarId}
+            className={`sb-sidebar ${open ? 'open' : ''}`}
+            inert={mobile && !open}
+            aria-hidden={mobile && !open ? true : undefined}
+            role={mobile && open ? 'dialog' : undefined}
+            aria-modal={mobile && open ? true : undefined}
+            aria-label={`${label} navigation`}
+            onKeyDown={(event) => {
+              if (!mobile || !open) return;
+              if (event.key === 'Escape') { event.preventDefault(); setOpen(false); }
+              if (event.key === 'Tab') {
+                const items = sidebarRef.current?.querySelectorAll<HTMLElement>('button, a[href]');
+                const first = items?.[0];
+                const last = items?.[items.length - 1];
+                if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+                else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+              }
+            }}
+          >
+            <button className="sb-close" onClick={() => setOpen(false)} aria-label={`Close ${label} navigation`}>Close</button>
             {sections.map((section) => (
               <div key={section.title} className="sb-group">
                 <div className="sb-group-title">{section.title}</div>
@@ -110,6 +169,7 @@ export default function SidebarShell({
                     key={item.href}
                     href={item.href}
                     className={`sb-link ${item.active ? 'active' : ''} ${item.lab ? 'haslab' : ''}`}
+                    aria-current={item.active ? 'page' : undefined}
                     onClick={() => setOpen(false)}
                     title={item.lab ? `${item.title} — includes a live lab` : undefined}
                   >

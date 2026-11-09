@@ -72,7 +72,7 @@ export function getWritingBySlug(slug: string): Writing | null {
       type: data.type || 'Essay',
       readTime: `${readTime} min read`,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

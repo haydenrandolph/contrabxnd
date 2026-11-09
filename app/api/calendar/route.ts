@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { nodeFetch } from '@/lib/node/client';
+import { FOMC_DATES } from '@/lib/fedwatch/calendar';
 
 interface CalendarEvent {
   date: string;
@@ -31,58 +32,62 @@ const IMPACT: Record<string, { avg: number; label: string }> = {
   halving:    { avg: 8.0, label: 'EXTREME' },
 };
 
-// FOMC decision dates (announcement day) — 2025-2026
-const FOMC_DATES = [
-  '2025-01-29', '2025-03-19', '2025-05-07', '2025-06-18',
-  '2025-07-30', '2025-09-17', '2025-10-29', '2025-12-17',
-  '2026-01-28', '2026-03-18', '2026-05-06', '2026-06-17',
-  '2026-07-29', '2026-09-16', '2026-10-28', '2026-12-16',
-];
-
-// CPI release dates — 2025-2026
+// Verified BLS release schedules: https://www.bls.gov/schedule/2026/home.htm
+// and https://www.bls.gov/schedule/2027/home.htm (checked 2026-11-08).
 const CPI_DATES = [
   '2025-01-15', '2025-02-12', '2025-03-12', '2025-04-10',
   '2025-05-13', '2025-06-11', '2025-07-10', '2025-08-12',
   '2025-09-10', '2025-10-14', '2025-11-12', '2025-12-10',
-  '2026-01-14', '2026-02-11', '2026-03-11', '2026-04-14',
+  '2026-01-13', '2026-02-13', '2026-03-11', '2026-04-10',
   '2026-05-12', '2026-06-10', '2026-07-14', '2026-08-12',
-  '2026-09-10', '2026-10-13', '2026-11-10', '2026-12-09',
+  '2026-09-11', '2026-10-14', '2026-11-10', '2026-12-10',
+  '2027-01-13', '2027-02-11', '2027-03-10', '2027-04-13',
+  '2027-05-12', '2027-06-10', '2027-07-14', '2027-08-11',
+  '2027-09-14', '2027-10-14', '2027-11-10', '2027-12-10',
 ];
 
-// PCE release dates (typically last Friday of month, ~4 weeks after CPI)
+// Verified BEA schedules: https://www.bea.gov/news/schedule/full and
+// https://www.bea.gov/news/schedule/next-year (checked 2026-11-08).
 const PCE_DATES = [
   '2025-01-31', '2025-02-28', '2025-03-28', '2025-04-30',
   '2025-05-30', '2025-06-27', '2025-07-31', '2025-08-29',
   '2025-09-26', '2025-10-31', '2025-11-26', '2025-12-23',
-  '2026-01-30', '2026-02-27', '2026-03-27', '2026-04-30',
-  '2026-05-29', '2026-06-26', '2026-07-31', '2026-08-28',
-  '2026-09-25', '2026-10-30', '2026-11-25', '2026-12-23',
+  '2026-01-22', '2026-02-20', '2026-03-13', '2026-04-09', '2026-04-30',
+  '2026-05-28', '2026-06-25', '2026-07-30', '2026-08-26',
+  '2026-09-30', '2026-10-29', '2026-11-25', '2026-12-23',
+  '2027-01-28', '2027-02-25', '2027-03-31', '2027-04-29',
+  '2027-05-27', '2027-06-25', '2027-07-29', '2027-08-25',
+  '2027-09-30', '2027-10-28', '2027-11-24', '2027-12-22',
 ];
 
-// Non-Farm Payrolls — first Friday of each month
+// Employment Situation release dates from the BLS schedules above.
 const NFP_DATES = [
   '2025-01-10', '2025-02-07', '2025-03-07', '2025-04-04',
   '2025-05-02', '2025-06-06', '2025-07-03', '2025-08-01',
   '2025-09-05', '2025-10-03', '2025-11-07', '2025-12-05',
-  '2026-01-09', '2026-02-06', '2026-03-06', '2026-04-03',
-  '2026-05-01', '2026-06-05', '2026-07-02', '2026-08-07',
+  '2026-01-09', '2026-02-11', '2026-03-06', '2026-04-03',
+  '2026-05-08', '2026-06-05', '2026-07-02', '2026-08-07',
   '2026-09-04', '2026-10-02', '2026-11-06', '2026-12-04',
+  '2027-01-08', '2027-02-05', '2027-03-05', '2027-04-02',
+  '2027-05-07', '2027-06-04', '2027-07-02', '2027-08-06',
+  '2027-09-03', '2027-10-08', '2027-11-05', '2027-12-03',
 ];
 
 // GDP advance estimates — quarterly
 const GDP_DATES = [
   '2025-01-30', '2025-04-30', '2025-07-30', '2025-10-29',
-  '2026-01-29', '2026-04-29', '2026-07-29', '2026-10-28',
+  '2026-02-20', '2026-04-30', '2026-07-30', '2026-10-29',
+  '2027-01-28', '2027-04-29', '2027-07-29', '2027-10-28',
 ];
 
 // BTC options expiry — last Friday of each month (CME + Deribit quarterly)
 function generateOptionsExpiries(): string[] {
   const dates: string[] = [];
-  for (let y = 2025; y <= 2026; y++) {
+  for (let y = 2025; y <= 2027; y++) {
     for (let m = 0; m < 12; m++) {
-      const lastDay = new Date(y, m + 1, 0);
-      const dayOfWeek = lastDay.getDay();
-      const lastFriday = new Date(y, m + 1, 0 - ((dayOfWeek + 2) % 7));
+      const lastDay = new Date(Date.UTC(y, m + 1, 0));
+      const dayOfWeek = lastDay.getUTCDay();
+      const lastFriday = new Date(Date.UTC(y, m + 1, 0 - ((dayOfWeek + 2) % 7)));
       dates.push(lastFriday.toISOString().slice(0, 10));
     }
   }
@@ -129,23 +134,23 @@ function buildScheduledEvents(now: Date): CalendarEvent[] {
   );
 
   addEvents(CPI_DATES, 'cpi',
-    (d) => `${getMonthName(new Date(d + 'T00:00:00Z').getMonth())} CPI Release`,
+    () => 'CPI Release',
     () => 'Consumer Price Index — headline inflation gauge',
   );
 
   addEvents(PCE_DATES, 'pce',
-    (d) => `${getMonthName(new Date(d + 'T00:00:00Z').getMonth())} PCE Release`,
+    () => 'PCE Release',
     () => 'Personal Consumption Expenditures — Fed\'s preferred inflation metric',
   );
 
   addEvents(NFP_DATES, 'jobs',
-    (d) => `${getMonthName(new Date(d + 'T00:00:00Z').getMonth())} Jobs Report`,
+    () => 'Jobs Report',
     () => 'Non-Farm Payrolls — monthly employment data',
   );
 
   addEvents(GDP_DATES, 'gdp',
     (d) => {
-      const q = Math.floor(new Date(d + 'T00:00:00Z').getMonth() / 3) + 1;
+      const q = Math.floor(new Date(d + 'T00:00:00Z').getUTCMonth() / 3) + 1;
       const prevQ = q === 1 ? 4 : q - 1;
       return `Q${prevQ} GDP Advance`;
     },
@@ -154,16 +159,11 @@ function buildScheduledEvents(now: Date): CalendarEvent[] {
 
   addEvents(OPTIONS_DATES, 'options',
     (d) => {
-      const m = new Date(d + 'T00:00:00Z').getMonth();
+      const m = new Date(d + 'T00:00:00Z').getUTCMonth();
       const isQuarterly = m % 3 === 2;
-      return `${getMonthName(m)} Options Expiry${isQuarterly ? ' (Q)' : ''}`;
+      return `${getMonthName(m)} Options Expiry${isQuarterly ? ' (Q)' : ''} (Est.)`;
     },
-    (d) => {
-      const m = new Date(d + 'T00:00:00Z').getMonth();
-      return m % 3 === 2
-        ? 'Quarterly CME + Deribit BTC options expiration'
-        : 'Monthly BTC options expiration';
-    },
+    () => 'Indicative last-Friday date; verify venue holiday schedules',
   );
 
   return events;

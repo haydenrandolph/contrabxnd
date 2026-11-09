@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useState, useEffectEvent } from 'react';
 import type { NewsItem } from '@/lib/news/types';
 
 interface NewsModalProps {
@@ -11,10 +11,16 @@ interface NewsModalProps {
 
 export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
-  const stableClose = useCallback(() => onClose(), [onClose]);
+  const stableClose = useEffectEvent(() => onClose());
+  const isOpen = item !== null;
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!item) return;
+    if (!isOpen) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const updateTime = () => setNow(Date.now());
+    const initialTimer = setTimeout(updateTime, 0);
+    const timer = setInterval(updateTime, 60000);
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { stableClose(); return; }
       if (e.key === 'Tab' && contentRef.current) {
@@ -23,14 +29,19 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
         );
         if (focusable.length === 0) return;
         const first = focusable[0], last = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        if (e.shiftKey && (document.activeElement === first || !contentRef.current.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !contentRef.current.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     contentRef.current?.querySelector<HTMLElement>('button')?.focus();
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [item, stableClose]);
+    return () => {
+      clearTimeout(initialTimer);
+      clearInterval(timer);
+      document.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, [isOpen]);
 
   if (!item) return null;
 
@@ -46,7 +57,8 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
   };
 
   const getRelativeTime = (timestamp: number) => {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (now === null) return new Date(timestamp).toLocaleDateString();
+    const seconds = Math.floor((now - timestamp) / 1000);
     if (seconds < 60) return 'Just now';
     const minutes = Math.floor(seconds / 60);
     if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
@@ -158,7 +170,7 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
         }
 
         .news-modal-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-sans);
           font-size: 1.75rem;
           font-weight: 400;
           line-height: 1.3;
@@ -248,8 +260,8 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
       `}</style>
 
       <div className="news-modal-overlay" onClick={onClose}>
-        <div className="news-modal" ref={contentRef} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
-          <button className="news-modal-close" onClick={onClose}>
+        <div className="news-modal" ref={contentRef} role="dialog" aria-modal="true" aria-labelledby="news-modal-title" onClick={e => e.stopPropagation()}>
+          <button className="news-modal-close" aria-label="Close news" onClick={onClose}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -266,7 +278,7 @@ export default function NewsModal({ item, onClose, isLightMode }: NewsModalProps
               )}
               <span className="news-modal-time">{getRelativeTime(item.timestamp)}</span>
             </div>
-            <h2 className="news-modal-title">{item.title}</h2>
+            <h2 className="news-modal-title" id="news-modal-title">{item.title}</h2>
           </div>
 
           <div className="news-modal-body">

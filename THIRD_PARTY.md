@@ -38,6 +38,8 @@ The merchant directory uses BTCMap data and Leaflet with standard OpenStreetMap 
 
 Audio files are pre-generated as static MP3s in `public/audio/`. The API key is only needed during generation (via `scripts/generate-audio.mjs`), not at runtime.
 
+No MP3s are currently checked in. The player stays hidden until audio metadata confirms an available asset; missing files do not display loading controls.
+
 ## Email & Notifications
 
 | Service | Purpose | Env Vars | Tier | Cost |
@@ -52,12 +54,14 @@ Audio files are pre-generated as static MP3s in `public/audio/`. The API key is 
 | **Vercel** | Hosting, serverless functions, edge runtime | Deploys from `main` branch | Free / Pro |
 | **GitHub** | Source control, CI | `haydenrandolph/contrabxnd` | Free |
 
-## Fonts (CDN)
+## Fonts (Self-Hosted)
 
 | Font | Source | Usage |
 |---|---|---|
-| **Space Mono** | Google Fonts | UI, monospace elements |
-| **Cormorant Garamond** | Google Fonts | Display headings, body text in lessons/writings |
+| **Jost** | Google Fonts via `next/font/google` | Variable weight: light display headings (200/300/400), body text, stronger tool/UI weights (500/600/700) |
+| **Space Mono** | Google Fonts via `next/font/google` | Labels, code, charts and numeric data (400/700) |
+
+Next.js downloads these fonts at build time and serves them as local static assets. Page typography makes no browser requests to Google Fonts. The shared `--cb-font-sans`, `--cb-font-display`, and `--cb-font-mono` tokens are the font API; no font API key is required. Standalone share-card SVG generation is separate from page typography.
 
 ---
 

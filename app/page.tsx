@@ -1,10 +1,35 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useEffectEvent, useCallback, useRef, useMemo } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SiteNav from '@/components/SiteNav';
 import { PriceAlertModal, NewsTicker, NewsModal, BTCChart } from '@/components/dashboard';
 import type { NewsItem } from '@/lib/news/types';
+
+function unchanged<T>(previous: T, next: T): T {
+  return JSON.stringify(previous) === JSON.stringify(next) ? previous : next;
+}
+
+function useVisiblePolling(fetchData: (signal: AbortSignal) => Promise<void>, delay: number) {
+  const poll = useEffectEvent(fetchData);
+  useEffect(() => {
+    let controller: AbortController | null = null;
+    const run = async () => {
+      if (document.hidden || controller) return;
+      controller = new AbortController();
+      try { await poll(controller.signal); } finally { controller = null; }
+    };
+    const onVisibility = () => { if (!document.hidden) void run(); };
+    void run();
+    const timer = setInterval(run, delay);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(timer);
+      controller?.abort();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [delay]);
+}
 
 // Node cities for transaction route labels in the feed
 const CITIES = [
@@ -139,11 +164,12 @@ export default function TerminalPage() {
   const [onchainData, setOnchainData] = useState<OnchainData | null>(null);
   const [briefData, setBriefData] = useState<{ date: string; headline: string; summary: string; sections: Array<{ title: string; body: string }> } | null>(null);
   const [briefExpanded, setBriefExpanded] = useState(false);
-  const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const [aiMessages, setAiMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string; context?: boolean }>>([]);
   const [aiInput, setAiInput] = useState('');
   const [aiStreaming, setAiStreaming] = useState(false);
   const [aiRemaining, setAiRemaining] = useState<number | null>(null);
   const aiScrollRef = useRef<HTMLDivElement>(null);
+  const aiRequestRef = useRef<AbortController | null>(null);
   const { isLightMode } = useTheme();
   const wsRef = useRef<WebSocket | null>(null);
   const seenTxIds = useRef<Set<string>>(new Set());
@@ -164,13 +190,13 @@ export default function TerminalPage() {
 
   // ── Data fetching ──
 
-  const fetchPriceData = useCallback(async () => {
+  const fetchPriceData = useCallback(async (signal: AbortSignal) => {
     try {
-      const res = await fetch('/api/price');
+      const res = await fetch('/api/price', { signal });
       if (!res.ok) throw new Error('fail');
       const data = await res.json();
-      if (data.price) {
-        setNetworkData(prev => ({
+      if (data.price && !signal.aborted) {
+        setNetworkData(prev => unchanged(prev, {
           ...prev, price: data.price, change24h: data.change24h ?? 0,
           marketCap: data.marketCap ?? 0, volume24h: data.volume24h ?? 0,
         }));
@@ -178,26 +204,26 @@ export default function TerminalPage() {
     } catch { /* retry next interval */ }
   }, []);
 
-  const fetchNetworkData = useCallback(async () => {
+  const fetchNetworkData = useCallback(async (signal: AbortSignal) => {
     try {
       const [blocksRes, mempoolRes, feesRes, hashRateRes] = await Promise.all([
-        fetch('/api/node/v1/blocks').catch(() => null),
-        fetch('/api/node/mempool').catch(() => null),
-        fetch('/api/node/v1/fees/recommended').catch(() => null),
-        fetch('/api/node/v1/mining/hashrate/3d').catch(() => null),
+        fetch('/api/node/v1/blocks', { signal }).catch(() => null),
+        fetch('/api/node/mempool', { signal }).catch(() => null),
+        fetch('/api/node/v1/fees/recommended', { signal }).catch(() => null),
+        fetch('/api/node/v1/mining/hashrate/3d', { signal }).catch(() => null),
       ]);
-      if (blocksRes) {
+      if (blocksRes?.ok) {
         const blocks = await blocksRes.json();
-        if (blocks?.length > 0) {
-          setNetworkData(prev => ({ ...prev, blockHeight: blocks[0].height }));
-          setRecentBlocks(blocks.slice(0, 6).map((b: { height: number; tx_count: number; timestamp: number; id: string }) => ({
+        if (blocks?.length > 0 && !signal.aborted) {
+          setNetworkData(prev => unchanged(prev, { ...prev, blockHeight: blocks[0].height }));
+          setRecentBlocks(prev => unchanged(prev, blocks.slice(0, 6).map((b: { height: number; tx_count: number; timestamp: number; id: string }) => ({
             height: b.height, txCount: b.tx_count, timestamp: b.timestamp, hash: b.id,
-          })));
+          }))));
         }
       }
-      if (mempoolRes) { const m = await mempoolRes.json(); if (m) setNetworkData(prev => ({ ...prev, mempoolCount: m.count || 0 })); }
-      if (feesRes) { const f = await feesRes.json(); if (f) setNetworkData(prev => ({ ...prev, priorityFee: f.fastestFee || 0 })); }
-      if (hashRateRes) { const h = await hashRateRes.json(); if (h?.currentHashrate) setNetworkData(prev => ({ ...prev, hashRate: h.currentHashrate / 1e18 })); }
+      if (mempoolRes?.ok) { const m = await mempoolRes.json(); if (m && !signal.aborted) setNetworkData(prev => unchanged(prev, { ...prev, mempoolCount: m.count ?? 0 })); }
+      if (feesRes?.ok) { const f = await feesRes.json(); if (f && !signal.aborted) setNetworkData(prev => unchanged(prev, { ...prev, priorityFee: f.fastestFee ?? 0 })); }
+      if (hashRateRes?.ok) { const h = await hashRateRes.json(); if (h?.currentHashrate && !signal.aborted) setNetworkData(prev => unchanged(prev, { ...prev, hashRate: h.currentHashrate / 1e18 })); }
     } catch { /* retry next interval */ }
   }, []);
 
@@ -216,143 +242,164 @@ export default function TerminalPage() {
     }, ...prev.slice(0, 29)]);
   }, []);
 
-  const fetchRecentTransactions = useCallback(async () => {
-    try {
-      const res = await fetch('/api/node/mempool/recent');
-      if (!res.ok) return;
-      const txs: Array<{ txid: string; value: number }> = await res.json();
-      let count = 0;
-      for (const tx of txs) {
-        if (!seenTxIds.current.has(tx.txid) && count < 5) {
-          seenTxIds.current.add(tx.txid);
-          setTimeout(() => processTransaction(tx), count * 400);
-          count++;
-        }
-      }
-      if (seenTxIds.current.size > 500) {
-        seenTxIds.current = new Set(Array.from(seenTxIds.current).slice(-250));
-      }
-    } catch { /* retry */ }
-  }, [processTransaction]);
-
   // ── Effects ──
 
-  useEffect(() => { fetchPriceData(); fetchNetworkData(); }, [fetchPriceData, fetchNetworkData]);
-  useEffect(() => { const i = setInterval(fetchPriceData, 30000); return () => clearInterval(i); }, [fetchPriceData]);
-  useEffect(() => { const i = setInterval(fetchNetworkData, 15000); return () => clearInterval(i); }, [fetchNetworkData]);
+  useVisiblePolling(fetchPriceData, 30000);
+  useVisiblePolling(fetchNetworkData, 15000);
 
-  useEffect(() => {
+  useVisiblePolling(async (signal) => {
     const fetchFG = async () => {
       try {
-        const res = await fetch('/api/fear-greed');
-        if (res.ok) { const d = await res.json(); if (d.value !== null) setFearGreed(d); }
+        const res = await fetch('/api/fear-greed', { signal });
+        if (res.ok) { const d = await res.json(); if (d.value !== null && !signal.aborted) setFearGreed(prev => unchanged(prev, d)); }
       } catch { /* silent */ }
     };
-    fetchFG();
-    const i = setInterval(fetchFG, 5 * 60 * 1000);
-    return () => clearInterval(i);
-  }, []);
+    await fetchFG();
+  }, 5 * 60 * 1000);
 
-  useEffect(() => {
+  useVisiblePolling(async (signal) => {
     const fetchETF = async () => {
       try {
-        const res = await fetch('/api/etf-flows');
-        if (res.ok) setEtfFlows(await res.json());
+        const res = await fetch('/api/etf-flows', { signal });
+        if (res.ok) { const data = await res.json(); if (!signal.aborted) setEtfFlows(prev => unchanged(prev, data)); }
       } catch { /* silent */ }
     };
-    fetchETF();
-    const i = setInterval(fetchETF, 5 * 60 * 1000);
-    return () => clearInterval(i);
-  }, []);
+    await fetchETF();
+  }, 5 * 60 * 1000);
 
-  useEffect(() => {
+  useVisiblePolling(async (signal) => {
     const fetchMacro = async () => {
       const fetches = [
-        fetch('/api/signal').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/fedwatch').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/liquidity').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/slr').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/polymarket').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/brief').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/hashrate').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/onchain').then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/signal', { signal }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/fedwatch', { signal }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/liquidity', { signal }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/slr', { signal }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/polymarket', { signal }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/brief', { signal }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/hashrate', { signal }).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch('/api/onchain', { signal }).then(r => r.ok ? r.json() : null).catch(() => null),
       ];
       const [sig, fed, liq, slr, poly, brief, hash, onchain] = await Promise.all(fetches);
-      if (sig && sig.score !== undefined) setSignalData(sig);
-      if (fed) setFedwatchData(fed);
-      if (liq) setLiquidityData(liq);
-      if (slr) setSlrData(slr);
-      if (poly) setPolymarketData(poly);
-      if (brief?.brief) setBriefData(brief.brief);
-      if (hash?.hash_ribbon) setHashrateData(hash);
-      if (onchain && !onchain.pending) setOnchainData(onchain);
+      if (signal.aborted) return;
+      if (sig && sig.score !== undefined) setSignalData(prev => unchanged(prev, sig));
+      if (fed) setFedwatchData(prev => unchanged(prev, fed));
+      if (liq) setLiquidityData(prev => unchanged(prev, liq));
+      if (slr) setSlrData(prev => unchanged(prev, slr));
+      if (poly) setPolymarketData(prev => unchanged(prev, poly));
+      if (brief?.brief) setBriefData(prev => unchanged(prev, brief.brief));
+      if (hash?.hash_ribbon) setHashrateData(prev => unchanged(prev, hash));
+      if (onchain && !onchain.pending) setOnchainData(prev => unchanged(prev, onchain));
     };
-    fetchMacro();
-    const i = setInterval(fetchMacro, 5 * 60 * 1000);
-    return () => clearInterval(i);
-  }, []);
+    await fetchMacro();
+  }, 5 * 60 * 1000);
 
-  useEffect(() => {
+  useVisiblePolling(async (signal) => {
     const fetchDerivatives = async () => {
       try {
-        const res = await fetch('/api/derivatives');
-        if (res.ok) setDerivativesData(await res.json());
+        const res = await fetch('/api/derivatives', { signal });
+        if (res.ok) { const data = await res.json(); if (!signal.aborted) setDerivativesData(prev => unchanged(prev, data)); }
       } catch { /* silent */ }
     };
-    fetchDerivatives();
-    const i = setInterval(fetchDerivatives, 5 * 60 * 1000);
-    return () => clearInterval(i);
-  }, []);
+    await fetchDerivatives();
+  }, 5 * 60 * 1000);
 
-  useEffect(() => {
+  useVisiblePolling(async (signal) => {
     const fetchCalendar = async () => {
       try {
-        const res = await fetch('/api/calendar');
+        const res = await fetch('/api/calendar', { signal });
         if (res.ok) {
           const data = await res.json();
-          if (data.events) setCalendarEvents(data.events);
+          if (data.events && !signal.aborted) setCalendarEvents(prev => unchanged(prev, data.events));
         }
       } catch { /* silent */ }
     };
-    fetchCalendar();
-    const i = setInterval(fetchCalendar, 30 * 60 * 1000);
-    return () => clearInterval(i);
-  }, []);
+    await fetchCalendar();
+  }, 30 * 60 * 1000);
 
   // WebSocket
   useEffect(() => {
-    let txPoll: NodeJS.Timeout;
+    let disposed = false;
+    let txPoll: ReturnType<typeof setInterval> | undefined;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let pending = false;
+    const controller = new AbortController();
+    const txTimers = new Set<ReturnType<typeof setTimeout>>();
+    const fetchRecentTransactions = async () => {
+      if (disposed || document.hidden || pending) return;
+      pending = true;
+      try {
+        const res = await fetch('/api/node/mempool/recent', { signal: controller.signal });
+        if (!res.ok) return;
+        const txs: Array<{ txid: string; value: number }> = await res.json();
+        if (disposed) return;
+        let count = 0;
+        for (const tx of txs) {
+          if (!seenTxIds.current.has(tx.txid) && count < 5) {
+            seenTxIds.current.add(tx.txid);
+            const timer = setTimeout(() => {
+              txTimers.delete(timer);
+              if (!disposed && !document.hidden) processTransaction(tx);
+            }, count++ * 400);
+            txTimers.add(timer);
+          }
+        }
+        if (seenTxIds.current.size > 500) seenTxIds.current = new Set(Array.from(seenTxIds.current).slice(-250));
+      } catch { /* retry next poll */ } finally { pending = false; }
+    };
+    const startPolling = () => {
+      clearInterval(txPoll);
+      void fetchRecentTransactions();
+      txPoll = setInterval(fetchRecentTransactions, 2000);
+    };
     const connect = () => {
+      if (disposed) return;
       try {
         const ws = new WebSocket(process.env.NEXT_PUBLIC_NODE_MEMPOOL_WS_URL || 'wss://mempool.space/api/v1/ws');
         wsRef.current = ws;
         ws.onopen = () => {
+          if (disposed) return;
           setWsConnected(true);
           ws.send(JSON.stringify({ action: 'want', data: ['blocks', 'stats', 'mempool-blocks'] }));
-          fetchRecentTransactions();
-          txPoll = setInterval(fetchRecentTransactions, 2000);
+          startPolling();
         };
         ws.onmessage = (e) => {
+          if (disposed) return;
           try {
             const d = JSON.parse(e.data);
-            if (d.block) { setNetworkData(prev => ({ ...prev, blockHeight: d.block.height || prev.blockHeight })); fetchRecentTransactions(); }
-            if (d.mempoolInfo) setNetworkData(prev => ({ ...prev, mempoolCount: d.mempoolInfo.size || prev.mempoolCount }));
-            if (d.fees) setNetworkData(prev => ({ ...prev, priorityFee: d.fees.fastestFee || prev.priorityFee }));
+            if (d.block) { setNetworkData(prev => unchanged(prev, { ...prev, blockHeight: d.block.height ?? prev.blockHeight })); void fetchRecentTransactions(); }
+            if (d.mempoolInfo) setNetworkData(prev => unchanged(prev, { ...prev, mempoolCount: d.mempoolInfo.size ?? prev.mempoolCount }));
+            if (d.fees) setNetworkData(prev => unchanged(prev, { ...prev, priorityFee: d.fees.fastestFee ?? prev.priorityFee }));
           } catch { /* ignore */ }
         };
-        ws.onclose = () => { setWsConnected(false); clearInterval(txPoll); setTimeout(connect, 3000); };
+        ws.onclose = () => {
+          if (disposed) return;
+          setWsConnected(false);
+          startPolling();
+          reconnectTimer = setTimeout(connect, 3000);
+        };
         ws.onerror = () => ws.close();
       } catch {
         setWsConnected(false);
-        fetchRecentTransactions();
-        txPoll = setInterval(fetchRecentTransactions, 2000);
+        startPolling();
+        reconnectTimer = setTimeout(connect, 3000);
       }
     };
     connect();
-    return () => { clearInterval(txPoll); wsRef.current?.close(); };
-  }, [fetchRecentTransactions]);
+    return () => {
+      disposed = true;
+      controller.abort();
+      clearInterval(txPoll);
+      clearTimeout(reconnectTimer);
+      txTimers.forEach(clearTimeout);
+      const ws = wsRef.current;
+      if (ws) { ws.onopen = null; ws.onmessage = null; ws.onclose = null; ws.onerror = null; ws.close(); }
+      wsRef.current = null;
+    };
+  }, [processTransaction]);
 
   // ── Helpers ──
+
+  useEffect(() => () => aiRequestRef.current?.abort(), []);
 
   const fmtNum = (n: number, d = 2) => {
     if (n >= 1e12) return (n / 1e12).toFixed(d) + 'T';
@@ -401,9 +448,21 @@ export default function TerminalPage() {
 
   const sendAiMessage = useCallback(async () => {
     const text = aiInput.trim();
-    if (!text || aiStreaming) return;
-    const userMsg = { role: 'user' as const, content: text };
+    if (!text || text.length > 500 || aiStreaming || aiRequestRef.current) return;
+    const controller = new AbortController();
+    aiRequestRef.current = controller;
+    const userMsg = { role: 'user' as const, content: text, context: false };
     const history = [...aiMessages, userMsg];
+    // Retain complete successful exchanges so the window always starts with a user.
+    const conversation = aiMessages.flatMap((message, index) => {
+      const reply = aiMessages[index + 1];
+      return message.role === 'user' && message.context !== false && message.content.trim() &&
+        message.content.trim().length <= 500 && reply?.role === 'assistant' &&
+        reply.context !== false && reply.content.trim()
+        ? [{ role: message.role, content: message.content.trim() }, { role: reply.role, content: reply.content.trim().slice(0, 4000) }]
+        : [];
+    }).slice(-8);
+    conversation.push({ role: 'user', content: text });
     setAiMessages(history);
     setAiInput('');
     setAiStreaming(true);
@@ -411,55 +470,73 @@ export default function TerminalPage() {
     try {
       const res = await fetch('/api/ai/analyst', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: history, _hp: '' }),
+        body: JSON.stringify({ messages: conversation, _hp: '' }),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: 'Request failed' }));
+        if (controller.signal.aborted) return;
         if (res.status === 429) setAiRemaining(0);
-        setAiMessages([...history, { role: 'assistant', content: err.error || 'Something went wrong.' }]);
+        setAiMessages([...history, { role: 'assistant', content: err.error || 'Something went wrong.', context: false }]);
         setAiStreaming(false);
         return;
       }
 
+      if (controller.signal.aborted) return;
       const reader = res.body?.getReader();
-      if (!reader) { setAiStreaming(false); return; }
+      if (!reader) throw new Error('Empty response');
       const decoder = new TextDecoder();
       let accumulated = '';
+      let buffer = '';
+      let finished = false;
 
-      setAiMessages([...history, { role: 'assistant', content: '' }]);
+      setAiMessages([...history, { role: 'assistant', content: '', context: false }]);
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = line.slice(6);
-          if (payload === '[DONE]') break;
-          try {
+      try {
+        while (!finished && !controller.signal.aborted) {
+          const { done, value } = await reader.read();
+          if (controller.signal.aborted) break;
+          buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+          const frames = buffer.split(/\r?\n\r?\n/);
+          buffer = frames.pop() ?? '';
+          if (done && buffer.trim()) { frames.push(buffer); buffer = ''; }
+          for (const frame of frames) {
+            const payload = frame.split(/\r?\n/).filter(line => line.startsWith('data:')).map(line => line.slice(5).replace(/^ /, '')).join('\n');
+            if (!payload) continue;
+            if (payload === '[DONE]') { finished = true; break; }
             const parsed = JSON.parse(payload);
+            if (parsed.error || parsed.type === 'error') throw new Error(parsed.error || 'Stream failed');
             if (parsed.text) {
               accumulated += parsed.text;
               setAiMessages(prev => {
+                if (controller.signal.aborted) return prev;
                 const updated = [...prev];
-                updated[updated.length - 1] = { role: 'assistant', content: accumulated };
+                updated[updated.length - 1] = { role: 'assistant', content: accumulated, context: false };
                 return updated;
               });
             }
             if (parsed.remaining !== undefined) {
               setAiRemaining(parsed.remaining);
             }
-          } catch { /* skip malformed lines */ }
+          }
+          if (done) break;
         }
+        if (!finished && !controller.signal.aborted) throw new Error('Connection ended before the response completed. Try again.');
+      } finally {
+        await reader.cancel().catch(() => {});
+        reader.releaseLock();
       }
-      setTimeout(() => aiScrollRef.current?.scrollTo({ top: aiScrollRef.current.scrollHeight, behavior: 'smooth' }), 50);
-    } catch {
-      setAiMessages(prev => [...prev, { role: 'assistant', content: 'Connection error. Try again.' }]);
+      if (!controller.signal.aborted) {
+        setAiMessages(prev => prev.map((message, index) => index >= history.length - 1 ? { ...message, context: true } : message));
+        aiScrollRef.current?.scrollTo({ top: aiScrollRef.current.scrollHeight, behavior: 'smooth' });
+      }
+    } catch (error) {
+      if (!controller.signal.aborted) setAiMessages(prev => [...prev, { role: 'assistant', content: error instanceof Error ? error.message : 'Connection error. Try again.', context: false }]);
     } finally {
-      setAiStreaming(false);
+      if (aiRequestRef.current === controller) aiRequestRef.current = null;
+      if (!controller.signal.aborted) setAiStreaming(false);
     }
   }, [aiInput, aiMessages, aiStreaming]);
 
@@ -471,7 +548,7 @@ export default function TerminalPage() {
         .terminal {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 13px;
           height: 100vh;
           display: flex;
@@ -570,7 +647,7 @@ export default function TerminalPage() {
           border: 1px solid var(--cb-border);
           border-radius: var(--cb-radius);
           color: var(--cb-text-muted);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -825,7 +902,7 @@ export default function TerminalPage() {
 
         .sidebar-tab-btn {
           flex: 1;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -917,7 +994,7 @@ export default function TerminalPage() {
           background: var(--cb-surface);
           border: 1px solid var(--cb-border);
           border-radius: var(--cb-radius);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           line-height: 1.6;
           letter-spacing: 0;
@@ -1259,7 +1336,7 @@ export default function TerminalPage() {
           display: flex; align-items: center; justify-content: center; gap: 8px;
           width: 100%; padding: 12px 24px;
           background: transparent; border: 1px solid var(--cb-border); border-radius: var(--cb-radius);
-          color: var(--cb-text); font-family: 'JetBrains Mono', monospace;
+          color: var(--cb-text); font-family: var(--cb-font-mono);
           font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
           text-decoration: none; cursor: pointer; transition: all 0.15s ease;
         }
@@ -1343,7 +1420,7 @@ export default function TerminalPage() {
           <div className="terminal-body">
             {/* ── Chart ── */}
             <div className="chart-panel">
-              <BTCChart isLightMode={isLightMode} onPriceTick={(p) => setNetworkData(prev => ({ ...prev, price: p }))} />
+              <BTCChart isLightMode={isLightMode} onPriceTick={(p) => setNetworkData(prev => prev.price === p ? prev : { ...prev, price: p })} />
             </div>
 
             {/* ── Sidebar ── */}
@@ -1848,6 +1925,8 @@ export default function TerminalPage() {
                       <input
                         className="ai-input"
                         type="text"
+                        maxLength={500}
+                        aria-label="Message the analyst"
                         placeholder={aiRemaining === 0 ? 'Limit reached — sign in for more' : 'Ask the analyst...'}
                         value={aiInput}
                         onChange={(e) => setAiInput(e.target.value)}
@@ -1862,6 +1941,12 @@ export default function TerminalPage() {
                         {aiStreaming ? '...' : '->'}
                       </button>
                     </div>
+                    {aiMessages.length > 0 && (
+                      <div className="ai-input-bar">
+                        {aiStreaming && <button className="ai-suggestion" onClick={() => { aiRequestRef.current?.abort(); aiRequestRef.current = null; setAiStreaming(false); }}>Stop</button>}
+                        <button className="ai-suggestion" onClick={() => { aiRequestRef.current?.abort(); aiRequestRef.current = null; setAiStreaming(false); setAiMessages([]); setAiInput(''); }}>New Chat</button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

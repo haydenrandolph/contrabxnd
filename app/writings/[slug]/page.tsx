@@ -5,7 +5,7 @@ import {
   getAllWritingSlugs,
   getRelatedWritings
 } from '@/lib/writings';
-import { useMDXComponents } from '@/lib/mdx-components';
+import { useMDXComponents as getMDXComponents } from '@/lib/mdx-components';
 import ArticleLayout from '@/components/ArticleLayout';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -61,7 +61,7 @@ export default async function ArticlePage({ params }: PageProps) {
     title: related.title,
     readTime: related.readTime || '5 min read'
   }));
-  const components = useMDXComponents({});
+  const components = getMDXComponents({});
 
   return (
     <ArticleLayout

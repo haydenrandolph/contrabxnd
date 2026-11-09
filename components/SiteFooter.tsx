@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { useTheme } from '@/contexts/ThemeContext';
 
 interface SiteFooterProps {
   variant?: 'standard' | 'instructor';
@@ -21,7 +20,6 @@ const INSTRUCTOR_LINKS = [
 ];
 
 export default function SiteFooter({ variant = 'standard', className }: SiteFooterProps) {
-  const { isLightMode } = useTheme();
   const links = variant === 'instructor' ? INSTRUCTOR_LINKS : STANDARD_LINKS;
 
   return (

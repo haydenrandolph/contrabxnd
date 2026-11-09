@@ -14,6 +14,7 @@ interface DerivativesData {
   liquidations24h: { long: number | null; short: number | null; total: number | null };
   longShortRatio: { ratio: number | null; longPct: number | null; shortPct: number | null };
   source: string;
+  periodEnd?: string;
 }
 
 let cache: CacheEntry | null = null;
@@ -23,9 +24,13 @@ async function coinalyzeFetch(endpoint: string, params: Record<string, string> =
   const apiKey = process.env.COINALYZE_API_KEY;
   if (!apiKey) return null;
 
-  const qs = new URLSearchParams({ symbols: SYMBOL, ...params }).toString();
+  const usd: Record<string, string> = ['open-interest', 'open-interest-history', 'liquidation-history'].includes(endpoint)
+    ? { convert_to_usd: 'true' } : {};
+  const qs = new URLSearchParams({ symbols: SYMBOL, ...usd, ...params }).toString();
   const res = await fetch(`${API_BASE}/${endpoint}?${qs}`, {
     headers: { api_key: apiKey },
+    cache: 'no-store',
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!res.ok) return null;
@@ -38,7 +43,7 @@ export async function GET() {
   }
 
   try {
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(Date.now() / 3_600_000) * 3600;
     const oneDayAgo = now - 86400;
 
     const [
@@ -48,52 +53,46 @@ export async function GET() {
       fundingPredicted,
       liqHistory,
       lsHistory,
-      priceRes,
     ] = await Promise.all([
       coinalyzeFetch('open-interest'),
       coinalyzeFetch('open-interest-history', {
-        interval: 'daily',
+        interval: '1hour',
         from: String(oneDayAgo),
-        to: String(now),
+        to: String(now - 1),
       }),
       coinalyzeFetch('funding-rate'),
       coinalyzeFetch('predicted-funding-rate'),
       coinalyzeFetch('liquidation-history', {
-        interval: 'daily',
+        interval: '1hour',
         from: String(oneDayAgo),
-        to: String(now),
+        to: String(now - 1),
       }),
       coinalyzeFetch('long-short-ratio-history', {
-        interval: 'daily',
+        interval: '1hour',
         from: String(oneDayAgo),
         to: String(now),
       }),
-      fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', { cache: 'no-store' })
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null),
     ]);
 
-    const btcPrice = priceRes?.bitcoin?.usd ?? 0;
+    const freshQuote = (quote: { update?: number } | undefined) => quote?.update != null &&
+      quote.update <= Date.now() / 1000 && Date.now() / 1000 - quote.update <= 3600;
 
     // Open Interest: current value + 24h change
     let oiValue: number | null = null;
     let oiChange: number | null = null;
 
-    if (oiCurrent?.[0]) {
+    if (freshQuote(oiCurrent?.[0])) {
       const raw = oiCurrent[0].value ?? oiCurrent[0].c ?? null;
-      oiValue = raw !== null && btcPrice > 0 ? raw * btcPrice : raw;
+      oiValue = Number.isFinite(raw) && raw >= 0 ? raw : null;
     }
-    if (oiHistory?.[0]?.history?.length >= 2) {
+    if (oiHistory?.[0]?.history?.length === 24 &&
+        oiHistory[0].history.every((e: { t: number; o: number; c: number }, i: number) =>
+          e.t === oneDayAgo + i * 3600 && Number.isFinite(e.o) && Number.isFinite(e.c))) {
       const h = oiHistory[0].history;
       const latest = h[h.length - 1].c;
       const prev = h[0].o;
-      if (latest && prev) {
+      if (latest >= 0 && prev > 0) {
         oiChange = ((latest - prev) / prev) * 100;
-      }
-    } else if (oiHistory?.[0]?.history?.length === 1) {
-      const h = oiHistory[0].history[0];
-      if (h.o && h.c) {
-        oiChange = ((h.c - h.o) / h.o) * 100;
       }
     }
 
@@ -101,11 +100,13 @@ export async function GET() {
     let fundingValue: number | null = null;
     let fundingPred: number | null = null;
 
-    if (fundingCurrent?.[0]) {
+    if (freshQuote(fundingCurrent?.[0])) {
       fundingValue = fundingCurrent[0].value ?? fundingCurrent[0].c ?? null;
+      if (!Number.isFinite(fundingValue)) fundingValue = null;
     }
-    if (fundingPredicted?.[0]) {
+    if (freshQuote(fundingPredicted?.[0])) {
       fundingPred = fundingPredicted[0].value ?? fundingPredicted[0].c ?? null;
+      if (!Number.isFinite(fundingPred)) fundingPred = null;
     }
 
     // Liquidations: sum last 24h long + short
@@ -113,11 +114,13 @@ export async function GET() {
     let liqShort: number | null = null;
 
     if (liqHistory?.[0]?.history?.length > 0) {
-      const entries = liqHistory[0].history;
-      const rawLong = entries.reduce((sum: number, e: { l: number }) => sum + (e.l || 0), 0);
-      const rawShort = entries.reduce((sum: number, e: { s: number }) => sum + (e.s || 0), 0);
-      liqLong = btcPrice > 0 ? rawLong * btcPrice : rawLong;
-      liqShort = btcPrice > 0 ? rawShort * btcPrice : rawShort;
+      const entries = liqHistory[0].history as Array<{ t: number; l: number; s: number }>;
+      const complete = entries.length === 24 && entries.every((e, i) => e.t === oneDayAgo + i * 3600 &&
+        Number.isFinite(e.l) && e.l >= 0 && Number.isFinite(e.s) && e.s >= 0);
+      if (complete) {
+        liqLong = entries.reduce((sum, e) => sum + e.l, 0);
+        liqShort = entries.reduce((sum, e) => sum + e.s, 0);
+      }
     }
 
     // Long/Short Ratio: latest
@@ -127,9 +130,11 @@ export async function GET() {
 
     if (lsHistory?.[0]?.history?.length > 0) {
       const latest = lsHistory[0].history[lsHistory[0].history.length - 1];
-      lsRatio = latest.r ?? null;
-      longPct = latest.l ?? null;
-      shortPct = latest.s ?? null;
+      if (latest.t >= now - 3600 && latest.t <= Date.now() / 1000) {
+        lsRatio = Number.isFinite(latest.r) ? latest.r : null;
+        longPct = Number.isFinite(latest.l) ? latest.l : null;
+        shortPct = Number.isFinite(latest.s) ? latest.s : null;
+      }
     }
 
     const data: DerivativesData = {
@@ -142,6 +147,7 @@ export async function GET() {
       },
       longShortRatio: { ratio: lsRatio, longPct, shortPct },
       source: 'coinalyze',
+      periodEnd: new Date(now * 1000).toISOString(),
     };
 
     cache = { data, fetchedAt: Date.now() };

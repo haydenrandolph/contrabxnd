@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { runNodeTool } from '@/lib/node/agent-tools';
+import { waitForChatWork } from '@/lib/chat-request';
 
 export interface AgentEvents {
   /** Streamed text deltas of the assistant's reply. */
@@ -22,6 +23,7 @@ export async function runAgentStream(
     system: string;
     tools: Anthropic.Tool[];
     messages: Anthropic.MessageParam[];
+    signal: AbortSignal;
     maxIterations?: number;
     maxTokens?: number;
   },
@@ -31,15 +33,19 @@ export async function runAgentStream(
   const maxIter = opts.maxIterations ?? 6;
 
   for (let i = 0; i < maxIter; i++) {
+    opts.signal.throwIfAborted();
     const stream = anthropic.messages.stream({
       model: opts.model,
       max_tokens: opts.maxTokens ?? 1024,
       system: opts.system,
       tools: opts.tools,
       messages: convo,
+    }, { signal: opts.signal, timeout: 55_000, maxRetries: 0 });
+    stream.on('text', (delta) => {
+      if (!opts.signal.aborted) ev.onText(delta);
     });
-    stream.on('text', (delta) => ev.onText(delta));
-    const msg = await stream.finalMessage();
+    const msg = await waitForChatWork(opts.signal, () => stream.finalMessage());
+    opts.signal.throwIfAborted();
     convo.push({ role: 'assistant', content: msg.content });
 
     if (msg.stop_reason !== 'tool_use') return;
@@ -47,8 +53,14 @@ export async function runAgentStream(
     const results: Anthropic.ToolResultBlockParam[] = [];
     for (const block of msg.content) {
       if (block.type === 'tool_use') {
+        opts.signal.throwIfAborted();
         ev.onTool?.(block.name, block.input);
-        const raw = await runNodeTool(block.name, block.input as Record<string, unknown>);
+        opts.signal.throwIfAborted();
+        // Nested tools cannot yet accept a signal. Their node fetches retain 8s
+        // deadlines; abandon the result on abort and never start another tool/turn.
+        const raw = await waitForChatWork(opts.signal,
+          () => runNodeTool(block.name, block.input as Record<string, unknown>));
+        opts.signal.throwIfAborted();
         let parsed: unknown = raw;
         try { parsed = JSON.parse(raw); } catch { /* keep string */ }
         ev.onToolResult?.(block.name, parsed);

@@ -1,84 +1,92 @@
-# Contrabxnd Sovereign UTXO Indexer
+# Read-Only Sovereign UTXO Indexer
 
-Computes **realized cap**, **realized price**, and **supply-by-age bands (HODL waves)**
-from your own node's UTXO set, then pushes the daily aggregate to Supabase. The
-Contrabxnd web app reads that aggregate and derives **MVRV** live against spot price.
+Produces a JSON **candidate**, never a database write. No Supabase credentials,
+automatic publishing, node stop/start, or scheduling is performed by this script.
+Review the candidate independently before any separate ingestion process.
 
-Runs **on the Umbrel** (or any host that can read the UTXO dump, reach your
-node's mempool API, and reach Supabase + CoinGecko outbound). Nothing heavy runs
-on Vercel; only compact daily aggregates leave the node.
+## Inputs
 
-## How it works
+Export a full mainnet UTXO CSV with exactly `height,amount` columns (amount in
+integer satoshis). The exact header is optional. Blank, negative, fractional,
+extra-column, unsafe-integer and out-of-snapshot-height rows are rejected and
+counted; any rejected row fails the entire run. Empty/zero supply and supply
+outside 90%-100% of issued subsidy at the dump height also fail. This is a coarse
+sanity check, not proof that the dump is complete.
 
-1. You produce a CSV of the current UTXO set — two columns: `height,amount` (amount in sats).
-2. `index.mjs` reconstructs `height → date` by sampling block timestamps from your
-   node's mempool API, maps each coin to the BTC price on its creation date,
-   and accumulates realized cap + total supply + age bands while streaming the CSV.
-3. It upserts one row into `onchain_snapshots` (keyed by date).
+For example, `bitcoin-utxo-dump -db ~/.bitcoin/chainstate -f height,amount -o utxos.csv`
+requires exclusive chainstate access with bitcoind stopped. Follow the exporter
+and Bitcoin Core documentation. Do not run this against a changing chainstate.
 
-## Step 1 — produce the UTXO CSV
+Capture the dump's height and block hash **at export time**, not at indexer run
+time. Use `getblockheader <dump-hash>` for its block timestamp. Provision a JSON
+manifest at `utxos.csv.manifest.json` (or set `UTXO_MANIFEST`):
 
-Recommended: [`bitcoin-utxo-dump`](https://github.com/in3rsha/bitcoin-utxo-dump)
-(reads bitcoind's chainstate directly). It needs **bitcoind stopped** (exclusive
-LevelDB access), so run it during a maintenance window:
+```json
+{
+  "height": 900000,
+  "hash": "<64 lowercase hex characters: dump block hash>",
+  "timestamp": 1740000000,
+  "checksum": "<64 lowercase hex characters: SHA-256 of exact CSV bytes>",
+  "rowCount": 180000000
+}
+```
+
+The values above are illustrative, not a usable manifest. `timestamp` is Unix
+seconds of the dump block, **not** export wall-clock time. `rowCount` excludes the
+optional header. Obtain the checksum with `shasum -a 256 utxos.csv` and the data
+row count from the exporter or an independent strict CSV validation. The manifest
+binds bytes and metadata but is not signed; the operator must establish provenance.
+The node must still map that height to the manifest hash/timestamp, or the run fails.
+Old dumps retain their historical UTC block date and height, never today's date/tip.
+
+Provision daily BTC/USD prices as a JSON object via `BTC_PRICE_HISTORY`:
+
+```json
+{ "2009-01-03": 0, "2010-07-17": 0.05 }
+```
+
+This example is deliberately incomplete. Every assigned creation date must exist.
+Zero is allowed only when explicitly provisioned (for an operator-reviewed
+pre-market valuation policy); no implicit pre-market price, lookback, forward-fill,
+or earliest-price substitution exists. Missing dates fail closed. Alternatively,
+set `COINGECKO_PRO_API_KEY` for authenticated Pro daily history; plan entitlements
+and pre-market coverage may still be insufficient. Local history takes precedence.
+There is no unauthenticated `days=max` request or public node fallback.
+
+## Invocation
+
+From the repository root, with Node 24:
 
 ```bash
-# stop the Bitcoin app (Umbrel UI: Bitcoin → Stop, or the app's stop command)
-bitcoin-utxo-dump -db ~/.bitcoin/chainstate -f height,amount -o utxos.csv
-# restart the Bitcoin app
+UTXO_CSV=/data/utxos.csv \
+UTXO_MANIFEST=/data/utxos.csv.manifest.json \
+BTC_PRICE_HISTORY=/data/btc-usd-daily.json \
+MEMPOOL_URL=http://localhost:3006 \
+node scripts/onchain-indexer/index.mjs
 ```
 
-The output `utxos.csv` looks like:
-```
-height,amount
-170,5000000000
-181,1000000
-...
-```
+Success prints candidate JSON to stdout including manifest provenance, accepted
+and rejected row counts. Failure prints an error to stderr and exits nonzero,
+without printing a candidate. Each node/provider request has an 8-second deadline,
+including body reads. No request to the live tip is made.
 
-> Alternative (node stays running, advanced): `bitcoin-cli dumptxoutset utxos.dat`
-> then convert the binary snapshot to a `height,amount` CSV. Heavier to parse and
-> Core-version-sensitive — prefer `bitcoin-utxo-dump` unless you have a parser.
-
-## Step 2 — run the indexer
+Offline deterministic regression tests (no live providers or database):
 
 ```bash
-export UTXO_CSV=./utxos.csv
-export MEMPOOL_URL=http://localhost:3006          # your node's mempool app
-export SUPABASE_URL=https://<project>.supabase.co
-export SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
-
-node index.mjs
+node --test scripts/provider-indexer.test.mjs
 ```
 
-Expected output ends with:
-```
-  realized price: $XXXXX
-  HODL waves:     {"<1d":..., ... "5y+":...}
-✓ done — onchain_snapshots row for YYYY-MM-DD written.
-```
+## Limitations
 
-The web app's `/api/onchain`, the **MVRV** row on the terminal, the Contrabxnd
-Score `mvrv` component, and the `get_onchain_metrics` MCP tool all light up
-automatically once the first row exists.
-
-## Step 3 — schedule it
-
-Run it on a cron (daily or weekly). Because Step 1 needs the node stopped, weekly
-is usually the right cadence — realized cap moves slowly. Example weekly cron:
-
-```cron
-0 4 * * 0  cd /path/to/onchain-indexer && ./run-weekly.sh >> indexer.log 2>&1
-```
-
-(where `run-weekly.sh` stops bitcoind, dumps the CSV, restarts bitcoind, then runs `node index.mjs`)
-
-## Notes / accuracy
-
-- **Migration:** run `supabase/migrations/012_onchain_snapshots.sql` against the DB first.
-- `height → date` is interpolated from ~250 sampled block timestamps — accurate to
-  well under a day, which is plenty for daily-granularity price assignment.
-- Pre-market coins (before price history begins) are valued ~$0.10, a negligible
-  share of realized cap.
-- First run streams ~180M UTXOs; expect a few minutes of CPU. Memory stays flat
-  (the CSV is streamed line-by-line).
+- Creation times remain interpolated from approximately 250 block anchors. This
+  can assign the wrong daily price or age band near boundaries; these metrics are
+  estimates, not an exact realized-cap index. Exact per-height timestamps are a
+  future improvement. Nonmonotonic timestamps can cause conservative rejection.
+- Checksums, row counts and supply bounds cannot prove chainstate authenticity,
+  completeness, or the quality of provisioned prices. No outpoint deduplication is
+  possible with this two-column format.
+- CSV processing remains streaming; price history and block anchors reside in
+  memory. Network calls are bounded individually, not by a whole-job deadline.
+- `lib/node/client.ts` retains `node`/`public` source labels. For application-side
+  privacy, set `NODE_PUBLIC_FALLBACK=false` to prohibit public fallback, including
+  when no sovereign node is configured. Its default remains public fallback.

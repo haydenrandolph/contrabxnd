@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useEffectEvent, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { BUSINESS_CATEGORIES } from '@/lib/network/types';
 
@@ -10,12 +11,34 @@ interface JoinNetworkModalProps {
   onSuccess?: () => void;
 }
 
-export default function JoinNetworkModal({
-  isOpen,
+export default function JoinNetworkModal(props: JoinNetworkModalProps) {
+  const { showAuthModal, setShowAuthModal } = useAuth();
+  const returnFocus = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (showAuthModal || !returnFocus.current) return;
+    if (returnFocus.current.isConnected && document.activeElement === document.body) {
+      returnFocus.current.focus({ preventScroll: true });
+    }
+    returnFocus.current = null;
+  }, [showAuthModal]);
+
+  const openSignIn = () => {
+    // Finish focus-trap cleanup before auth captures its initial focus.
+    flushSync(() => props.onClose());
+    returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setShowAuthModal('signin');
+  };
+
+  return props.isOpen ? <JoinNetworkDialog {...props} onSignIn={openSignIn} /> : null;
+}
+
+function JoinNetworkDialog({
   onClose,
   onSuccess,
-}: JoinNetworkModalProps) {
-  const { user, setShowAuthModal } = useAuth();
+  onSignIn,
+}: Omit<JoinNetworkModalProps, 'isOpen'> & { onSignIn: () => void }) {
+  const { user } = useAuth();
   const [businessName, setBusinessName] = useState('');
   const [website, setWebsite] = useState('');
   const [category, setCategory] = useState('');
@@ -27,54 +50,50 @@ export default function JoinNetworkModal({
   const [success, setSuccess] = useState(false);
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const closeModal = () => {
-    setBusinessName('');
-    setWebsite('');
-    setCategory('');
-    setDescription('');
-    setContactEmail('');
-    setPaymentMethod('');
-    setError('');
-    setSuccess(false);
-    onClose();
-  };
-  const handleClose = useEffectEvent(() => closeModal());
+  const requestRef = useRef<AbortController | null>(null);
+  const handleClose = useEffectEvent(() => onClose());
 
   useEffect(() => {
-    if (!isOpen) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { handleClose(); return; }
       if (e.key === 'Tab' && contentRef.current) {
         const focusable = contentRef.current.querySelectorAll<HTMLElement>(
-          'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
         );
         if (focusable.length === 0) return;
         const first = focusable[0], last = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        if (e.shiftKey && (document.activeElement === first || !contentRef.current.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !contentRef.current.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     contentRef.current?.querySelector<HTMLElement>('button, input')?.focus();
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
-
-  if (!isOpen) return null;
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      requestRef.current?.abort();
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (requestRef.current && !requestRef.current.signal.aborted) return;
     setError('');
 
     if (!user) {
-      setShowAuthModal('signin');
+      onSignIn();
       return;
     }
 
     setIsLoading(true);
+    const controller = new AbortController();
+    requestRef.current = controller;
 
     try {
       const res = await fetch('/api/network/apply', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessName,
@@ -92,12 +111,14 @@ export default function JoinNetworkModal({
         throw new Error(data.error || 'Failed to submit application');
       }
 
+      if (controller.signal.aborted) return;
       setSuccess(true);
       onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      if (!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
-      setIsLoading(false);
+      if (requestRef.current === controller) requestRef.current = null;
+      if (!controller.signal.aborted) setIsLoading(false);
     }
   };
 
@@ -150,7 +171,7 @@ export default function JoinNetworkModal({
         }
 
         .modal-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.5rem;
           color: #e8e4dc;
         }
@@ -209,7 +230,7 @@ export default function JoinNetworkModal({
           border: 1px solid #2a2a2a;
           border-radius: 4px;
           color: #e8e4dc;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 14px;
           transition: border-color 0.2s ease;
         }
@@ -258,7 +279,7 @@ export default function JoinNetworkModal({
           border: none;
           border-radius: 4px;
           color: #fff;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -299,7 +320,7 @@ export default function JoinNetworkModal({
         }
 
         .success-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.5rem;
           color: #e8e4dc;
           margin-bottom: 0.75rem;
@@ -338,7 +359,7 @@ export default function JoinNetworkModal({
           border: 1px solid #2a2a2a;
           border-radius: 4px;
           color: #8a8a8a;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           text-transform: uppercase;
           letter-spacing: 0.05em;
@@ -412,11 +433,11 @@ export default function JoinNetworkModal({
         }
       `}</style>
 
-      <div className="modal-overlay" onClick={closeModal}>
-        <div className="modal-content" ref={contentRef} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" ref={contentRef} role="dialog" aria-modal="true" aria-labelledby="join-network-title" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
-            <h2 className="modal-title">Join the Network</h2>
-            <button className="modal-close" onClick={closeModal}>
+            <h2 className="modal-title" id="join-network-title">Join the Network</h2>
+            <button className="modal-close" aria-label="Close network application" onClick={onClose}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
@@ -426,7 +447,7 @@ export default function JoinNetworkModal({
 
           <div className="modal-body">
             {success ? (
-              <div className="success-state">
+              <div className="success-state" role="status">
                 <div className="success-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12"/>
@@ -440,15 +461,16 @@ export default function JoinNetworkModal({
               </div>
             ) : !user ? (
               <div className="signin-prompt">
-                <p>Please <button onClick={() => setShowAuthModal('signin')}>sign in</button> to submit an application.</p>
+                <p>Please <button onClick={onSignIn}>sign in</button> to submit an application.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit}>
-                {error && <div className="form-error">{error}</div>}
+                {error && <div className="form-error" role="alert">{error}</div>}
 
                 <div className="form-group">
-                  <label className="form-label">Business Name *</label>
+                  <label className="form-label" htmlFor="network-business-name">Business Name *</label>
                   <input
+                    id="network-business-name"
                     type="text"
                     className="form-input"
                     placeholder="Your business name"
@@ -459,8 +481,9 @@ export default function JoinNetworkModal({
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Website URL *</label>
+                  <label className="form-label" htmlFor="network-website">Website URL *</label>
                   <input
+                    id="network-website"
                     type="url"
                     className="form-input"
                     placeholder="https://example.com"
@@ -471,8 +494,9 @@ export default function JoinNetworkModal({
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Category *</label>
+                  <label className="form-label" htmlFor="network-category">Category *</label>
                   <select
+                    id="network-category"
                     className="form-select"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
@@ -486,20 +510,23 @@ export default function JoinNetworkModal({
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Description</label>
+                  <label className="form-label" htmlFor="network-description">Description</label>
                   <textarea
+                    id="network-description"
+                    aria-describedby="network-description-hint"
                     className="form-textarea"
                     placeholder="Brief description of your business (optional)"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     maxLength={200}
                   />
-                  <p className="form-hint">{description.length}/200 characters</p>
+                  <p className="form-hint" id="network-description-hint">{description.length}/200 characters</p>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Contact Email *</label>
+                  <label className="form-label" htmlFor="network-contact-email">Contact Email *</label>
                   <input
+                    id="network-contact-email"
                     type="email"
                     className="form-input"
                     placeholder="contact@yourbusiness.com"
@@ -510,8 +537,8 @@ export default function JoinNetworkModal({
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">How do you accept Bitcoin? *</label>
-                  <div className="payment-options">
+                  <span className="form-label" id="network-payment-label">How do you accept Bitcoin? *</span>
+                  <div className="payment-options" role="group" aria-labelledby="network-payment-label">
                     {[
                       { value: 'lightning', label: 'Lightning' },
                       { value: 'onchain', label: 'On-chain' },
@@ -521,6 +548,7 @@ export default function JoinNetworkModal({
                       <button
                         key={option.value}
                         type="button"
+                        aria-pressed={paymentMethod === option.value}
                         className={`payment-option ${paymentMethod === option.value ? 'active' : ''}`}
                         onClick={() => setPaymentMethod(option.value)}
                       >

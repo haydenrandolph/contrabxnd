@@ -27,21 +27,26 @@ const calculateStreak = (progress: Array<{ completed_at: string | null; complete
 
 export default function StreakBadge() {
   const { user } = useAuth();
+  return user ? <UserStreakBadge key={user.id} /> : null;
+}
+
+function UserStreakBadge() {
   const [streak, setStreak] = useState(0);
 
   useEffect(() => {
-    if (!user) return;
-    fetch('/api/progress')
-      .then(r => r.json())
+    const controller = new AbortController();
+    fetch('/api/progress', { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error('Unable to load progress'); return r.json(); })
       .then(data => {
-        if (data.progress) {
+        if (!controller.signal.aborted && data.progress) {
           setStreak(calculateStreak(data.progress));
         }
       })
       .catch(() => {});
-  }, [user]);
+    return () => controller.abort();
+  }, []);
 
-  if (!user || streak <= 0) return null;
+  if (streak <= 0) return null;
 
   return (
     <>
@@ -50,7 +55,7 @@ export default function StreakBadge() {
           display: flex;
           align-items: center;
           gap: 0.35rem;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           color: #F7931A;
           letter-spacing: 0.05em;

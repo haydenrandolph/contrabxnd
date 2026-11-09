@@ -41,3 +41,7 @@ supabase/.temp
 # OS
 .DS_Store
 Thumbs.db
+
+# Browser test artifacts
+playwright-report/
+test-results/

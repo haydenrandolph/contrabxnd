@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import InfraShell from '@/components/infra/InfraShell';
 import ResultCard from '@/components/explorer/ResultCard';
 
 interface CardData { tool: string; data: Record<string, unknown> }
-interface Msg { role: 'user' | 'assistant'; content: string; tools?: string[]; card?: CardData }
+interface Msg { role: 'user' | 'assistant'; content: string; context?: boolean; tools?: string[]; card?: CardData }
 
 const EXAMPLES = [
   "What's the balance of 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa?",
@@ -21,6 +21,9 @@ export default function ExplorerPage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+
+  useEffect(() => () => requestRef.current?.abort(), []);
 
   useEffect(() => {
     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
@@ -28,58 +31,87 @@ export default function ExplorerPage() {
 
   const send = useCallback(async (text: string) => {
     const q = text.trim();
-    if (!q || loading) return;
+    if (!q || q.length > 500 || loading || requestRef.current) return;
+    const controller = new AbortController();
+    requestRef.current = controller;
     setError(null);
-    const base: Msg[] = [...messages, { role: 'user', content: q }];
-    setMessages([...base, { role: 'assistant', content: '', tools: [] }]);
+    const base: Msg[] = [...messages, { role: 'user', content: q, context: false }];
+    // Retain complete successful exchanges so the window always starts with a user.
+    const conversation = messages.flatMap((message, index) => {
+      const reply = messages[index + 1];
+      return message.role === 'user' && message.context !== false && message.content.trim() &&
+        message.content.trim().length <= 500 && reply?.role === 'assistant' &&
+        reply.context !== false && reply.content.trim()
+        ? [{ role: message.role, content: message.content.trim() }, { role: reply.role, content: reply.content.trim().slice(0, 4000) }]
+        : [];
+    }).slice(-10);
+    conversation.push({ role: 'user', content: q });
+    setMessages([...base, { role: 'assistant', content: '', context: false, tools: [] }]);
     setInput('');
     setLoading(true);
 
     const patch = (fn: (m: Msg) => Msg) =>
-      setMessages((prev) => { const c = [...prev]; c[c.length - 1] = fn(c[c.length - 1]); return c; });
+      setMessages((prev) => { if (controller.signal.aborted || !prev.length) return prev; const c = [...prev]; c[c.length - 1] = fn(c[c.length - 1]); return c; });
 
     try {
       const res = await fetch('/api/explorer/chat', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: base.map((m) => ({ role: m.role, content: m.content })) }),
+        body: JSON.stringify({ messages: conversation }),
       });
       if (!res.ok || !res.body) {
         const d = await res.json().catch(() => ({}));
+        if (controller.signal.aborted) return;
         setError([d.error, d.detail].filter(Boolean).join(' — ') || 'Something went wrong');
         setMessages((prev) => prev.slice(0, -1));
         setLoading(false);
         return;
       }
+      if (controller.signal.aborted) return;
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = '';
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n\n');
-        buf = lines.pop() ?? '';
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = line.slice(6);
-          if (payload === '[DONE]') continue;
-          let ev: { type?: string; text?: string; name?: string; data?: Record<string, unknown>; error?: string; detail?: string };
-          try { ev = JSON.parse(payload); } catch { continue; }
-          if (ev.type === 'text' && ev.text) patch((a) => ({ ...a, content: a.content + ev.text }));
-          else if (ev.type === 'tool' && ev.name) patch((a) => ({ ...a, tools: [...(a.tools ?? []), ev.name!] }));
-          else if (ev.type === 'tool_result' && ev.name && CARD_TOOLS.has(ev.name) && ev.data && !ev.data.error) {
-            patch((a) => ({ ...a, card: { tool: ev.name!, data: ev.data! } }));
-          } else if (ev.type === 'error') {
-            setError([ev.error, ev.detail].filter(Boolean).join(' — '));
+      let finished = false;
+      try {
+        while (!finished && !controller.signal.aborted) {
+          const { done, value } = await reader.read();
+          if (controller.signal.aborted) break;
+          buf += done ? decoder.decode() : decoder.decode(value, { stream: true });
+          const lines = buf.split(/\r?\n\r?\n/);
+          buf = lines.pop() ?? '';
+          if (done && buf.trim()) { lines.push(buf); buf = ''; }
+          for (const line of lines) {
+            const payload = line.split(/\r?\n/).filter(part => part.startsWith('data:')).map(part => part.slice(5).replace(/^ /, '')).join('\n');
+            if (!payload) continue;
+            if (payload === '[DONE]') { finished = true; break; }
+            const ev: { type?: string; text?: string; name?: string; data?: Record<string, unknown>; error?: string; detail?: string } = JSON.parse(payload);
+            if (ev.type === 'text' && ev.text) patch((a) => ({ ...a, content: a.content + ev.text }));
+            else if (ev.type === 'tool' && ev.name) patch((a) => ({ ...a, tools: [...(a.tools ?? []), ev.name!] }));
+            else if (ev.type === 'tool_result' && ev.name && CARD_TOOLS.has(ev.name) && ev.data && !ev.data.error) {
+              patch((a) => ({ ...a, card: { tool: ev.name!, data: ev.data! } }));
+            } else if (ev.type === 'error' || ev.error) {
+              throw new Error([ev.error, ev.detail].filter(Boolean).join(': ') || 'Stream failed');
+            }
           }
+          if (done) break;
         }
+        if (!finished && !controller.signal.aborted) throw new Error('Connection ended before the response completed. Try again.');
+      } finally {
+        await reader.cancel().catch(() => {});
+        reader.releaseLock();
       }
-    } catch {
-      setError('Network error — try again.');
+      if (!controller.signal.aborted) {
+        setMessages(prev => prev.map((message, index) => index >= base.length - 1 ? { ...message, context: true } : message));
+      }
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      setError(error instanceof Error ? error.message : 'Network error. Try again.');
       setMessages((prev) => (prev[prev.length - 1]?.content ? prev : prev.slice(0, -1)));
+    } finally {
+      if (requestRef.current === controller) requestRef.current = null;
+      if (!controller.signal.aborted) setLoading(false);
     }
-    setLoading(false);
   }, [messages, loading]);
 
   const onSubmit = (e: React.FormEvent) => { e.preventDefault(); send(input); };
@@ -108,7 +140,7 @@ export default function ExplorerPage() {
         .cx-error { border: 1px solid var(--cb-border); border-left: 2px solid var(--cb-accent); border-radius: var(--cb-radius); padding: 12px 14px; color: var(--cb-text-muted); font-size: 13px; margin-bottom: 16px; }
 
         .cx-form { display: flex; gap: 8px; padding: 14px 0; border-top: 1px solid var(--cb-border); position: sticky; bottom: 0; background: var(--cb-bg); z-index: 5; }
-        .cx-input { flex: 1; background: var(--cb-bg); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); color: var(--cb-text); font-family: var(--cb-font-sans); font-size: 14px; padding: 12px 14px; outline: none; transition: border-color 0.15s ease; }
+        .cx-input { flex: 1; min-width: 0; background: var(--cb-bg); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); color: var(--cb-text); font-family: var(--cb-font-sans); font-size: 14px; padding: 12px 14px; outline: none; transition: border-color 0.15s ease; }
         .cx-input:focus { border-color: var(--cb-accent); }
         .cx-send { background: var(--cb-text); color: var(--cb-bg); border: none; border-radius: var(--cb-radius); font-family: var(--cb-font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; padding: 0 22px; cursor: pointer; transition: opacity 0.15s ease; }
         .cx-send:hover { opacity: 0.85; }
@@ -157,6 +189,7 @@ export default function ExplorerPage() {
           <form className="cx-form" onSubmit={onSubmit}>
             <input
               className="cx-input"
+              aria-label="Ask the block explorer"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about an address, tx, block, mempool, fees…"
@@ -165,6 +198,10 @@ export default function ExplorerPage() {
             />
             <button className="cx-send" type="submit" disabled={loading || !input.trim()}>Ask</button>
           </form>
+          {messages.length > 0 && <div className="cx-form">
+            {loading && <button className="cx-example" onClick={() => { requestRef.current?.abort(); requestRef.current = null; setLoading(false); }}>Stop</button>}
+            <button className="cx-example" onClick={() => { requestRef.current?.abort(); requestRef.current = null; setLoading(false); setMessages([]); setInput(''); setError(null); }}>New Chat</button>
+          </div>}
         </div>
       </InfraShell>
     </>

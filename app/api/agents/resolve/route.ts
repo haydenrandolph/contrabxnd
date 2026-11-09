@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, createClient } from '@/lib/supabase/server';
-import { computeCreditScore } from '@/lib/agent-credit';
+import { recomputeAgentCreditScore } from '@/lib/agent-credit';
+import { isOperator } from '@/lib/audit-guards';
 
 // POST: resolve a prediction and recompute credit score
 export async function POST(req: Request) {
@@ -9,11 +10,15 @@ export async function POST(req: Request) {
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!isOperator(user.id)) return NextResponse.json({ error: 'Operator scope required' }, { status: 403 });
 
-  const body = await req.json();
-  const { predictionId, outcome, note } = body;
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== 'object') return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  const { predictionId, outcome } = body;
+  // Keep the shipped `note` field; resolutionNote is the explicit evidence name.
+  const note = body.resolutionNote ?? body.note;
 
-  if (!predictionId || !outcome) {
+  if (typeof predictionId !== 'string' || !predictionId || typeof outcome !== 'string') {
     return NextResponse.json({ error: 'predictionId and outcome required' }, { status: 400 });
   }
 
@@ -24,76 +29,62 @@ export async function POST(req: Request) {
   const admin = createAdminClient();
   if (!admin) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
 
-  // Get prediction + verify ownership
-  const { data: prediction } = await admin
+  // Operators can resolve other agents, never award credit to their own agents.
+  const { data: prediction, error: predictionError } = await admin
     .from('agent_predictions')
-    .select('id, agent_id, outcome, agents!inner(owner_id)')
+    .select('id, agent_id, outcome, target_date, submitted_at, resolution_note, agents!inner(owner_id)')
     .eq('id', predictionId)
     .single();
 
+  if (predictionError && predictionError.code !== 'PGRST116') return NextResponse.json({ error: 'Could not load prediction' }, { status: 503 });
   if (!prediction) return NextResponse.json({ error: 'Prediction not found' }, { status: 404 });
 
   const agentOwner = (prediction as Record<string, unknown>).agents as Record<string, string>;
-  if (agentOwner.owner_id !== user.id) {
-    return NextResponse.json({ error: 'Not your agent' }, { status: 403 });
+  if (!agentOwner?.owner_id || agentOwner.owner_id === user.id) {
+    return NextResponse.json({ error: 'Cannot resolve your own agent predictions' }, { status: 403 });
   }
 
-  if (prediction.outcome !== 'pending') {
+  // This is an operator attestation, not automatic verification of the cited source.
+  if (typeof note !== 'string' || note.length > 2000 ||
+      note.trim().length < 40 || note.trim().split(/\s+/).length < 6) {
+    return NextResponse.json({ error: 'A substantive resolutionNote is required: cite target-time evidence and explain the outcome, or why it cannot be determined' }, { status: 400 });
+  }
+
+  const target = Date.parse(prediction.target_date);
+  const submitted = Date.parse(prediction.submitted_at);
+  if (!Number.isFinite(target) || !Number.isFinite(submitted) || target <= submitted || target > Date.now()) {
+    return NextResponse.json({ error: 'Prediction is not eligible for resolution' }, { status: 400 });
+  }
+
+  // An identical operator retry can repair a score write that failed after resolution.
+  const retry = prediction.outcome === outcome && prediction.resolution_note === note.trim();
+  if (prediction.outcome !== 'pending' && !retry) {
     return NextResponse.json({ error: 'Prediction already resolved' }, { status: 400 });
   }
 
-  // Resolve the prediction
-  const { error: updateErr } = await admin
-    .from('agent_predictions')
-    .update({
-      outcome,
-      resolved_at: new Date().toISOString(),
-      resolution_note: note || null,
-    })
-    .eq('id', predictionId);
+  if (!retry) {
+    const { data: updated, error: updateErr } = await admin
+      .from('agent_predictions')
+      .update({
+        outcome,
+        resolved_at: new Date().toISOString(),
+        resolution_note: note.trim(),
+      })
+      .eq('id', predictionId)
+      .eq('outcome', 'pending')
+      .select('id')
+      .maybeSingle();
 
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
-
-  // Recompute credit score
-  const agentId = prediction.agent_id;
-
-  const { data: allPredictions } = await admin
-    .from('agent_predictions')
-    .select('confidence, outcome, submitted_at, resolved_at')
-    .eq('agent_id', agentId);
-
-  const { data: agent } = await admin
-    .from('agents')
-    .select('created_at')
-    .eq('id', agentId)
-    .single();
-
-  if (allPredictions && agent) {
-    const score = computeCreditScore(
-      allPredictions as Array<{
-        confidence: number;
-        outcome: 'correct' | 'incorrect' | 'expired' | 'pending';
-        submitted_at: string;
-        resolved_at: string | null;
-      }>,
-      agent.created_at,
-    );
-
-    await admin
-      .from('agent_credit_scores')
-      .upsert({
-        agent_id: agentId,
-        accuracy: score.accuracy,
-        volume: score.volume,
-        consistency: score.consistency,
-        calibration: score.calibration,
-        age_days: score.ageDays,
-        composite_score: score.compositeScore,
-        total_predictions: score.totalPredictions,
-        correct_predictions: score.correctPredictions,
-        updated_at: new Date().toISOString(),
-      });
+    if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    if (!updated) return NextResponse.json({ error: 'Prediction already resolved' }, { status: 409 });
   }
 
-  return NextResponse.json({ resolved: true, outcome });
+  // Recompute credit score
+  try {
+    await recomputeAgentCreditScore(admin, prediction.agent_id);
+  } catch {
+    return NextResponse.json({ error: 'Prediction resolved but credit score update failed; retry the identical request', resolved: true, score_updated: false, outcome }, { status: 503 });
+  }
+
+  return NextResponse.json({ resolved: true, score_updated: true, outcome });
 }

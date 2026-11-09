@@ -1,4 +1,5 @@
 import webpush from 'web-push';
+import { validPushEndpoint, validPushKeys } from './validation';
 
 interface PushPayload {
   title: string;
@@ -16,23 +17,20 @@ interface PushSubscription {
 export async function sendPushNotification(
   subscription: PushSubscription,
   payload: PushPayload
-): Promise<boolean> {
+): Promise<void> {
+  // Recheck persisted rows too: subscriptions can bypass the HTTP route.
+  if (!validPushEndpoint(subscription.endpoint) || !validPushKeys(subscription.p256dh, subscription.auth)) {
+    throw new Error('push_invalid_subscription');
+  }
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
 
   if (!vapidPublicKey || !vapidPrivateKey) {
-    console.warn('VAPID keys not configured, skipping push notification');
-    return false;
+    throw new Error('push_not_configured');
   }
 
-  webpush.setVapidDetails(
-    'mailto:alerts@contrabxnd.io',
-    vapidPublicKey,
-    vapidPrivateKey
-  );
-
   try {
-    await webpush.sendNotification(
+    const request = webpush.generateRequestDetails(
       {
         endpoint: subscription.endpoint,
         keys: {
@@ -40,11 +38,20 @@ export async function sendPushNotification(
           auth: subscription.auth,
         },
       },
-      JSON.stringify(payload)
+      JSON.stringify(payload),
+      { TTL: 3600, vapidDetails: {
+        subject: 'mailto:alerts@contrabxnd.io', publicKey: vapidPublicKey, privateKey: vapidPrivateKey,
+      } }
     );
-    return true;
-  } catch (error) {
-    console.error('Push notification failed:', error);
-    return false;
+    // fetch supplies a hard deadline (not just socket inactivity) and never
+    // follows provider redirects to an unvalidated destination.
+    const response = await fetch(subscription.endpoint, {
+      method: 'POST', headers: request.headers, body: new Uint8Array(request.body),
+      signal: AbortSignal.timeout(10_000), redirect: 'error',
+    });
+    if (!response.ok) throw new Error();
+  } catch {
+    // web-push errors include endpoint URLs, request headers and response bodies.
+    throw new Error('push_delivery_failed');
   }
 }

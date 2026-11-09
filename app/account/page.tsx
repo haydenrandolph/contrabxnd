@@ -47,92 +47,86 @@ const COURSES = [
 ];
 
 export default function AccountPage() {
+  const { user } = useAuth();
+  return <AccountContent key={user?.id ?? 'anonymous'} />;
+}
+
+function AccountContent() {
+  const { user, profile, isLoading, isConfigured } = useAuth();
+  const userId = user?.id;
   const [progress, setProgress] = useState<LessonProgress[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
-  const [isLoadingProgress, setIsLoadingProgress] = useState(true);
-  const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(true);
-  const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
+  const [isLoadingProgress, setIsLoadingProgress] = useState(Boolean(userId));
+  const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(Boolean(userId));
+  const [isLoadingHighlights, setIsLoadingHighlights] = useState(Boolean(userId));
   const { isLightMode } = useTheme();
-  const { user, profile, isLoading, isConfigured } = useAuth();
 
   // Fetch user progress
   useEffect(() => {
+    if (!userId || isLoading) return;
+    const controller = new AbortController();
     const fetchProgress = async () => {
-      if (!user) {
-        setIsLoadingProgress(false);
-        return;
-      }
-
       try {
-        const res = await fetch('/api/progress');
+        const res = await fetch('/api/progress', { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
-          setProgress(data.progress || []);
+          if (!controller.signal.aborted) setProgress(data.progress || []);
         }
       } catch (error) {
-        console.error('Error fetching progress:', error);
+        if (!controller.signal.aborted) console.error('Error fetching progress:', error);
       } finally {
-        setIsLoadingProgress(false);
+        if (!controller.signal.aborted) setIsLoadingProgress(false);
       }
     };
 
-    if (!isLoading) {
-      fetchProgress();
-    }
-  }, [user, isLoading]);
+    void fetchProgress();
+    return () => controller.abort();
+  }, [userId, isLoading]);
 
   // Fetch user bookmarks
   useEffect(() => {
+    if (!userId || isLoading) return;
+    const controller = new AbortController();
     const fetchBookmarks = async () => {
-      if (!user) {
-        setIsLoadingBookmarks(false);
-        return;
-      }
-
       try {
-        const res = await fetch('/api/bookmarks');
+        const res = await fetch('/api/bookmarks', { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
-          setBookmarks(data.bookmarks || []);
+          if (!controller.signal.aborted) setBookmarks(data.bookmarks || []);
         }
       } catch (error) {
-        console.error('Error fetching bookmarks:', error);
+        if (!controller.signal.aborted) console.error('Error fetching bookmarks:', error);
       } finally {
-        setIsLoadingBookmarks(false);
+        if (!controller.signal.aborted) setIsLoadingBookmarks(false);
       }
     };
 
-    if (!isLoading) {
-      fetchBookmarks();
-    }
-  }, [user, isLoading]);
+    void fetchBookmarks();
+    return () => controller.abort();
+  }, [userId, isLoading]);
 
   // Fetch user highlights
   useEffect(() => {
+    if (!userId || isLoading) return;
+    const controller = new AbortController();
     const fetchHighlights = async () => {
-      if (!user) {
-        setIsLoadingHighlights(false);
-        return;
-      }
-
       try {
-        const res = await fetch('/api/highlights');
+        const res = await fetch('/api/highlights', { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
-          setHighlights(data.highlights || []);
+          if (!controller.signal.aborted) setHighlights(data.highlights || []);
         }
       } catch (error) {
-        console.error('Error fetching highlights:', error);
+        if (!controller.signal.aborted) console.error('Error fetching highlights:', error);
       } finally {
-        setIsLoadingHighlights(false);
+        if (!controller.signal.aborted) setIsLoadingHighlights(false);
       }
     };
 
-    if (!isLoading) {
-      fetchHighlights();
-    }
-  }, [user, isLoading]);
+    void fetchHighlights();
+    return () => controller.abort();
+  }, [userId, isLoading]);
 
   // Calculate progress per course
   const getCourseProgress = (courseSlug: string) => {
@@ -164,7 +158,7 @@ export default function AccountPage() {
         .account-page {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 13px;
           min-height: 100vh;
         }
@@ -188,7 +182,7 @@ export default function AccountPage() {
         }
 
         .account-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 2.5rem;
           font-weight: 400;
           letter-spacing: -0.02em;
@@ -209,7 +203,7 @@ export default function AccountPage() {
         }
 
         .section-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 1.5rem;
           font-weight: 400;
           margin-bottom: 24px;
@@ -270,7 +264,7 @@ export default function AccountPage() {
         }
 
         .not-logged-in h2 {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 2rem;
           margin-bottom: 16px;
         }
@@ -289,7 +283,7 @@ export default function AccountPage() {
           border: none;
           border-radius: var(--cb-radius);
           color: #fff;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -320,7 +314,7 @@ export default function AccountPage() {
           border: 1px solid var(--cb-accent);
           border-radius: var(--cb-radius);
           color: var(--cb-accent);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -406,7 +400,7 @@ export default function AccountPage() {
         }
 
         .highlight-text {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 1.1rem;
           font-style: italic;
           line-height: 1.6;

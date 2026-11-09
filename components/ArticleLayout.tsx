@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, useRef } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 import SidebarShell from '@/components/SidebarShell';
 import SiteFooter from '@/components/SiteFooter';
@@ -36,7 +36,7 @@ export default function ArticleLayout({
 }: ArticleLayoutProps) {
   const { isLightMode } = useTheme();
 
-  const [readProgress, setReadProgress] = useState(0);
+  const progressRef = useRef<HTMLDivElement>(null);
   const [navSections, setNavSections] = useState<{ title: string; items: { title: string; href: string; active: boolean }[] }[]>([]);
 
   useEffect(() => {
@@ -58,14 +58,25 @@ export default function ArticleLayout({
   }, [slug]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
+    let frame = 0;
+    const updateProgress = () => {
+      frame = 0;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setReadProgress(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0);
+      const progress = docHeight > 0 ? Math.max(0, Math.min(1, window.scrollY / docHeight)) : 0;
+      if (progressRef.current) progressRef.current.style.width = `${progress * 100}%`;
     };
+    const handleScroll = () => {
+      if (!frame) frame = requestAnimationFrame(updateProgress);
+    };
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    window.addEventListener('resize', handleScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [slug]);
 
   return (
     <>
@@ -75,7 +86,7 @@ export default function ArticleLayout({
         .article-page {
           background: #0a0a0a;
           color: #e8e4dc;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-sans);
           min-height: 100vh;
         }
 
@@ -172,10 +183,10 @@ export default function ArticleLayout({
         }
 
         .article-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: clamp(1.6rem, 3vw, 2.25rem);
-          font-weight: 500;
-          letter-spacing: -0.02em;
+          font-weight: 300;
+          letter-spacing: 0.04em;
           line-height: 1.15;
           margin-bottom: 0;
           color: #e8e4dc;
@@ -187,7 +198,7 @@ export default function ArticleLayout({
         }
 
         .article-subtitle {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-sans);
           font-size: 1.05rem;
           font-weight: 400;
           line-height: 1.5;
@@ -210,7 +221,7 @@ export default function ArticleLayout({
         }
 
         .article-content > p:first-of-type::first-letter {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 3rem;
           float: left;
           line-height: 1;
@@ -269,7 +280,7 @@ export default function ArticleLayout({
         .share-button:hover {
           background: #F7931A;
           border-color: #F7931A;
-          color: #f7f7f8;
+          color: var(--cb-on-accent);
         }
 
         .related-articles {
@@ -284,7 +295,7 @@ export default function ArticleLayout({
         }
 
         .related-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 2rem;
           font-weight: 400;
           margin-bottom: 3rem;
@@ -328,7 +339,7 @@ export default function ArticleLayout({
         }
 
         .related-card-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.5rem;
           font-weight: 400;
           line-height: 1.3;
@@ -338,6 +349,21 @@ export default function ArticleLayout({
         .related-card-meta {
           font-size: 11px;
           color: #8a8a8a;
+        }
+
+        .article-page .back-link,
+        .article-page .article-type,
+        .article-page .article-meta,
+        .article-page .share-title,
+        .article-page .share-button,
+        .article-page .related-card-type,
+        .article-page .related-card-meta {
+          font-family: var(--cb-font-mono);
+        }
+
+        .article-meta,
+        .share-buttons {
+          flex-wrap: wrap;
         }
 
         @media (max-width: 1000px) {
@@ -364,7 +390,7 @@ export default function ArticleLayout({
       <SidebarShell bare label="Writings" activePath="/writings" sections={navSections}>
         <div className={`article-page ${isLightMode ? 'light-mode' : ''}`}>
         <div className="article-progress-container">
-          <div className="article-progress-bar" style={{ width: `${readProgress}%` }} />
+          <div className="article-progress-bar" ref={progressRef} style={{ width: '0%' }} />
         </div>
 
         <div className="article-container">

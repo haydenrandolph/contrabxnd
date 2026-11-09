@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/alerts-check",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/cron/etf-scrape",
       "schedule": "30 21 * * 1-5"
     },

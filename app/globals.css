@@ -1,7 +1,3 @@
-/* Font @import must precede Tailwind: `@import "tailwindcss"` expands inline
-   into rules, and CSS requires all @import rules to come first (Turbopack dev
-   enforces this strictly — otherwise the font import errors). */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -24,14 +20,17 @@
   --cb-border: rgba(255, 255, 255, 0.08);
   --cb-border-hover: rgba(255, 255, 255, 0.16);
   --cb-text: #ededed;
-  --cb-text-muted: #8a8a8a;
-  --cb-text-dim: #5a5a5a;
+  --cb-text-muted: #aaa59d;
+  --cb-text-dim: #918b83;
   --cb-accent: #F7931A;
+  --cb-on-accent: #17110a;
+  --cb-positive: #4ade80;
+  --cb-negative: #fb7185;
   --cb-accent-subtle: rgba(247, 147, 26, 0.12);
   --cb-radius: 10px;
-  --cb-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --cb-font-display: 'Inter', system-ui, sans-serif;
-  --cb-font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --cb-font-sans: var(--font-jost), 'Jost', system-ui, sans-serif;
+  --cb-font-display: var(--font-jost), 'Jost', system-ui, sans-serif;
+  --cb-font-mono: var(--font-space-mono), 'Space Mono', ui-monospace, monospace;
 }
 
 html.light-mode {
@@ -43,14 +42,18 @@ html.light-mode {
   --cb-border: #e5e5e5;
   --cb-border-hover: #d0d0d0;
   --cb-text: #111111;
-  --cb-text-muted: #6b6b6b;
-  --cb-text-dim: #a0a0a0;
+  --cb-text-muted: #57534d;
+  --cb-text-dim: #6d685f;
+  --cb-positive: #16723c;
+  --cb-negative: #b4233d;
   --cb-accent-subtle: rgba(247, 147, 26, 0.09);
 }
 
 @theme inline {
   --color-background: var(--cb-bg);
   --color-foreground: var(--cb-text);
+  --font-sans: var(--cb-font-sans);
+  --font-mono: var(--cb-font-mono);
 }
 
 * {
@@ -63,17 +66,13 @@ body {
   font-family: var(--cb-font-sans);
   font-size: 14px;
   line-height: 1.6;
-  transition: opacity 0.4s ease, background 0.3s ease, color 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-body.ready {
-  opacity: 1;
-}
-
 /* FML shared utilities ---------------------------------------------------- */
-.mono { font-family: var(--cb-font-mono); }
+.mono { font-family: var(--cb-font-mono); font-variant-numeric: tabular-nums; }
 
 /* Subtle grid background (dark theme = light lines; light-mode = dark lines) */
 .grid-bg {
@@ -100,8 +99,8 @@ html.light-mode .grid-bg {
 
 .fml-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--cb-font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cb-text-muted); }
 .fml-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--cb-accent); }
-.fml-display { font-family: var(--cb-font-display); font-weight: 300; letter-spacing: -0.03em; line-height: 1.02; font-size: clamp(2.6rem, 6vw, 4.5rem); color: var(--cb-text); margin: 0; }
-.fml-h2 { font-family: var(--cb-font-display); font-weight: 400; letter-spacing: -0.01em; font-size: clamp(1.5rem, 3vw, 2rem); color: var(--cb-text); margin: 0; }
+.fml-display { font-family: var(--cb-font-display); font-weight: 200; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.15; font-size: clamp(2.6rem, 6vw, 4.5rem); color: var(--cb-text); margin: 0; overflow-wrap: anywhere; }
+.fml-h2 { font-family: var(--cb-font-display); font-weight: 300; letter-spacing: 0.06em; font-size: clamp(1.5rem, 3vw, 2rem); color: var(--cb-text); margin: 0; }
 .fml-lead { font-size: 1.05rem; font-weight: 300; color: var(--cb-text-muted); line-height: 1.7; max-width: 560px; }
 
 .fml-section { border-top: 1px solid var(--cb-border); }
@@ -136,7 +135,7 @@ a.fml-card:hover { border-color: var(--cb-border-hover); }
 /* Buttons */
 .fml-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--cb-text); color: var(--cb-bg); border: none; border-radius: var(--cb-radius); font-family: var(--cb-font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 20px; cursor: pointer; text-decoration: none; transition: opacity 0.15s ease; }
 .fml-btn:hover { opacity: 0.85; }
-.fml-btn-accent { background: var(--cb-accent); color: #fff; }
+.fml-btn-accent { background: var(--cb-accent); color: var(--cb-on-accent); }
 .fml-btn-ghost { background: transparent; color: var(--cb-text); border: 1px solid var(--cb-border); }
 .fml-btn-ghost:hover { border-color: var(--cb-border-hover); opacity: 1; }
 
@@ -243,6 +242,52 @@ html.light-mode .auth-success-title {
 
 html.light-mode .auth-success-text {
   color: #6a6a6a;
+}
+
+/* Page titles share the public site's light display cut; data stays compact. */
+html body .page-header .page-title,
+html body .sb-main .sb-title {
+  font-family: var(--cb-font-display);
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+html body .auth-submit,
+html body .auth-buttons .auth-btn-primary,
+html body .reset-card .reset-submit,
+html body .modal-content .form-submit,
+html body .course-badge,
+html body .hl-popover .hl-btn:active {
+  color: var(--cb-on-accent);
+}
+
+html body :is(.auth-modal, .reset-card, .modal-content) :is(.auth-label, .auth-hint, .auth-divider, .auth-switch, .auth-text-link, .reset-label, .form-label, .form-hint) {
+  color: var(--cb-text-dim);
+}
+
+html body :is(.auth-modal, .modal-content) :is(.auth-input, .form-input, .form-textarea)::placeholder {
+  color: var(--cb-text-dim);
+}
+
+.cb-mdx-code {
+  font-family: var(--cb-font-mono);
+  font-size: 0.9em;
+  background: var(--cb-surface);
+  padding: 0.15rem 0.4rem;
+  border-radius: 2px;
+  color: var(--cb-text);
+  border: 1px solid var(--cb-border);
+}
+
+pre .cb-mdx-code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
 }
 
 /* Skeleton loading shimmer */

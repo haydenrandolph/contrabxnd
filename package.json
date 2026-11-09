@@ -6,14 +6,27 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings 0",
+    "typecheck": "tsc --noEmit --incremental false",
+    "test": "tsx --test lib/*.test.ts lib/**/*.test.ts scripts/*.test.mjs",
+    "test:database": "CONTRABXND_TEST_POSTGRES=1 tsx --test lib/ai-quota.test.ts scripts/database-migrations.test.mjs scripts/alerts.test.mjs scripts/job-leases.test.mjs",
+    "test:browser": "playwright test",
+    "check": "npm run lint && npm run typecheck && npm test && npm audit --audit-level=moderate && npm run build"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.5"
+    }
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.2",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "@next/mdx": "^16.0.3",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@next/mdx": "^16.4.5",
     "@scure/bip39": "^2.2.0",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
@@ -25,10 +38,10 @@
     "gray-matter": "^4.0.3",
     "leaflet": "^1.9.4",
     "lightweight-charts": "^5.2.0",
-    "next": "^16.1.1",
+    "next": "^16.4.5",
     "next-mdx-remote": "^6.0.0",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-leaflet": "^5.0.0",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
@@ -37,14 +50,16 @@
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
-    "eslint-config-next": "16.0.3",
+    "eslint-config-next": "^16.4.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   }
 }

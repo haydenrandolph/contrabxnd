@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import type { EtfFlowResponse } from '@/lib/etf/types';
+import { etfFlowDollars, isFreshDate } from '@/lib/etf/math';
 
 let cache: { data: EtfFlowResponse; fetchedAt: number } | null = null;
 const CACHE_TTL_MS = 60 * 60 * 1000;
@@ -43,6 +44,8 @@ async function getFlowsFromSupabase(): Promise<EtfFlowResponse | null> {
   if (uniqueDates.length < 2) return null;
 
   const [today, yesterday] = uniqueDates;
+  if (!isFreshDate(today, 5) || !isFreshDate(yesterday, 9) ||
+      Date.parse(today) - Date.parse(yesterday) > 5 * 86_400_000) return null;
 
   const { data: snapshots, error: snapErr } = await supabase
     .from('etf_snapshots')
@@ -74,7 +77,7 @@ async function getFlowsFromSupabase(): Promise<EtfFlowResponse | null> {
     let flow: number | null = null;
     if (curr && prev) {
       // flow = change in shares × current NAV
-      flow = (curr.shares_outstanding - prev.shares_outstanding) * curr.nav_per_share;
+      flow = etfFlowDollars(curr, prev);
     }
 
     return {
@@ -84,7 +87,8 @@ async function getFlowsFromSupabase(): Promise<EtfFlowResponse | null> {
     };
   });
 
-  const netFlow = funds.reduce((sum, f) => sum + (f.flow ?? 0), 0);
+  const complete = funds.length > 0 && funds.every(f => f.flow !== null);
+  const netFlow = complete ? funds.reduce((sum, f) => sum + f.flow!, 0) : null;
 
   return {
     source: 'contrabxnd',
@@ -134,18 +138,21 @@ export async function GET() {
           flow: f.netFlow ?? f.dailyFlow ?? f.flow ?? null,
         }));
 
-      netFlow = funds.reduce((sum, f) => sum + (f.flow ?? 0), 0);
+      funds = funds.map(f => ({ ...f, flow: typeof f.flow === 'number' && Number.isFinite(f.flow) ? f.flow : null }));
+      netFlow = funds.length && funds.every(f => f.flow !== null)
+        ? funds.reduce((sum, f) => sum + f.flow!, 0) : null;
       date = raw.date ?? raw.data[0]?.date ?? null;
     }
 
-    if (funds.length === 0) throw new Error('No fund data');
+    // The legacy vendor mapping does not establish flow units. Do not publish
+    // it as dollars without an explicit upstream currency/unit contract.
+    if (funds.length === 0 || !isFreshDate(date, 5) || raw.unit !== 'USD') throw new Error('Unverified fund data date or units');
 
     const data: EtfFlowResponse = { source: 'sosovalue', date, funds, netFlow };
     cache = { data, fetchedAt: Date.now() };
     return NextResponse.json(data);
   } catch (error) {
     console.warn('ETF flow fetch failed:', error);
-    if (cache) return NextResponse.json(cache.data);
     return NextResponse.json(UNAVAILABLE);
   }
 }

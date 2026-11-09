@@ -48,7 +48,7 @@ export function AuthModalStyles() {
       }
 
       .auth-modal-title {
-        font-family: 'Inter', serif;
+        font-family: var(--cb-font-display);
         font-size: 1.5rem;
         color: #e8e4dc;
       }
@@ -104,7 +104,7 @@ export function AuthModalStyles() {
         border: 1px solid #2a2a2a;
         border-radius: var(--cb-radius);
         color: #e8e4dc;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--cb-font-mono);
         font-size: 14px;
         transition: border-color 0.2s ease;
       }
@@ -145,7 +145,7 @@ export function AuthModalStyles() {
         border: none;
         border-radius: var(--cb-radius);
         color: #fff;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--cb-font-mono);
         font-size: 12px;
         letter-spacing: 0.1em;
         text-transform: uppercase;
@@ -198,7 +198,7 @@ export function AuthModalStyles() {
         border: 1px solid #2a2a2a;
         border-radius: var(--cb-radius);
         color: #e8e4dc;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--cb-font-mono);
         font-size: 12px;
         letter-spacing: 0.05em;
         cursor: pointer;
@@ -251,7 +251,7 @@ export function AuthModalStyles() {
         background: none;
         border: none;
         padding: 0;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: var(--cb-font-mono);
         font-size: 12px;
         color: #5a5a5a;
         cursor: pointer;
@@ -291,7 +291,7 @@ export function AuthModalStyles() {
       }
 
       .auth-success-title {
-        font-family: 'Inter', serif;
+        font-family: var(--cb-font-display);
         font-size: 1.5rem;
         color: #e8e4dc;
         margin-bottom: 0.75rem;

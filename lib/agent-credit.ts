@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface CreditScore {
   compositeScore: number;
@@ -26,7 +27,10 @@ export function hashPrediction(text: string, agentId: string, timestamp: string)
 }
 
 export function computeCreditScore(predictions: Prediction[], registeredAt: string): CreditScore {
-  const resolved = predictions.filter(p => p.outcome === 'correct' || p.outcome === 'incorrect');
+  const resolved = predictions.filter(p => p.outcome === 'correct' || p.outcome === 'incorrect')
+    .sort((a, b) => Date.parse(a.submitted_at) - Date.parse(b.submitted_at) ||
+      (a.resolved_at || '').localeCompare(b.resolved_at || '') ||
+      a.outcome.localeCompare(b.outcome) || a.confidence - b.confidence);
   const total = resolved.length;
   const correct = resolved.filter(p => p.outcome === 'correct').length;
 
@@ -119,4 +123,40 @@ export function computeCreditScore(predictions: Prediction[], registeredAt: stri
     totalPredictions: predictions.length,
     correctPredictions: correct,
   };
+}
+
+export async function recomputeAgentCreditScore(client: SupabaseClient, agentId: string) {
+  const predictions: Prediction[] = [];
+  // Stay below the API row cap and use a unique tie-breaker across pages.
+  const pageSize = 500;
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await client.from('agent_predictions')
+      .select('id, confidence, outcome, submitted_at, resolved_at')
+      .eq('agent_id', agentId)
+      .order('submitted_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error || !data) throw new Error('Could not load complete prediction history');
+    predictions.push(...data as Prediction[]);
+    if (data.length < pageSize) break;
+  }
+
+  const { data: agent, error: agentError } = await client.from('agents')
+    .select('created_at').eq('id', agentId).single();
+  if (agentError || !agent) throw new Error('Could not load agent for scoring');
+
+  const score = computeCreditScore(predictions, agent.created_at);
+  const { error } = await client.from('agent_credit_scores').upsert({
+    agent_id: agentId,
+    accuracy: score.accuracy,
+    volume: score.volume,
+    consistency: score.consistency,
+    calibration: score.calibration,
+    age_days: score.ageDays,
+    composite_score: score.compositeScore,
+    total_predictions: score.totalPredictions,
+    correct_predictions: score.correctPredictions,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw new Error('Could not write credit score');
 }

@@ -28,7 +28,7 @@ export interface MeetingForecast {
   current_rate_upper_bps: number;
   /** Array of rate-target probabilities (sums to ~1.0) */
   probabilities: RateProbability[];
-  /** Implied rate from futures, in percent */
+  /** Expected post-decision target midpoint, in percent (EFFR spread-adjusted) */
   implied_rate: number;
   /** Probability of at least one cut (sum of all below-current outcomes) */
   cut_probability: number;
@@ -42,7 +42,7 @@ export interface MeetingForecast {
 export interface FedWatchSnapshot {
   /** Observation date (YYYY-MM-DD) */
   date: string;
-  /** Current effective fed funds rate midpoint in percent */
+  /** Current target range midpoint in percent, consistent with implied_rate */
   current_rate: number;
   /** Current target range lower in percent */
   target_lower: number;

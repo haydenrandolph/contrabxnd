@@ -1,11 +1,11 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
-import { createAdminClient } from '@/lib/supabase/server';
+import { authenticateApiKey, limitInvoiceCreation } from '@/lib/api-auth';
+import { historyRangeFromDates, isOperator } from '@/lib/audit-guards';
 import { nodeJson, nodeFetch } from '@/lib/node/client';
 import { decodeScript } from '@/lib/node/script';
 import { lndConfigured, getInfo, getBalances, listChannels, createInvoice, decodeInvoice } from '@/lib/lightning/client';
 import { PAYWALL } from '@/lib/lightning/l402';
-import crypto from 'crypto';
 import { z } from 'zod';
 
 // ── Node indexer types (mempool.space API shape) ──
@@ -45,46 +45,13 @@ export const dynamic = 'force-dynamic';
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.contrabxnd.io';
 
-function hashKey(key: string): string {
-  return crypto.createHash('sha256').update(key).digest('hex');
-}
-
-async function validateApiKey(req: Request): Promise<boolean> {
-  const auth = req.headers.get('authorization');
-  if (!auth?.startsWith('Bearer cbx_')) return false;
-
-  const key = auth.slice(7);
-  const keyHash = hashKey(key);
-
-  const supabase = createAdminClient();
-  if (!supabase) return false;
-
-  const { data } = await supabase
-    .from('api_keys')
-    .select('id')
-    .eq('key_hash', keyHash)
-    .is('revoked_at', null)
-    .limit(1)
-    .single();
-
-  if (!data) return false;
-
-  supabase
-    .from('api_keys')
-    .update({ last_used_at: new Date().toISOString() })
-    .eq('id', data.id)
-    .then(() => {});
-
-  return true;
-}
-
 async function fetchInternal(path: string) {
   const res = await fetch(`${BASE_URL}${path}`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`${path}: ${res.status}`);
   return res.json();
 }
 
-function createServer() {
+function createServer(userId: string) {
   const server = new McpServer({
     name: 'contrabxnd',
     version: '1.0.0',
@@ -205,9 +172,11 @@ function createServer() {
   server.tool(
     'get_bitcoin_history',
     'Get historical Bitcoin price data for a date range',
-    { start_date: z.string().describe('Start date (YYYY-MM-DD)'), end_date: z.string().describe('End date (YYYY-MM-DD)') },
+    { start_date: z.string().length(10).describe('Start date (YYYY-MM-DD)'), end_date: z.string().length(10).describe('End date (YYYY-MM-DD)') },
     async ({ start_date, end_date }) => {
-      const data = await fetchInternal(`/api/bitcoin-history?start=${start_date}&end=${end_date}`);
+      const range = historyRangeFromDates(start_date, end_date);
+      if (!range) return fail('Invalid date range. Use ordered dates from 2009-01-03 through today, spanning at most 20 years.');
+      const data = await fetchInternal(`/api/bitcoin-history?from=${range.from}&to=${range.to}`);
       return { content: [{ type: 'text' as const, text: JSON.stringify(data, null, 2) }] };
     },
   );
@@ -426,10 +395,10 @@ function createServer() {
   server.tool(
     'decode_script',
     'Decode a Bitcoin script (scriptPubKey hex) into readable ASM and explain its type — P2PKH, P2SH, P2WPKH, P2WSH, P2TR, P2PK, OP_RETURN, bare multisig, or non-standard.',
-    { script: z.string().describe('Script as a hex string (e.g. a scriptPubKey)') },
+    { script: z.string().max(20_002).describe('Script hex, at most 10,000 bytes (e.g. a scriptPubKey)') },
     async ({ script }) => {
       const decoded = decodeScript(script);
-      if (!decoded) return fail('Invalid script hex. Provide an even-length hexadecimal string.');
+      if (!decoded) return fail('Invalid or truncated script. Provide even-length hex of at most 10,000 bytes with complete pushes.');
       return ok(decoded);
     },
   );
@@ -469,6 +438,7 @@ function createServer() {
     "Get the Contrabxnd node's Lightning channel balances (local/remote/pending) and on-chain wallet balances, in satoshis.",
     {},
     async () => {
+      if (!isOperator(userId)) return fail('Operator scope required.');
       const g = lnGuard();
       if (g) return g;
       try {
@@ -484,6 +454,7 @@ function createServer() {
     'List the active Lightning channels on the Contrabxnd node: peer pubkey, capacity, and local/remote balance per channel.',
     {},
     async () => {
+      if (!isOperator(userId)) return fail('Operator scope required.');
       const g = lnGuard();
       if (g) return g;
       try {
@@ -499,12 +470,14 @@ function createServer() {
     'create_invoice',
     'Generate a BOLT11 Lightning invoice on the Contrabxnd node to receive a payment. Returns the payment_request string.',
     {
-      value_sat: z.number().int().positive().describe('Amount to receive, in satoshis'),
+      value_sat: z.number().int().positive().max(2_100_000_000_000_000).describe('Amount to receive, in satoshis'),
       memo: z.string().max(256).optional().describe('Optional description'),
     },
     async ({ value_sat, memo }) => {
       const g = lnGuard();
       if (g) return g;
+      const denied = await limitInvoiceCreation(`user:${userId}`);
+      if (denied) return fail(denied.status === 429 ? 'Invoice rate limit exceeded.' : 'Invoice rate limiter unavailable.');
       try {
         return ok(await createInvoice(value_sat, memo));
       } catch {
@@ -556,7 +529,9 @@ function createServer() {
 }
 
 async function handleMcpRequest(req: Request): Promise<Response> {
-  const server = createServer();
+  const auth = await authenticateApiKey(req, 'bearer');
+  if (!auth.ok) return auth.response;
+  const server = createServer(auth.userId);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
@@ -572,20 +547,7 @@ async function handleMcpRequest(req: Request): Promise<Response> {
   }
 }
 
-async function authGuard(req: Request): Promise<Response | null> {
-  const valid = await validateApiKey(req);
-  if (!valid) {
-    return new Response(
-      JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message: 'Invalid or missing API key. Get one at https://contrabxnd.io/infra/mcp' }, id: null }),
-      { status: 401, headers: { 'Content-Type': 'application/json' } },
-    );
-  }
-  return null;
-}
-
 export async function POST(req: Request) {
-  const denied = await authGuard(req);
-  if (denied) return denied;
   return handleMcpRequest(req);
 }
 
@@ -613,13 +575,9 @@ export async function GET(req: Request) {
       ],
     }), { headers: { 'Content-Type': 'application/json' } });
   }
-  const denied = await authGuard(req);
-  if (denied) return denied;
   return handleMcpRequest(req);
 }
 
 export async function DELETE(req: Request) {
-  const denied = await authGuard(req);
-  if (denied) return denied;
   return handleMcpRequest(req);
 }

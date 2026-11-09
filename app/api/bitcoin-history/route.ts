@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getStaticPriceOnDate,
-  interpolateDailyPrices,
-} from '@/lib/btc-prices';
+import { interpolateDailyPrices } from '@/lib/btc-prices';
+import { validHistoryRange } from '@/lib/audit-guards';
 import { getHistoricalPrices } from '@/lib/bitcoin-history';
 
 export async function GET(request: NextRequest) {
@@ -10,9 +8,9 @@ export async function GET(request: NextRequest) {
   const from = Number(searchParams.get('from'));
   const to = Number(searchParams.get('to'));
 
-  if (!from || !to || from >= to) {
+  if (!validHistoryRange(from, to)) {
     return NextResponse.json(
-      { error: 'Invalid from/to timestamps' },
+      { error: 'from/to must be ordered integer Unix seconds from 2009-01-03 through now, spanning at most 20 years' },
       { status: 400 },
     );
   }
@@ -44,4 +42,3 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ prices });
 }
-

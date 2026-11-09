@@ -1,4 +1,5 @@
 import type { SlrSnapshot, FedPolicyEntry } from './types';
+import { isFreshDate } from '../etf/math';
 
 // ---------------------------------------------------------------------------
 // 1. FRED API helpers
@@ -9,11 +10,11 @@ const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
 async function fetchFredSeries(
   seriesId: string,
   apiKey: string,
-): Promise<number | null> {
+): Promise<{ value: number; date: string } | null> {
   try {
     const url =
       `${FRED_BASE}?series_id=${seriesId}&sort_order=desc&limit=1&file_type=json&api_key=${apiKey}`;
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
 
     if (!res.ok) {
       console.warn(`FRED ${seriesId}: HTTP ${res.status}`);
@@ -29,7 +30,9 @@ async function fetchFredSeries(
     }
 
     const parsed = parseFloat(value);
-    return isNaN(parsed) ? null : parsed;
+    const date = data?.observations?.[0]?.date;
+    const maxAge = seriesId === 'NFCILEVERAGE' ? 14 : 150;
+    return Number.isFinite(parsed) && isFreshDate(date, maxAge) ? { value: parsed, date } : null;
   } catch (err) {
     console.error(`FRED ${seriesId} fetch failed:`, err);
     return null;
@@ -87,27 +90,27 @@ function isSlrRelated(item: RssItem): boolean {
   );
 }
 
-function classifyPolicySignal(item: RssItem): number {
+export function classifyPolicySignal(item: RssItem): number | null {
   const text = `${item.title} ${item.description}`;
-  if (EASING_KEYWORDS.test(text)) return 1;
-  if (TIGHTENING_KEYWORDS.test(text)) return -1;
-  return 0;
+  const easing = EASING_KEYWORDS.test(text);
+  const tightening = TIGHTENING_KEYWORDS.test(text);
+  return easing === tightening ? null : easing ? 1 : -1;
 }
 
 async function fetchFedRssPolicySignal(): Promise<{
-  policy_signal: number;
+  policy_signal: number | null;
   policy_event: string | null;
   rss_entries: FedPolicyEntry[];
 }> {
   try {
     const res = await fetch(
       'https://www.federalreserve.gov/feeds/press_all.xml',
-      { cache: 'no-store' },
+      { cache: 'no-store', signal: AbortSignal.timeout(8000) },
     );
 
     if (!res.ok) {
       console.warn(`Fed RSS: HTTP ${res.status}`);
-      return { policy_signal: 1, policy_event: null, rss_entries: [] };
+      return { policy_signal: null, policy_event: null, rss_entries: [] };
     }
 
     const xml = await res.text();
@@ -118,13 +121,8 @@ async function fetchFedRssPolicySignal(): Promise<{
       .filter(item => isBankingRegulation(item) && isSlrRelated(item));
 
     // Only consider entries from the last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recent = relevant.filter(item => {
-      const pubDate = new Date(item.pubDate);
-      return !isNaN(pubDate.getTime()) && pubDate >= thirtyDaysAgo;
-    });
+    const recent = relevant.filter(item => isFreshDate(item.pubDate, 30))
+      .sort((a, b) => Date.parse(b.pubDate) - Date.parse(a.pubDate));
 
     const rssEntries: FedPolicyEntry[] = relevant.slice(0, 5).map(item => ({
       title: item.title,
@@ -134,10 +132,9 @@ async function fetchFedRssPolicySignal(): Promise<{
     }));
 
     if (recent.length === 0) {
-      // No recent SLR news — carry forward the default easing signal
-      // based on the Nov 2025 eSLR recalibration (effective Apr 2026)
+      // Absence of recent news does not establish the current policy state.
       return {
-        policy_signal: 1,
+        policy_signal: null,
         policy_event: recent.length === 0 && relevant.length > 0
           ? relevant[0].title
           : null,
@@ -156,8 +153,7 @@ async function fetchFedRssPolicySignal(): Promise<{
     };
   } catch (err) {
     console.error('Fed RSS fetch failed:', err);
-    // Default to easing (+1) based on known policy state
-    return { policy_signal: 1, policy_event: null, rss_entries: [] };
+    return { policy_signal: null, policy_event: null, rss_entries: [] };
   }
 }
 
@@ -179,9 +175,12 @@ export async function scrapeSlr(): Promise<SlrSnapshot> {
       fetchFredSeries('NFCILEVERAGE', fredKey),
       fetchFredSeries('QBPBSLEVK', fredKey),
     ]);
-    leverageSubindex = nfci;
-    tier1LeverageCapital = tier1;
-    fredRaw = { nfci_leverage: nfci, tier1_leverage_capital: tier1 };
+    leverageSubindex = nfci?.value ?? null;
+    tier1LeverageCapital = tier1?.value ?? null;
+    fredRaw = {
+      nfci_leverage: nfci?.value ?? null, nfci_leverage_date: nfci?.date ?? null,
+      tier1_leverage_capital: tier1?.value ?? null, tier1_leverage_capital_date: tier1?.date ?? null,
+    };
   } else {
     console.warn('FRED_API_KEY not set — FRED fields will be null');
   }

@@ -4,6 +4,7 @@ import React, { createContext, useContext, useCallback, useEffect, useSyncExtern
 
 const STORAGE_KEY = 'contraband-theme';
 const THEME_EVENT = 'contraband-theme-change';
+let memoryPreference: boolean | undefined;
 
 interface ThemeContextType {
   isLightMode: boolean;
@@ -13,17 +14,27 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function subscribe(callback: () => void) {
-  window.addEventListener('storage', callback);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== null && event.key !== STORAGE_KEY) return;
+    memoryPreference = undefined;
+    callback();
+  };
+  window.addEventListener('storage', onStorage);
   window.addEventListener(THEME_EVENT, callback);
   return () => {
-    window.removeEventListener('storage', callback);
+    window.removeEventListener('storage', onStorage);
     window.removeEventListener(THEME_EVENT, callback);
   };
 }
 
 function getSnapshot() {
   // Light-first (FML brand default): light unless the user explicitly chose dark.
-  return localStorage.getItem(STORAGE_KEY) !== 'dark';
+  if (memoryPreference !== undefined) return memoryPreference;
+  try {
+    return localStorage.getItem(STORAGE_KEY) !== 'dark';
+  } catch {
+    return true;
+  }
 }
 
 // Server (and first hydration paint) render the light theme by default. The
@@ -38,16 +49,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const isLightMode = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const toggleTheme = useCallback(() => {
-    const currentlyLight = localStorage.getItem(STORAGE_KEY) !== 'dark';
-    const nextLight = !currentlyLight;
-    localStorage.setItem(STORAGE_KEY, nextLight ? 'light' : 'dark');
+    const nextLight = !getSnapshot();
+    try {
+      localStorage.setItem(STORAGE_KEY, nextLight ? 'light' : 'dark');
+      memoryPreference = undefined;
+    } catch {
+      memoryPreference = nextLight;
+    }
     document.documentElement.classList.toggle('light-mode', nextLight);
     window.dispatchEvent(new Event(THEME_EVENT));
   }, []);
 
   useEffect(() => {
-    document.body.classList.add('ready');
-  }, []);
+    document.documentElement.classList.toggle('light-mode', getSnapshot());
+  }, [isLightMode]);
 
   return (
     <ThemeContext.Provider value={{ isLightMode, toggleTheme }}>

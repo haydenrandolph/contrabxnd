@@ -1,19 +1,15 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient, createClient } from '@/lib/supabase/server';
+import { AiRequestError, consumeAiQuota, readConversation } from '@/lib/ai-quota';
 import { NODE_TOOLS } from '@/lib/node/agent-tools';
 import { runAgentStream } from '@/lib/node/agent-run';
+import { chatBaseUrl, chatRequestSignal, chatStream, isAllowedChatOrigin, waitForChatWork } from '@/lib/chat-request';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+export const maxDuration = 60;
 
 const FREE_LIMIT = 5;
 const AUTH_LIMIT = 25;
-const MAX_MSG_LENGTH = 500;
-const THROTTLE_MS = 3_000;
-
-const lastRequestByIp = new Map<string, number>();
 
 interface SignalContext {
   score: { value: number | null; label: string; components: Record<string, unknown> } | null;
@@ -28,20 +24,23 @@ interface SignalContext {
 let cachedCtx: { data: SignalContext; ts: number } | null = null;
 const CTX_TTL = 60_000;
 
-async function fetchSignalContext(baseUrl: string): Promise<SignalContext> {
+async function fetchSignalContext(baseUrl: string, requestSignal: AbortSignal): Promise<SignalContext> {
+  requestSignal.throwIfAborted();
   if (cachedCtx && Date.now() - cachedCtx.ts < CTX_TTL) return cachedCtx.data;
 
+  const signal = AbortSignal.any([requestSignal, AbortSignal.timeout(8_000)]);
   const headers = { 'Content-Type': 'application/json' };
   const [scoreRes, fedwatchRes, liquidityRes, slrRes, etfRes, fgRes, priceRes] =
     await Promise.allSettled([
-      fetch(`${baseUrl}/api/signal`, { headers, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
-      fetch(`${baseUrl}/api/fedwatch`, { headers, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
-      fetch(`${baseUrl}/api/liquidity`, { headers, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
-      fetch(`${baseUrl}/api/slr`, { headers, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
-      fetch(`${baseUrl}/api/etf-flows`, { headers, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
-      fetch(`${baseUrl}/api/fear-greed`, { headers, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
-      fetch(`${baseUrl}/api/price`, { headers, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
+      fetch(`${baseUrl}/api/signal`, { headers, signal, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
+      fetch(`${baseUrl}/api/fedwatch`, { headers, signal, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
+      fetch(`${baseUrl}/api/liquidity`, { headers, signal, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
+      fetch(`${baseUrl}/api/slr`, { headers, signal, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
+      fetch(`${baseUrl}/api/etf-flows`, { headers, signal, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
+      fetch(`${baseUrl}/api/fear-greed`, { headers, signal, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
+      fetch(`${baseUrl}/api/price`, { headers, signal, next: { revalidate: 60 } }).then(r => r.ok ? r.json() : null),
     ]);
+  requestSignal.throwIfAborted();
 
   const data: SignalContext = {
     score: scoreRes.status === 'fulfilled' ? scoreRes.value : null,
@@ -86,57 +85,6 @@ RULES:
 - Stay in your domain: Bitcoin, macro, markets, and on-chain data.`;
 }
 
-async function checkRateLimit(
-  request: NextRequest
-): Promise<{ allowed: boolean; remaining: number; isAuth: boolean; userId: string | null }> {
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-
-  const supabase = await createClient();
-  let userId: string | null = null;
-  let isAuth = false;
-
-  if (supabase) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      userId = user.id;
-      isAuth = true;
-    }
-  }
-
-  const limit = isAuth ? AUTH_LIMIT : FREE_LIMIT;
-  const key = userId || ip;
-  const today = new Date().toISOString().slice(0, 10);
-  const storageKey = `ai_usage:${key}:${today}`;
-
-  if (supabase) {
-    const { data } = await supabase
-      .from('ai_usage')
-      .select('count')
-      .eq('usage_key', storageKey)
-      .maybeSingle();
-
-    const count = data?.count ?? 0;
-    if (count >= limit) {
-      return { allowed: false, remaining: 0, isAuth, userId };
-    }
-
-    if (data) {
-      await supabase
-        .from('ai_usage')
-        .update({ count: count + 1 })
-        .eq('usage_key', storageKey);
-    } else {
-      await supabase
-        .from('ai_usage')
-        .insert({ usage_key: storageKey, count: 1, user_id: userId });
-    }
-
-    return { allowed: true, remaining: limit - count - 1, isAuth, userId };
-  }
-
-  return { allowed: true, remaining: limit, isAuth, userId };
-}
-
 function jsonErr(msg: string, status: number) {
   return new Response(JSON.stringify({ error: msg }), {
     status,
@@ -145,75 +93,59 @@ function jsonErr(msg: string, status: number) {
 }
 
 export async function POST(request: NextRequest) {
+  const cancellation = new AbortController();
+  const signal = chatRequestSignal(request, cancellation);
   if (!process.env.ANTHROPIC_API_KEY) {
-    return jsonErr('ANTHROPIC_API_KEY not configured', 500);
+    return jsonErr('AI service unavailable', 503);
   }
 
-  const origin = request.headers.get('origin') || '';
-  const allowedOrigins = ['https://contrabxnd.io', 'https://www.contrabxnd.io', 'http://localhost:3000'];
-  if (origin && !allowedOrigins.some(o => origin.startsWith(o))) {
+  if (!isAllowedChatOrigin(request.headers.get('origin'))) {
     return jsonErr('Forbidden', 403);
   }
 
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-  const now = Date.now();
-  const lastReq = lastRequestByIp.get(ip) || 0;
-  if (now - lastReq < THROTTLE_MS) {
-    return jsonErr('Too fast. Wait a moment.', 429);
+  let messages;
+  let rateCheck;
+  try {
+    messages = await waitForChatWork(signal, () => readConversation(request));
+    rateCheck = await waitForChatWork(signal, async () => {
+      const client = await createClient();
+      signal.throwIfAborted();
+      return consumeAiQuota(request, 'analyst', client, createAdminClient());
+    });
+  } catch (error) {
+    if (signal.aborted) return jsonErr('Request cancelled or timed out', request.signal.aborted ? 499 : 504);
+    return jsonErr(error instanceof AiRequestError ? error.message : 'AI service unavailable',
+      error instanceof AiRequestError ? error.status : 503);
   }
-  lastRequestByIp.set(ip, now);
-
-  const body = await request.json();
-  const { messages, _hp } = body;
-
-  if (_hp) return jsonErr('Bad request', 400);
-
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return jsonErr('messages array required', 400);
-  }
-
-  const lastMsg = messages[messages.length - 1];
-  if (typeof lastMsg?.content === 'string' && lastMsg.content.length > MAX_MSG_LENGTH) {
-    return jsonErr(`Message too long (max ${MAX_MSG_LENGTH} chars)`, 400);
-  }
-
-  const rateCheck = await checkRateLimit(request);
   if (!rateCheck.allowed) {
+    if (rateCheck.retryAfter) return jsonErr('Too fast. Wait a moment.', 429);
     const msg = rateCheck.isAuth
       ? `Daily limit reached (${AUTH_LIMIT}/day). Resets at midnight UTC.`
       : `Free tier limit reached (${FREE_LIMIT}/day). Sign in for ${AUTH_LIMIT} daily messages.`;
     return jsonErr(msg, 429);
   }
 
-  const baseUrl = request.nextUrl.origin;
-  const ctx = await fetchSignalContext(baseUrl);
+  // Do not use the caller-controlled Host header for server-side data fetches.
+  let ctx;
+  try {
+    ctx = await waitForChatWork(signal, () => fetchSignalContext(chatBaseUrl(), signal));
+  } catch {
+    return jsonErr('Request cancelled or timed out', request.signal.aborted ? 499 : 504);
+  }
   const systemPrompt = buildSystemPrompt(ctx);
 
-  const convo: Anthropic.MessageParam[] = messages.slice(-10).map((m: { role: string; content: string }) => ({
-    role: (m.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
-    content: m.content,
-  }));
+  const convo: Anthropic.MessageParam[] = messages.slice(-10);
+  if (convo[0]?.role === 'assistant') convo.shift();
+  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 55_000, maxRetries: 0 });
 
-  const encoder = new TextEncoder();
-  const readable = new ReadableStream({
-    async start(controller) {
-      const enc = (obj: unknown) => controller.enqueue(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
-      try {
-        await runAgentStream(
-          anthropic,
-          { model: 'claude-haiku-4-5-20251001', system: systemPrompt, tools: NODE_TOOLS, messages: convo, maxTokens: 700 },
-          { onText: (delta) => enc({ text: delta }) },
-        );
-        enc({ remaining: rateCheck.remaining });
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
-      } catch (err) {
-        enc({ error: err instanceof Error ? err.message : 'Stream error' });
-        controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-        controller.close();
-      }
-    },
-  });
+  const readable = chatStream(cancellation, signal, async (enc) => {
+    await runAgentStream(
+      anthropic,
+      { model: 'claude-haiku-4-5-20251001', system: systemPrompt, tools: NODE_TOOLS, messages: convo, maxTokens: 700, signal },
+      { onText: (delta) => enc({ text: delta }) },
+    );
+    enc({ remaining: rateCheck.remaining });
+  }, { error: 'The analyst is unavailable. Try again later.' });
 
   return new Response(readable, {
     headers: {

@@ -30,7 +30,7 @@ export interface DecodedScript {
   description: string;
 }
 
-function classify(bytes: number[], asm: string): { type: string; description: string } {
+function classify(bytes: number[]): { type: string; description: string } {
   const n = bytes.length;
   const b = bytes;
   // P2PKH: OP_DUP OP_HASH160 <20> OP_EQUALVERIFY OP_CHECKSIG
@@ -61,8 +61,9 @@ function classify(bytes: number[], asm: string): { type: string; description: st
 }
 
 export function decodeScript(hexInput: string): DecodedScript | null {
+  if (typeof hexInput !== 'string' || hexInput.length > 20_002) return null;
   const hex = hexInput.trim().toLowerCase().replace(/^0x/, '');
-  if (!/^[0-9a-f]*$/.test(hex) || hex.length === 0 || hex.length % 2 !== 0) return null;
+  if (!/^[0-9a-f]*$/.test(hex) || hex.length === 0 || hex.length > 20_000 || hex.length % 2 !== 0) return null;
 
   const bytes: number[] = [];
   for (let i = 0; i < hex.length; i += 2) bytes.push(parseInt(hex.slice(i, i + 2), 16));
@@ -72,15 +73,19 @@ export function decodeScript(hexInput: string): DecodedScript | null {
   while (i < bytes.length) {
     const op = bytes[i++];
     if (op >= 0x01 && op <= 0x4b) {
+      if (op > bytes.length - i) return null;
       // direct push of `op` bytes
       const data = hex.slice(i * 2, (i + op) * 2);
       parts.push(`OP_PUSHBYTES_${op} ${data}`);
       i += op;
     } else if (op === 0x4c || op === 0x4d || op === 0x4e) {
       const lenBytes = op === 0x4c ? 1 : op === 0x4d ? 2 : 4;
+      if (lenBytes > bytes.length - i) return null;
       let len = 0;
-      for (let k = 0; k < lenBytes; k++) len |= bytes[i + k] << (8 * k); // little-endian
+      // Arithmetic keeps PUSHDATA4 unsigned; bitwise shifts can move i backwards.
+      for (let k = 0; k < lenBytes; k++) len += bytes[i + k] * 2 ** (8 * k);
       i += lenBytes;
+      if (len > bytes.length - i) return null;
       const data = hex.slice(i * 2, (i + len) * 2);
       parts.push(`${OPCODES[op]} ${data}`);
       i += len;
@@ -90,6 +95,6 @@ export function decodeScript(hexInput: string): DecodedScript | null {
   }
 
   const asm = parts.join(' ');
-  const { type, description } = classify(bytes, asm);
+  const { type, description } = classify(bytes);
   return { hex, asm, type, description };
 }

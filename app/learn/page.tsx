@@ -93,7 +93,7 @@ export default function LearnPage() {
         .learn-page {
           background: var(--cb-bg);
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-sans);
           font-size: 13px;
           line-height: 1.7;
           overflow-x: hidden;
@@ -108,7 +108,7 @@ export default function LearnPage() {
         }
 
         .page-label {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.12em;
           text-transform: uppercase;
@@ -117,7 +117,7 @@ export default function LearnPage() {
         }
 
         .page-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: clamp(1.8rem, 3.5vw, 2.5rem);
           font-weight: 500;
           letter-spacing: -0.02em;
@@ -127,7 +127,7 @@ export default function LearnPage() {
         }
 
         .page-subtitle {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-sans);
           font-size: 13px;
           color: var(--cb-text-muted);
           max-width: 600px;
@@ -188,7 +188,7 @@ export default function LearnPage() {
         }
 
         .course-number {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-mono);
           font-size: 1.75rem;
           color: var(--cb-border);
           line-height: 1;
@@ -196,7 +196,7 @@ export default function LearnPage() {
         }
 
         .course-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 1.4rem;
           font-weight: 500;
           letter-spacing: -0.01em;
@@ -204,7 +204,7 @@ export default function LearnPage() {
         }
 
         .course-tagline {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-sans);
           font-size: 1rem;
           font-style: italic;
           color: var(--cb-accent);
@@ -255,7 +255,7 @@ export default function LearnPage() {
           border: 1px solid var(--cb-text);
           border-radius: var(--cb-radius);
           color: var(--cb-text);
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -299,7 +299,7 @@ export default function LearnPage() {
         }
 
         .path-title {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 2rem;
           font-weight: 400;
           letter-spacing: -0.02em;
@@ -324,14 +324,14 @@ export default function LearnPage() {
         }
 
         .step-number {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-mono);
           font-size: 2.5rem;
           color: var(--cb-accent);
           line-height: 1;
         }
 
         .step-content h3 {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 1.4rem;
           font-weight: 400;
           margin-bottom: 8px;
@@ -351,7 +351,7 @@ export default function LearnPage() {
         }
 
         .philosophy-quote {
-          font-family: var(--cb-font-display, 'Inter', serif);
+          font-family: var(--cb-font-display);
           font-size: 1.75rem;
           font-style: italic;
           line-height: 1.6;

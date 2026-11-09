@@ -20,20 +20,33 @@ interface LessonLayoutProps {
 export default function LessonLayout({ slug, children }: LessonLayoutProps) {
   const { isLightMode } = useTheme();
   const { user } = useAuth();
-  const [completed, setCompleted] = useState(false);
-  const [completing, setCompleting] = useState(false);
+  const completionKey = `${user?.id ?? 'guest'}:${slug}`;
+  const [completion, setCompletion] = useState<{ key: string; completed: boolean } | null>(null);
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const completed = completion?.key === completionKey && completion.completed;
+  const completing = savingKey === completionKey;
   const [scrollProgress, setScrollProgress] = useState(0);
   const contentRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.scrollY;
+    let frame = 0;
+    const updateProgress = () => {
+      frame = 0;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setScrollProgress(docHeight > 0 ? scrollTop / docHeight : 0);
+      setScrollProgress(docHeight > 0 ? Math.max(0, Math.min(1, window.scrollY / docHeight)) : 0);
     };
+    const handleScroll = () => {
+      if (!frame) frame = requestAnimationFrame(updateProgress);
+    };
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    window.addEventListener('resize', handleScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [slug]);
 
   const nav = getLessonNav(slug);
 
@@ -45,31 +58,36 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
   useEffect(() => {
     if (!user) return;
-    fetch('/api/progress')
-      .then(r => r.json())
+    const controller = new AbortController();
+    fetch('/api/progress', { signal: controller.signal })
+      .then(r => r.ok ? r.json() : null)
       .then(data => {
-        const match = data.progress?.find(
+        if (controller.signal.aborted) return;
+        const match = data?.progress?.find(
           (p: { course_slug: string; lesson_slug: string; completed: boolean }) =>
             p.course_slug === 'boarding-pass' && p.lesson_slug === slug && p.completed
         );
-        if (match) setCompleted(true);
+        setCompletion(current => current?.key === completionKey && current.completed
+          ? current
+          : { key: completionKey, completed: Boolean(match) });
       })
       .catch(() => {});
-  }, [user, slug]);
+    return () => controller.abort();
+  }, [user, slug, completionKey]);
 
   const markComplete = useCallback(async () => {
-    if (completing || completed) return;
-    setCompleting(true);
+    if (!user || completing || completed) return;
+    setSavingKey(completionKey);
     try {
       const res = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ courseSlug: 'boarding-pass', lessonSlug: slug, completed: true }),
       });
-      if (res.ok) setCompleted(true);
+      if (res.ok) setCompletion({ key: completionKey, completed: true });
     } catch { /* ignore */ }
-    setCompleting(false);
-  }, [completing, completed, slug]);
+    setSavingKey(current => current === completionKey ? null : current);
+  }, [user, completing, completed, slug, completionKey]);
 
   if (!nav) return null;
   const { lesson, total, progress, weekLabel, prev, next } = nav;
@@ -93,7 +111,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         .lesson-page {
           background: #0a0a0a;
           color: #e8e4dc;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-sans);
           font-size: 14px;
           line-height: 1.7;
           overflow-x: hidden;
@@ -157,7 +175,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           border: 1px solid #1a1a1a;
           border-radius: var(--cb-radius);
           color: #e8e4dc;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -230,7 +248,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           gap: 12px;
           padding: 10px 20px;
           text-decoration: none;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           color: #8a8a8a;
           transition: color 0.15s ease, background 0.15s ease;
@@ -268,10 +286,10 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         /* Section Dividers */
         .lesson-content h2 {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.4rem;
-          font-weight: 500;
-          letter-spacing: -0.01em;
+          font-weight: 400;
+          letter-spacing: 0.03em;
           margin: 2.5rem 0 1.25rem;
           color: #f7f7f8;
           padding-top: 2rem;
@@ -287,7 +305,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         .lesson-content h2::before {
           content: attr(data-section-index);
           display: block;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.2em;
           color: #F7931A;
@@ -351,7 +369,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-number {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-mono);
           font-size: 1rem;
           color: #F7931A;
         }
@@ -385,10 +403,10 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: clamp(1.6rem, 3vw, 2.25rem);
-          font-weight: 500;
-          letter-spacing: -0.02em;
+          font-weight: 300;
+          letter-spacing: 0.04em;
           line-height: 1.2;
           margin-bottom: 0;
           flex: 1;
@@ -408,7 +426,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           border-radius: var(--cb-radius);
           background: rgba(247, 147, 26, 0.08);
           color: #F7931A;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.14em;
           text-transform: uppercase;
@@ -444,7 +462,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-subtitle {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-sans);
           font-size: 1.05rem;
           font-style: italic;
           color: #8a8a8a;
@@ -457,7 +475,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-content p {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-sans);
           font-size: 1.0625rem;
           line-height: 1.75;
           margin-bottom: 1.35rem;
@@ -487,7 +505,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-content h3 {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.15rem;
           font-weight: 400;
           margin: 2.5rem 0 1rem;
@@ -505,7 +523,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .lesson-content li {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-sans);
           font-size: 1.15rem;
           line-height: 1.8;
           margin-bottom: 0.75rem;
@@ -558,7 +576,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .key-concept-text {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-sans);
           font-size: 1.5rem;
           font-style: italic;
           line-height: 1.5;
@@ -585,7 +603,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .highlight-box h4 {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 10px;
           letter-spacing: 0.2em;
           text-transform: uppercase;
@@ -629,7 +647,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .illustration-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.25rem;
           color: #8a8a8a;
         }
@@ -651,7 +669,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         }
 
         .summary-title {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-display);
           font-size: 1.25rem;
           font-weight: 400;
           margin-bottom: 1rem;
@@ -698,7 +716,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           background: transparent;
           border: 1px solid #F7931A;
           color: #F7931A;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -708,7 +726,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
 
         .mark-complete-btn:hover:not(:disabled) {
           background: #F7931A;
-          color: #f7f7f8;
+          color: var(--cb-on-accent);
         }
 
         .mark-complete-btn:disabled {
@@ -748,7 +766,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           background: transparent;
           border: 1px solid #3a3a3a;
           color: #e8e4dc;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -774,7 +792,7 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
         .nav-btn.primary {
           background: #F7931A;
           border-color: #F7931A;
-          color: #f7f7f8;
+          color: var(--cb-on-accent);
         }
 
         .nav-btn.primary:hover {
@@ -782,6 +800,20 @@ export default function LessonLayout({ slug, children }: LessonLayoutProps) {
           border-color: #ff6600;
         }
 
+
+        .lesson-page .lesson-meta,
+        .lesson-page .lesson-breadcrumb,
+        .lesson-page .key-concept-label,
+        .lesson-page .illustration-label {
+          font-family: var(--cb-font-mono);
+        }
+
+        .lesson-page .lesson-week,
+        .lesson-page .lesson-duration,
+        .lesson-page .toc-number,
+        .lesson-page .illustration-label {
+          color: var(--cb-text-dim);
+        }
 
         @media (max-width: 768px) {
           .progress-container {

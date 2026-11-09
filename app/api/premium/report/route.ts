@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { invoiceRequestIdentity, limitInvoiceCreation } from '@/lib/api-auth';
 import { lndConfigured, createInvoice } from '@/lib/lightning/client';
 import {
   PAYWALL,
@@ -51,8 +52,8 @@ export async function GET(req: Request) {
   const auth = parseL402Auth(req.headers.get('authorization'));
   if (auth) {
     const payload = verifyToken(auth.token);
-    if (payload && payload.resource === RESOURCE && preimageMatches(auth.preimage, payload.payment_hash)) {
-      return NextResponse.json({ paid: true, resource: RESOURCE, report: await buildReport() });
+    if (payload && payload.resource === RESOURCE && payload.price_sats === price && preimageMatches(auth.preimage, payload.payment_hash)) {
+      return NextResponse.json({ paid: true, resource: RESOURCE, report: await buildReport() }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
     // Invalid/expired token or wrong preimage → fall through to a fresh challenge.
   }
@@ -61,6 +62,8 @@ export async function GET(req: Request) {
   if (!lndConfigured()) {
     return NextResponse.json({ error: 'Lightning node unavailable — cannot issue invoice' }, { status: 503 });
   }
+  const denied = await limitInvoiceCreation(invoiceRequestIdentity(req));
+  if (denied) return denied;
   try {
     const inv = await createInvoice(price, `Contrabxnd ${RESOURCE}`);
     const token = mintToken({

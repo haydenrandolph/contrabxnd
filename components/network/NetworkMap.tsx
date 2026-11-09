@@ -68,6 +68,7 @@ export default function NetworkMap({
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<string, L.CircleMarker>>(new Map());
+  const businessesByIdRef = useRef<Map<string, NetworkBusiness>>(new Map());
   const previousSelectionRef = useRef<L.CircleMarker | null>(null);
   const fittedPositionsRef = useRef<Set<string> | null>(null);
   const selectedIdRef = useRef<string | null>(null);
@@ -91,6 +92,8 @@ export default function NetworkMap({
       preferCanvas: true, worldCopyJump: true,
     });
     mapRef.current = map;
+    const markers = markersRef.current;
+    const businessesById = businessesByIdRef.current;
     L.control.zoom({ position: 'topright' }).addTo(map);
     const tiles = L.tileLayer(tileUrl, { attribution: tileAttribution, maxZoom: 19 }).addTo(map);
     tiles.on('tileerror', () => setTileError(true));
@@ -105,6 +108,9 @@ export default function NetworkMap({
       map.eachLayer(layer => { if (layer instanceof L.Path) map.removeLayer(layer); });
       map.remove();
       mapRef.current = null;
+      markers.clear();
+      businessesById.clear();
+      previousSelectionRef.current = null;
       fittedPositionsRef.current = null;
       selectedIdRef.current = null;
     };
@@ -113,9 +119,8 @@ export default function NetworkMap({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const layer = L.layerGroup().addTo(map);
-    markersRef.current.clear();
-    previousSelectionRef.current = null;
+    const markers = markersRef.current;
+    const businessesById = businessesByIdRef.current;
     const bounds = L.latLngBounds([]);
     const positions = new Set<string>();
     businesses.forEach(business => {
@@ -123,15 +128,40 @@ export default function NetworkMap({
       const { lat, lon } = business.location;
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
       positions.add(`${business.id}:${lat}:${lon}`);
-      const marker = L.circleMarker([lat, lon], {
-        radius: 5, color: '#f7931a', weight: 1.5,
-        fillColor: '#f7931a', fillOpacity: 0.55,
-      }).addTo(layer);
-      marker.bindPopup(() => createPopup(business), { maxWidth: 280, className: 'btc-popup' });
-      marker.on('click', () => selectBusiness(business));
-      markersRef.current.set(business.id, marker);
+      const previousBusiness = businessesById.get(business.id);
+      businessesById.set(business.id, business);
+      let marker = markers.get(business.id);
+      if (!marker) {
+        marker = L.circleMarker([lat, lon], {
+          radius: 5, color: '#f7931a', weight: 1.5,
+          fillColor: '#f7931a', fillOpacity: 0.55,
+        }).addTo(map);
+        marker.bindPopup(() => createPopup(businessesById.get(business.id)!), { maxWidth: 280, className: 'btc-popup' });
+        marker.on('click', () => {
+          const current = businessesById.get(business.id);
+          if (current) selectBusiness(current);
+        });
+        markers.set(business.id, marker);
+      } else {
+        const point = marker.getLatLng();
+        if (point.lat !== lat || point.lng !== lon) marker.setLatLng([lat, lon]);
+        if (marker.isPopupOpen() && previousBusiness && (
+          previousBusiness.name !== business.name || previousBusiness.category !== business.category ||
+          previousBusiness.website !== business.website || previousBusiness.paymentMethods !== business.paymentMethods ||
+          previousBusiness.location?.city !== business.location.city ||
+          previousBusiness.location?.country !== business.location.country
+        )) marker.setPopupContent(createPopup(business));
+      }
       bounds.extend([lat, lon]);
     });
+    for (const [id, marker] of markers) {
+      const business = businessesById.get(id);
+      if (business?.location && positions.has(`${id}:${business.location.lat}:${business.location.lon}`)) continue;
+      marker.remove();
+      markers.delete(id);
+      businessesById.delete(id);
+      if (previousSelectionRef.current === marker) previousSelectionRef.current = null;
+    }
     const previousPositions = fittedPositionsRef.current;
     const positionsChanged = !previousPositions || positions.size !== previousPositions.size ||
       [...positions].some(position => !previousPositions.has(position));
@@ -143,7 +173,7 @@ export default function NetworkMap({
       fittedPositionsRef.current = positions;
       emitBoundsChange();
     });
-    return () => { cancelAnimationFrame(frame); layer.remove(); };
+    return () => { cancelAnimationFrame(frame); };
   }, [businesses]);
 
   useEffect(() => {
@@ -156,17 +186,20 @@ export default function NetworkMap({
   }, [userLocation]);
 
   useEffect(() => {
-    previousSelectionRef.current?.setStyle({ radius: 5, color: '#f7931a', weight: 1.5, fillOpacity: 0.55 });
-    previousSelectionRef.current?.closePopup();
     const selectionChanged = selectedIdRef.current !== (selectedBusiness?.id ?? null);
     selectedIdRef.current = selectedBusiness?.id ?? null;
     const marker = selectedBusiness ? markersRef.current.get(selectedBusiness.id) : undefined;
+    const previousMarker = previousSelectionRef.current;
+    if (previousMarker === marker && !selectionChanged) return;
+    previousMarker?.setStyle({ radius: 5, color: '#f7931a', weight: 1.5, fillOpacity: 0.55 });
+    previousMarker?.closePopup();
+    previousSelectionRef.current = marker ?? null;
     if (!marker || !mapRef.current) return;
     marker.setStyle({ radius: 9, color: '#fff', weight: 2, fillOpacity: 1 });
     marker.bringToFront();
-    previousSelectionRef.current = marker;
-    if (!selectionChanged) return;
-    mapRef.current.setView(marker.getLatLng(), Math.max(mapRef.current.getZoom(), 10), { animate: false });
+    if (selectionChanged) {
+      mapRef.current.setView(marker.getLatLng(), Math.max(mapRef.current.getZoom(), 10), { animate: false });
+    }
     marker.openPopup();
   }, [selectedBusiness, businesses]);
 
@@ -180,21 +213,21 @@ export default function NetworkMap({
         .merchant-map-canvas { height: 100%; width: 100%; background: #171a1c; }
         .merchant-map.dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) saturate(0.25) brightness(0.75) contrast(0.9); }
         .merchant-map.light .leaflet-tile-pane { filter: saturate(0.25); }
-        .merchant-map .leaflet-container { font-family: 'JetBrains Mono', monospace; }
+        .merchant-map .leaflet-container { font-family: var(--cb-font-mono); }
         .merchant-map .leaflet-control-zoom { border: 1px solid var(--cb-border); border-radius: var(--cb-radius); overflow: hidden; }
         .merchant-map .leaflet-control-zoom a { background: var(--cb-surface); color: var(--cb-text); border-color: var(--cb-border); }
         .merchant-map .leaflet-control-zoom a:hover { color: var(--cb-accent); background: var(--cb-bg); }
         .merchant-map .leaflet-control-attribution { background: var(--cb-surface); color: var(--cb-text-muted); font-size: 9px; }
         .merchant-map .leaflet-control-attribution a { color: var(--cb-text); }
-        .map-legend { position: absolute; z-index: 500; left: 12px; top: 12px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--cb-surface); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); color: var(--cb-text-muted); font: 10px 'JetBrains Mono', monospace; pointer-events: none; }
+        .map-legend { position: absolute; z-index: 500; left: 12px; top: 12px; display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--cb-surface); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); color: var(--cb-text-muted); font: 10px var(--cb-font-mono); pointer-events: none; }
         .map-legend span { width: 7px; height: 7px; border-radius: 50%; background: #f7931a; }
         .map-legend .location-dot { background: #4ade80; margin-left: 8px; }
         .map-error { position: absolute; z-index: 500; bottom: 30px; left: 12px; right: 12px; padding: 12px; background: var(--cb-surface); color: var(--cb-text); font-size: 11px; border: 1px solid var(--cb-border); }
         .btc-popup .leaflet-popup-content-wrapper, .btc-popup .leaflet-popup-tip { background: var(--cb-surface); color: var(--cb-text); border-radius: var(--cb-radius); }
         .btc-popup .leaflet-popup-content-wrapper { border: 1px solid var(--cb-border); }
         .btc-popup .leaflet-popup-close-button { color: var(--cb-text-muted); }
-        .merchant-popup { min-width: 180px; font: 11px 'JetBrains Mono', monospace; }
-        .merchant-popup h3 { font-family: var(--cb-font-display, 'Inter', sans-serif); font-size: 18px; line-height: 1.3; margin: 0 16px 12px 0; }
+        .merchant-popup { min-width: 180px; font: 11px var(--cb-font-mono); }
+        .merchant-popup h3 { font-family: var(--cb-font-display); font-size: 18px; line-height: 1.3; margin: 0 16px 12px 0; }
         .merchant-popup p { margin: 6px 0; color: var(--cb-text-muted); }
         .merchant-popup .merchant-popup-payments { text-transform: uppercase; font-size: 10px; padding: 8px 0; }
         .merchant-popup a { color: var(--cb-accent); }

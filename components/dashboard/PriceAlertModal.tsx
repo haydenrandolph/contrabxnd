@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useEffectEvent } from 'react';
+import { flushSync } from 'react-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface PriceAlertModalProps {
@@ -10,71 +11,106 @@ interface PriceAlertModalProps {
   onAlertCreated?: () => void;
 }
 
-export default function PriceAlertModal({
-  isOpen,
+export default function PriceAlertModal(props: PriceAlertModalProps) {
+  const { showAuthModal, setShowAuthModal } = useAuth();
+  const returnFocus = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (showAuthModal || !returnFocus.current) return;
+    if (returnFocus.current.isConnected && document.activeElement === document.body) {
+      returnFocus.current.focus({ preventScroll: true });
+    }
+    returnFocus.current = null;
+  }, [showAuthModal]);
+
+  const openSignIn = () => {
+    // Finish focus-trap cleanup before auth captures its initial focus.
+    flushSync(() => props.onClose());
+    returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setShowAuthModal('signin');
+  };
+
+  return props.isOpen ? <PriceAlertDialog {...props} onSignIn={openSignIn} /> : null;
+}
+
+function PriceAlertDialog({
   onClose,
   currentPrice,
   onAlertCreated,
-}: PriceAlertModalProps) {
-  const { user, setShowAuthModal } = useAuth();
+  onSignIn,
+}: Omit<PriceAlertModalProps, 'isOpen'> & { onSignIn: () => void }) {
+  const { user } = useAuth();
   const [targetPrice, setTargetPrice] = useState('');
   const [direction, setDirection] = useState<'above' | 'below'>('above');
   const [notifyEmail, setNotifyEmail] = useState(true);
-  const [notifyPush, setNotifyPush] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const stableClose = useCallback(() => onClose(), [onClose]);
+  const stableClose = useEffectEvent(() => onClose());
+  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { stableClose(); return; }
       if (e.key === 'Tab' && contentRef.current) {
         const focusable = contentRef.current.querySelectorAll<HTMLElement>(
-          'button, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
         );
         if (focusable.length === 0) return;
         const first = focusable[0], last = focusable[focusable.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        if (e.shiftKey && (document.activeElement === first || !contentRef.current.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && (document.activeElement === last || !contentRef.current.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     contentRef.current?.querySelector<HTMLElement>('button, input')?.focus();
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, stableClose]);
-
-  if (!isOpen) return null;
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+      requestRef.current?.abort();
+      if (successTimer.current) clearTimeout(successTimer.current);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (requestRef.current && !requestRef.current.signal.aborted) return;
     setError('');
 
     if (!user) {
-      setShowAuthModal('signin');
+      onSignIn();
       return;
     }
 
     const price = parseFloat(targetPrice);
-    if (isNaN(price) || price <= 0) {
+    if (!Number.isFinite(price) || price <= 0) {
       setError('Please enter a valid price');
       return;
     }
 
+    if (!notifyEmail) {
+      setError('Select email notifications to receive this alert. Push notifications are unavailable.');
+      return;
+    }
+
     setIsLoading(true);
+    const controller = new AbortController();
+    requestRef.current = controller;
 
     try {
       const res = await fetch('/api/alerts', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           targetPrice: price,
           direction,
           notifyEmail,
-          notifyPush,
+          notifyPush: false,
         }),
       });
 
@@ -83,17 +119,17 @@ export default function PriceAlertModal({
         throw new Error(data.error || 'Failed to create alert');
       }
 
+      if (controller.signal.aborted) return;
       setSuccess(true);
-      onAlertCreated?.();
-      setTimeout(() => {
+      successTimer.current = setTimeout(() => {
         onClose();
-        setSuccess(false);
-        setTargetPrice('');
       }, 1500);
+      onAlertCreated?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      if (!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
-      setIsLoading(false);
+      if (requestRef.current === controller) requestRef.current = null;
+      if (!controller.signal.aborted) setIsLoading(false);
     }
   };
 
@@ -150,7 +186,7 @@ export default function PriceAlertModal({
         }
 
         .modal-title {
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -196,7 +232,7 @@ export default function PriceAlertModal({
         }
 
         .current-price-value {
-          font-family: 'Inter', serif;
+          font-family: var(--cb-font-sans);
           font-size: 2rem;
           color: #e8e4dc;
         }
@@ -220,7 +256,7 @@ export default function PriceAlertModal({
           background: #141414;
           border: 1px solid #2a2a2a;
           color: #e8e4dc;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 16px;
           transition: border-color 0.2s ease;
         }
@@ -245,7 +281,7 @@ export default function PriceAlertModal({
           background: #141414;
           border: 1px solid #2a2a2a;
           color: #8a8a8a;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -286,6 +322,12 @@ export default function PriceAlertModal({
           color: #e8e4dc;
         }
 
+        .notification-unavailable {
+          color: #8a8a8a;
+          font-size: 12px;
+          margin-top: 0.5rem;
+        }
+
         .form-error {
           color: #ef4444;
           font-size: 12px;
@@ -315,7 +357,7 @@ export default function PriceAlertModal({
           background: #F7931A;
           border: none;
           color: #fff;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           letter-spacing: 0.15em;
           text-transform: uppercase;
@@ -406,10 +448,10 @@ export default function PriceAlertModal({
       `}</style>
 
       <div className="modal-overlay" onClick={onClose}>
-        <div className="modal-content" ref={contentRef} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+        <div className="modal-content" ref={contentRef} role="dialog" aria-modal="true" aria-labelledby="price-alert-title" onClick={e => e.stopPropagation()}>
           <div className="modal-header">
-            <span className="modal-title">Set Price Alert</span>
-            <button className="modal-close" onClick={onClose}>
+            <span className="modal-title" id="price-alert-title">Set Price Alert</span>
+            <button className="modal-close" aria-label="Close price alert" onClick={onClose}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
@@ -419,7 +461,7 @@ export default function PriceAlertModal({
 
           <div className="modal-body">
             {success ? (
-              <div className="form-success">
+              <div className="form-success" role="status">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                   <polyline points="22 4 12 14.01 9 11.01"/>
@@ -428,7 +470,7 @@ export default function PriceAlertModal({
               </div>
             ) : !user ? (
               <div className="signin-prompt">
-                <p>Please <button onClick={() => setShowAuthModal('signin')}>sign in</button> to create price alerts.</p>
+                <p>Please <button onClick={onSignIn}>sign in</button> to create price alerts.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit}>
@@ -437,13 +479,14 @@ export default function PriceAlertModal({
                   <p className="current-price-value">{formattedCurrentPrice}</p>
                 </div>
 
-                {error && <p className="form-error">{error}</p>}
+                {error && <p className="form-error" role="alert">{error}</p>}
 
                 <div className="form-group">
-                  <label className="form-label">Alert me when price goes</label>
-                  <div className="direction-buttons">
+                  <span className="form-label" id="alert-direction-label">Alert me when price goes</span>
+                  <div className="direction-buttons" role="group" aria-labelledby="alert-direction-label">
                     <button
                       type="button"
+                      aria-pressed={direction === 'above'}
                       className={`direction-btn ${direction === 'above' ? 'active' : ''}`}
                       onClick={() => setDirection('above')}
                     >
@@ -451,6 +494,7 @@ export default function PriceAlertModal({
                     </button>
                     <button
                       type="button"
+                      aria-pressed={direction === 'below'}
                       className={`direction-btn ${direction === 'below' ? 'active' : ''}`}
                       onClick={() => setDirection('below')}
                     >
@@ -460,8 +504,9 @@ export default function PriceAlertModal({
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Target Price (USD)</label>
+                  <label className="form-label" htmlFor="alert-target-price">Target Price (USD)</label>
                   <input
+                    id="alert-target-price"
                     type="number"
                     className="form-input"
                     placeholder="e.g. 100000"
@@ -474,8 +519,8 @@ export default function PriceAlertModal({
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Notify me via</label>
-                  <div className="notification-options">
+                  <span className="form-label" id="alert-notification-label">Notify me via</span>
+                  <div className="notification-options" role="group" aria-labelledby="alert-notification-label">
                     <label className="notification-option">
                       <input
                         type="checkbox"
@@ -489,12 +534,16 @@ export default function PriceAlertModal({
                       <input
                         type="checkbox"
                         className="notification-checkbox"
-                        checked={notifyPush}
-                        onChange={e => setNotifyPush(e.target.checked)}
+                        checked={false}
+                        disabled
+                        aria-describedby="alert-push-unavailable"
                       />
                       <span className="notification-label">Push</span>
                     </label>
                   </div>
+                  <p className="notification-unavailable" id="alert-push-unavailable">
+                    Push notifications are unavailable until browser subscriptions are supported. Use email instead.
+                  </p>
                 </div>
 
                 <button type="submit" className="submit-btn" disabled={isLoading}>

@@ -1,4 +1,6 @@
 import type { LiquiditySnapshot } from './types';
+import { isFreshDate } from '../etf/math';
+import { parseMacroNumber, fredMillions, netLiquidity } from './math';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -8,11 +10,7 @@ const BROWSER_UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 
 /** Parse a numeric string, returning null on failure. */
-function safeParseFloat(value: string | undefined | null): number | null {
-  if (!value || value === '.') return null;
-  const n = parseFloat(value);
-  return isNaN(n) ? null : n;
-}
+const safeParseFloat = parseMacroNumber;
 
 // ---------------------------------------------------------------------------
 // 1. Treasury General Account (TGA) — Treasury Fiscal Data API (no auth)
@@ -38,6 +36,7 @@ async function fetchTGA(): Promise<TgaResult> {
     const res = await fetch(url, {
       headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' },
       cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!res.ok) throw new Error(`Treasury API ${res.status}`);
@@ -55,7 +54,7 @@ async function fetchTGA(): Promise<TgaResult> {
       record.open_today_bal ?? record.close_today_bal,
     );
 
-    const tga_balance = rawValue;
+    const tga_balance = isFreshDate(record.record_date, 5) && rawValue !== null && rawValue >= 0 ? rawValue : null;
 
     return { tga_balance, raw: record };
   } catch (err) {
@@ -81,6 +80,7 @@ async function fetchRRP(): Promise<RrpResult> {
     const res = await fetch(url, {
       headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' },
       cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!res.ok) throw new Error(`NY Fed RRP API ${res.status}`);
@@ -103,12 +103,16 @@ async function fetchRRP(): Promise<RrpResult> {
     let latestRrp: number | null = null;
     let latestRecord: unknown = null;
 
-    for (const op of operations) {
+    for (const op of [...operations].sort((a, b) => String(b.operationDate).localeCompare(String(a.operationDate)))) {
       // NY Fed reports totalAmtAccepted in raw dollars. Convert to millions
       // to match FRED/Treasury units. Filter for Reverse Repo operations.
       if (op.operationType !== 'Reverse Repo') continue;
+      if (!isFreshDate(op.operationDate, 5)) continue;
+      // Do not mix term operations into the overnight facility balance.
+      const duration = Date.parse(op.maturityDate) - Date.parse(op.settlementDate);
+      if (!Number.isFinite(duration) || duration <= 0 || duration > 4 * 86_400_000) continue;
       const total = safeParseFloat(op.totalAmtAccepted);
-      if (total !== null) {
+      if (total !== null && total >= 0) {
         latestRrp = Math.round((total / 1_000_000) * 100) / 100;
         latestRecord = op;
         break;
@@ -141,7 +145,7 @@ async function fetchFredSeries(
       `https://api.stlouisfed.org/fred/series/observations` +
       `?series_id=${seriesId}&sort_order=desc&limit=1&file_type=json&api_key=${apiKey}`;
 
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(8000) });
 
     if (!res.ok) throw new Error(`FRED ${seriesId} ${res.status}`);
 
@@ -153,7 +157,9 @@ async function fetchFredSeries(
       return { value: null, date: null, raw: data };
     }
 
-    const value = safeParseFloat(obs.value);
+    const parsed = safeParseFloat(obs.value);
+    const value = isFreshDate(obs.date, seriesId === 'M2SL' ? 90 : 14) && parsed !== null && parsed >= 0
+      ? fredMillions(seriesId, parsed) : null;
     return { value, date: obs.date ?? null, raw: obs };
   } catch (err) {
     console.error(`FRED ${seriesId} fetch failed:`, err);
@@ -178,6 +184,7 @@ async function fetchRates(): Promise<RatesResult> {
     const res = await fetch(url, {
       headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json' },
       cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
     });
 
     if (!res.ok) throw new Error(`NY Fed Rates API ${res.status}`);
@@ -190,6 +197,7 @@ async function fetchRates(): Promise<RatesResult> {
 
     if (Array.isArray(refRates)) {
       for (const rate of refRates) {
+        if (!isFreshDate(rate.effectiveDate, 5)) continue;
         if (rate.type === 'SOFR') {
           sofr = safeParseFloat(rate.percentRate);
         } else if (rate.type === 'EFFR') {
@@ -232,18 +240,9 @@ export async function scrapeLiquidity(): Promise<LiquiditySnapshot> {
     ]);
 
   // Compute net liquidity only when all three components are available
-  let net_liquidity: number | null = null;
-
-  if (
-    walclResult.value !== null &&
-    tgaResult.tga_balance !== null &&
-    rrpResult.reverse_repo !== null
-  ) {
-    net_liquidity =
-      Math.round(
-        (walclResult.value - tgaResult.tga_balance - rrpResult.reverse_repo) * 100,
-      ) / 100;
-  }
+  const net_liquidity = netLiquidity(walclResult.value, tgaResult.tga_balance, rrpResult.reverse_repo);
+  // Reject an incomplete core snapshot rather than overwrite a good same-day row.
+  if (net_liquidity === null) throw new Error('Missing or stale WALCL, TGA or overnight RRP; snapshot rejected');
 
   return {
     date: today,

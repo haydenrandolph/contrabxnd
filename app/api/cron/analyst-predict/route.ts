@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { cronGuard, validPredictionTarget } from '@/lib/audit-guards';
 import Anthropic from '@anthropic-ai/sdk';
 import { createAdminClient } from '@/lib/supabase/server';
 import { hashPrediction } from '@/lib/agent-credit';
+import { withDailyJobLease } from '@/lib/job-lease';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -9,22 +11,25 @@ export const maxDuration = 60;
 const ANALYST_NAME = 'Contrabxnd Analyst';
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.contrabxnd.io';
 
-async function fetchInternal(path: string) {
-  const res = await fetch(`${BASE_URL}${path}`, { cache: 'no-store' });
-  if (!res.ok) return null;
+async function fetchInternal(path: string, signal: AbortSignal) {
+  const res = await fetch(`${BASE_URL}${path}`, { cache: 'no-store', signal: AbortSignal.any([signal, AbortSignal.timeout(10_000)]) });
+  if (!res.ok) throw new Error('Internal data unavailable');
   return res.json();
 }
 
 async function ensureAnalystAgent(supabase: ReturnType<typeof createAdminClient>) {
   if (!supabase) return null;
 
-  const { data: existing } = await supabase
+  const { data: existing, error: lookupError } = await supabase
     .from('agents')
     .select('id')
     .eq('name', ANALYST_NAME)
+    .is('owner_id', null)
+    .eq('verified', true)
     .eq('status', 'active')
     .maybeSingle();
 
+  if (lookupError) throw new Error('Analyst lookup failed');
   if (existing) return existing.id;
 
   const { data: agent, error } = await supabase
@@ -42,12 +47,12 @@ async function ensureAnalystAgent(supabase: ReturnType<typeof createAdminClient>
     .select('id')
     .single();
 
-  if (error) {
-    console.error('Failed to register analyst:', error.message);
+  if (error || !agent) {
     return null;
   }
 
-  await supabase.from('agent_credit_scores').insert({ agent_id: agent.id });
+  const { error: creditError } = await supabase.from('agent_credit_scores').insert({ agent_id: agent.id });
+  if (creditError) throw new Error('Analyst credit initialization failed');
   return agent.id;
 }
 
@@ -61,56 +66,54 @@ const PREDICTION_SCHEMA = `[
 ]`;
 
 export async function GET(request: Request) {
-  const authHeader = request.headers.get('authorization');
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const denied = cronGuard(request);
+  if (denied) return denied;
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
   }
 
-  const supabase = createAdminClient();
-  if (!supabase) {
-    return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
-  }
+  let stored = 0;
+  try {
+    const supabase = createAdminClient();
+    if (!supabase) {
+      return NextResponse.json({ error: 'Database not configured' }, { status: 500 });
+    }
 
-  const agentId = await ensureAnalystAgent(supabase);
-  if (!agentId) {
-    return NextResponse.json({ error: 'Failed to ensure analyst agent' }, { status: 500 });
-  }
+    return await withDailyJobLease(supabase, 'analyst-predict', async today => {
+      const agentId = await ensureAnalystAgent(supabase);
+      if (!agentId) {
+        return NextResponse.json({ error: 'Failed to ensure analyst agent' }, { status: 500 });
+      }
 
-  const today = new Date().toISOString().split('T')[0];
+      const { data: todayPredictions, error: predictionsError } = await supabase
+        .from('agent_predictions')
+        .select('id')
+        .eq('agent_id', agentId)
+        .or(`job_day.eq.${today},and(job_day.is.null,submitted_at.gte.${today}T00:00:00Z,submitted_at.lt.${new Date(Date.parse(today) + 86400000).toISOString()})`);
 
-  const { data: todayPredictions } = await supabase
-    .from('agent_predictions')
-    .select('id')
-    .eq('agent_id', agentId)
-    .gte('submitted_at', `${today}T00:00:00Z`)
-    .lt('submitted_at', `${today}T23:59:59Z`);
+      if (predictionsError) throw new Error('Prediction lookup failed');
 
-  if (todayPredictions && todayPredictions.length >= 3) {
-    return NextResponse.json({ status: 'already_predicted', date: today, count: todayPredictions.length });
-  }
+      if (todayPredictions && todayPredictions.length >= 3) {
+        return NextResponse.json({ status: 'already_predicted', date: today, count: todayPredictions.length });
+      }
 
-  const [price, signal, liquidity, fedwatch, derivatives, fearGreed, polymarket] =
-    await Promise.all([
-      fetchInternal('/api/price'),
-      fetchInternal('/api/signal'),
-      fetchInternal('/api/liquidity'),
-      fetchInternal('/api/fedwatch'),
-      fetchInternal('/api/derivatives'),
-      fetchInternal('/api/fear-greed'),
-      fetchInternal('/api/polymarket'),
-    ]);
+      const [price, signal, liquidity, fedwatch, derivatives, fearGreed, polymarket] =
+        await Promise.all([
+          fetchInternal('/api/price', request.signal),
+          fetchInternal('/api/signal', request.signal),
+          fetchInternal('/api/liquidity', request.signal),
+          fetchInternal('/api/fedwatch', request.signal),
+          fetchInternal('/api/derivatives', request.signal),
+          fetchInternal('/api/fear-greed', request.signal),
+          fetchInternal('/api/polymarket', request.signal),
+        ]);
 
-  const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, timeout: 10_000, maxRetries: 0 });
 
-  const currentPrice = price?.price || price?.data?.price;
+      const currentPrice = price?.price || price?.data?.price;
 
-  const prompt = `You are the Contrabxnd Analyst. Based on the live data below, generate exactly 3 specific, verifiable predictions about Bitcoin.
+      const prompt = `You are the Contrabxnd Analyst. Based on the live data below, generate exactly 3 specific, verifiable predictions about Bitcoin.
 
 CURRENT DATE: ${today}
 CURRENT BTC PRICE: $${currentPrice?.toLocaleString() || 'unknown'}
@@ -136,61 +139,71 @@ Rules:
 - Be realistic — don't predict extreme moves unless data strongly supports it
 - Confidence should reflect actual uncertainty in the data`;
 
-  try {
-    const response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 800,
-      messages: [
-        { role: 'user', content: prompt },
-        { role: 'assistant', content: '[' },
-      ],
-    });
+      const response = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        messages: [
+          { role: 'user', content: prompt },
+          { role: 'assistant', content: '[' },
+        ],
+      }, { signal: request.signal });
 
-    const rawText = response.content[0].type === 'text' ? response.content[0].text : '';
-    const text = ('[' + rawText).replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-    const predictions: Array<{
-      text: string;
-      confidence: number;
-      category: string;
-      targetDate: string;
-    }> = JSON.parse(text);
+      const rawText = response.content[0].type === 'text' ? response.content[0].text : '';
+      const text = ('[' + rawText).replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const predictions: Array<{
+        text: string;
+        confidence: number;
+        category: string;
+        targetDate: string;
+      }> = JSON.parse(text);
 
-    if (!Array.isArray(predictions) || predictions.length === 0) {
-      return NextResponse.json({ error: 'No predictions generated' }, { status: 502 });
-    }
+      if (!Array.isArray(predictions) || predictions.length === 0) {
+        return NextResponse.json({ error: 'No predictions generated' }, { status: 502 });
+      }
 
-    const submitted = [];
-    for (const p of predictions.slice(0, 3)) {
-      const confidence = Math.max(0.5, Math.min(0.95, p.confidence));
-      const timestamp = new Date().toISOString();
-      const predictionHash = hashPrediction(p.text, agentId, timestamp);
+      if (predictions.length !== 3 || predictions.some(p =>
+        !p || typeof p.text !== 'string' || !p.text.trim() || p.text.length > 10_000 ||
+        typeof p.confidence !== 'number' || !Number.isFinite(p.confidence) ||
+        !validPredictionTarget(p.targetDate) || Date.parse(p.targetDate) > Date.now() + 7 * 86400000 ||
+        !['price', 'macro', 'sentiment', 'derivatives'].includes(p.category))) {
+        return NextResponse.json({ error: 'Invalid predictions generated', stored: 0 }, { status: 502 });
+      }
 
-      const { data, error } = await supabase
-        .from('agent_predictions')
-        .insert({
+      // One statement is all-or-nothing. Account for legacy partial daily output.
+      const existingCount = todayPredictions?.length ?? 0;
+      const rows = predictions.slice(existingCount).map((p, index) => {
+        const confidence = Math.max(0.5, Math.min(0.95, p.confidence));
+        const timestamp = new Date().toISOString();
+        const predictionHash = hashPrediction(p.text, agentId, timestamp);
+
+        return {
           agent_id: agentId,
           prediction_hash: predictionHash,
           prediction_text: p.text,
           confidence,
           category: p.category || 'general',
           target_date: p.targetDate,
+          submitted_at: timestamp,
           outcome: 'pending',
-        })
-        .select('id, prediction_hash, prediction_text, confidence, target_date')
-        .single();
+          job_day: today,
+          job_slot: existingCount + index,
+        };
+      });
+      const { data: submitted, error: writeError } = await supabase.from('agent_predictions')
+        .insert(rows).select('id, prediction_hash, prediction_text, confidence, target_date');
+      if (writeError || !submitted || submitted.length !== rows.length) {
+        return NextResponse.json({ error: 'Prediction write failed', stored, total: predictions.length }, { status: 503 });
+      }
+      stored = submitted.length;
 
-      if (!error && data) submitted.push(data);
-    }
-
-    return NextResponse.json({
-      status: 'predicted',
-      date: today,
-      agentId,
-      predictions: submitted,
+      return NextResponse.json({
+        status: 'predicted',
+        date: today,
+        agentId,
+        predictions: submitted,
+      });
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('Analyst prediction failed:', err);
-    return NextResponse.json({ error: message }, { status: 502 });
+  } catch {
+    return NextResponse.json({ error: 'Analyst prediction failed', stored }, { status: 503 });
   }
 }

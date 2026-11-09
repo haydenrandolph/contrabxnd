@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import type { MeetingForecast } from '@/lib/fedwatch/types';
+import { isFreshDate } from '@/lib/etf/math';
+import { validMeetingForecast } from '@/lib/fedwatch/math';
+import { FOMC_DATES } from '@/lib/fedwatch/calendar';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,14 +37,16 @@ export async function GET() {
       .limit(1)
       .single();
 
-    if (error || !row) {
+    if (error || !row || !isFreshDate(row.date, 4)) {
       return NextResponse.json(UNAVAILABLE);
     }
 
-    const meetings = (row.meetings ?? []) as MeetingForecast[];
+    const today = new Date().toISOString().slice(0, 10);
+    const meetings = ((row.meetings ?? []) as MeetingForecast[])
+      .filter(m => m.meeting_date > today && validMeetingForecast(m)).sort((a, b) => a.meeting_date.localeCompare(b.meeting_date));
     const first = meetings[0] ?? null;
 
-    const next_meeting = first
+    const next_meeting = first && first.meeting_date === FOMC_DATES.find(d => d > today)
       ? {
           date: first.meeting_date,
           cut: first.cut_probability,
@@ -63,7 +68,6 @@ export async function GET() {
     return NextResponse.json(result);
   } catch (err) {
     console.error('FedWatch API error:', err);
-    if (cache) return NextResponse.json(cache.data);
     return NextResponse.json(UNAVAILABLE, { status: 500 });
   }
 }

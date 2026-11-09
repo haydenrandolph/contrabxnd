@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProgressEntry {
@@ -11,25 +11,37 @@ interface ProgressEntry {
 
 export default function ShareProgressButton() {
   const { user } = useAuth();
+  return user ? <UserShareProgressButton key={user.id} /> : null;
+}
+
+function UserShareProgressButton() {
   const [sharing, setSharing] = useState(false);
   const [toast, setToast] = useState('');
   const [completedCount, setCompletedCount] = useState(0);
+  const mountedRef = useRef(false);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const totalLessons = 21;
 
   useEffect(() => {
-    if (!user) return;
-    fetch('/api/progress')
-      .then(r => r.json())
+    const controller = new AbortController();
+    mountedRef.current = true;
+    fetch('/api/progress', { signal: controller.signal })
+      .then(r => { if (!r.ok) throw new Error('Unable to load progress'); return r.json(); })
       .then(data => {
         const count = (data.progress ?? []).filter(
           (p: ProgressEntry) => p.course_slug === 'boarding-pass' && p.completed
         ).length;
-        setCompletedCount(count);
+        if (!controller.signal.aborted) setCompletedCount(count);
       })
       .catch(() => {});
-  }, [user]);
+    return () => {
+      mountedRef.current = false;
+      controller.abort();
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
+  }, []);
 
-  if (!user || completedCount === 0) return null;
+  if (completedCount === 0) return null;
 
   const share = async () => {
     setSharing(true);
@@ -45,13 +57,15 @@ export default function ShareProgressButton() {
         // Fallback: copy progress message to clipboard
         const message = `I've completed ${completedCount}/${totalLessons} lessons on the Boarding Pass course at Contrabxnd!\nhttps://contrabxnd.io/learn/boarding-pass`;
         await navigator.clipboard.writeText(message);
+        if (!mountedRef.current) return;
         setToast('Copied to clipboard!');
-        setTimeout(() => setToast(''), 2500);
+        if (toastTimer.current) clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => setToast(''), 2500);
       }
     } catch {
       // User cancelled share dialog or error occurred
     }
-    setSharing(false);
+    if (mountedRef.current) setSharing(false);
   };
 
   const percentage = Math.round((completedCount / totalLessons) * 100);
@@ -67,7 +81,7 @@ export default function ShareProgressButton() {
           background: transparent;
           border: 1px solid #3a3a3a;
           color: #8a8a8a;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 11px;
           letter-spacing: 0.1em;
           text-transform: uppercase;
@@ -103,7 +117,7 @@ export default function ShareProgressButton() {
           transform: translateX(-50%);
           background: #F7931A;
           color: #fff;
-          font-family: 'JetBrains Mono', monospace;
+          font-family: var(--cb-font-mono);
           font-size: 12px;
           letter-spacing: 0.05em;
           padding: 0.75rem 1.5rem;
@@ -149,7 +163,7 @@ export default function ShareProgressButton() {
         {sharing ? 'Sharing...' : 'Share Progress'}
       </button>
 
-      {toast && <div className="share-toast">{toast}</div>}
+      {toast && <div className="share-toast" role="status">{toast}</div>}
     </>
   );
 }

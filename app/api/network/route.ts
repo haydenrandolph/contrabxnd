@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/server';
 import { fetchBTCMapBusinesses, fetchBusinessesNearLocation, getAvailableCountries } from '@/lib/network/btcmap';
 import type { NetworkBusiness } from '@/lib/network/types';
+import { validNearbyLocation } from '@/lib/audit-guards';
 
 // GET - Fetch businesses from BTCMap + approved applications
 // Query params:
@@ -18,6 +19,16 @@ export async function GET(request: NextRequest) {
     const radius = searchParams.get('radius');
     const getCountries = searchParams.get('countries');
 
+    const nearby = lat !== null || lon !== null || radius !== null;
+    const latitude = Number(lat);
+    const longitude = Number(lon);
+    const radiusKm = radius === null ? 100 : Number(radius);
+    if ((countryCode !== null && !/^[a-zA-Z]{2}$/.test(countryCode)) ||
+        (nearby && (lat === null || lon === null || !lat.trim() || !lon.trim() ||
+          (radius !== null && !radius.trim()) || !validNearbyLocation(latitude, longitude, radiusKm)))) {
+      return NextResponse.json({ error: 'Use a two-letter country code, latitude -90..90, longitude -180..180, and radius greater than 0 and at most 20000 km' }, { status: 400 });
+    }
+
     // Return available countries list
     if (getCountries === 'true') {
       const countries = await getAvailableCountries();
@@ -27,17 +38,8 @@ export async function GET(request: NextRequest) {
     let btcmapBusinesses: NetworkBusiness[];
 
     // Fetch based on location parameters
-    if (lat && lon) {
-      // Nearby search
-      const latitude = parseFloat(lat);
-      const longitude = parseFloat(lon);
-      const radiusKm = radius ? parseFloat(radius) : 100;
-
-      if (!isNaN(latitude) && !isNaN(longitude)) {
-        btcmapBusinesses = await fetchBusinessesNearLocation(latitude, longitude, radiusKm);
-      } else {
-        btcmapBusinesses = await fetchBTCMapBusinesses();
-      }
+    if (nearby) {
+      btcmapBusinesses = await fetchBusinessesNearLocation(latitude, longitude, radiusKm);
     } else if (countryCode) {
       // Country-specific search
       btcmapBusinesses = await fetchBTCMapBusinesses(countryCode);
@@ -92,7 +94,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Sort by name (unless it's a nearby search which is already sorted by distance)
-    if (!lat || !lon) {
+    if (!nearby) {
       uniqueBusinesses.sort((a, b) => a.name.localeCompare(b.name));
     }
 
@@ -101,9 +103,9 @@ export async function GET(request: NextRequest) {
       count: uniqueBusinesses.length,
       query: {
         country: countryCode || undefined,
-        lat: lat ? parseFloat(lat) : undefined,
-        lon: lon ? parseFloat(lon) : undefined,
-        radius: radius ? parseFloat(radius) : undefined,
+        lat: nearby ? latitude : undefined,
+        lon: nearby ? longitude : undefined,
+        radius: nearby ? radiusKm : undefined,
       },
     });
 

@@ -1,10 +1,24 @@
 import type { Metadata, Viewport } from "next";
+import { Jost, Space_Mono } from 'next/font/google';
 import "./globals.css";
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { AuthProvider } from '@/contexts/AuthContext';
 import AuthModals from '@/components/auth/AuthModals';
 import SearchModal from '@/components/SearchModal';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+
+const jost = Jost({
+  subsets: ['latin'],
+  variable: '--font-jost',
+  display: 'swap',
+});
+
+const mono = Space_Mono({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  variable: '--font-space-mono',
+  display: 'swap',
+});
 
 const SITE_URL = 'https://www.contrabxnd.io';
 
@@ -58,18 +72,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${jost.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
         {/* Apply the saved theme before hydration to avoid a flash of the
             wrong theme and to keep the <html>-level class in sync. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `try{if(localStorage.getItem('contraband-theme')!=='dark'){document.documentElement.classList.add('light-mode')}}catch(e){}`,
-          }}
-        />
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `body{opacity:0}`,
           }}
         />
       </head>

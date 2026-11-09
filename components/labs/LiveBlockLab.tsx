@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Lab from './Lab';
 
 interface Block {
@@ -31,19 +31,28 @@ export default function LiveBlockLab() {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async () => {
-    try {
-      const res = await fetch('/api/node/v1/blocks', { cache: 'no-store' });
-      if (res.ok) setBlocks(await res.json());
-    } catch { /* ignore */ }
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    load();
+    const controller = new AbortController();
+    let pending = false;
+    const load = async () => {
+      if (pending) return;
+      pending = true;
+      try {
+        const res = await fetch('/api/node/v1/blocks', { cache: 'no-store', signal: controller.signal });
+        if (res.ok) {
+          const data: Block[] = await res.json();
+          if (!controller.signal.aborted) setBlocks(data);
+        }
+      } catch { /* Keep the last successfully fetched blocks. */ }
+      finally {
+        pending = false;
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
     const i = setInterval(load, 30_000);
-    return () => clearInterval(i);
-  }, [load]);
+    return () => { controller.abort(); clearInterval(i); };
+  }, []);
 
   const tip = blocks[0];
   const [zeros, rest] = tip ? splitHash(tip.id) : ['', ''];
