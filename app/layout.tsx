@@ -25,8 +25,8 @@ const SITE_URL = 'https://www.contrabxnd.io';
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: 'CXB',
-    template: '%s | CXB',
+    default: 'CONTRA\u20bfXND | Bitcoin Intelligence',
+    template: '%s | CONTRA\u20bfXND',
   },
   description: 'Live Bitcoin terminal with macro signals, FedWatch probabilities, ETF flows, AI analysis, and sovereign tools. Real-time intelligence for serious Bitcoiners.',
   keywords: ['Bitcoin', 'BTC', 'Bitcoin terminal', 'Bitcoin intelligence', 'FedWatch', 'ETF flows', 'macro liquidity', 'Bitcoin education', 'DCA calculator', 'MCP server'],
@@ -35,19 +35,17 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   openGraph: {
     type: 'website',
-    siteName: 'Contrabxnd',
-    title: 'Contrabxnd — Bitcoin Intelligence Platform',
-    description: 'Live Bitcoin terminal with macro signals, FedWatch probabilities, ETF flows, AI analysis, and sovereign tools.',
+    siteName: 'CONTRA\u20bfXND',
+    title: 'CONTRA\u20bfXND | Bitcoin Intelligence',
+    description: 'Live Bitcoin markets, macro signals, ETF flows, and sovereign on-chain tools. Intelligence built for conviction.',
     url: SITE_URL,
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Contrabxnd — Bitcoin Intelligence Platform' }],
   },
   twitter: {
     card: 'summary_large_image',
     site: '@contrabxnd',
     creator: '@contrabxnd',
-    title: 'Contrabxnd — Bitcoin Intelligence Platform',
-    description: 'Live Bitcoin terminal with macro signals, FedWatch probabilities, ETF flows, AI analysis, and sovereign tools.',
-    images: ['/og-image.png'],
+    title: 'CONTRA\u20bfXND | Bitcoin Intelligence',
+    description: 'Live Bitcoin markets, macro signals, ETF flows, and sovereign on-chain tools. Intelligence built for conviction.',
   },
   robots: {
     index: true,

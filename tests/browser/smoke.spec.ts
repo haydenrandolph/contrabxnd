@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { load } from 'cheerio';
 
 const merchants = [
   { id: 'coffee', name: 'Satoshi Coffee', category: 'Food & Drink', location: { lat: 28.8, lon: -82.6, country: 'US' } },
@@ -22,6 +23,37 @@ async function fixtures(page: Page) {
     body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=', 'base64'),
   }));
 }
+
+test('social crawlers receive branded metadata and matching valid share images', async ({ request }) => {
+  const response = await request.get('/', { headers: { 'user-agent': 'facebookexternalhit/1.1' } });
+  expect(response.status()).toBe(200);
+  const $ = load(await response.text());
+  expect($('title').text()).toBe('CONTRA\u20bfXND | Bitcoin Intelligence');
+  expect($('meta[property="og:site_name"]').attr('content')).toBe('CONTRA\u20bfXND');
+  expect($('meta[property="og:title"]').attr('content')).toBe('CONTRA\u20bfXND | Bitcoin Intelligence');
+  expect($('meta[name="twitter:title"]').attr('content')).toBe('CONTRA\u20bfXND | Bitcoin Intelligence');
+  expect($('meta[name="twitter:card"]').attr('content')).toBe('summary_large_image');
+  const images: Buffer[] = [];
+  for (const selector of ['meta[property="og:image"]', 'meta[name="twitter:image"]']) {
+    const url = $(selector).attr('content');
+    expect(url).toBeTruthy();
+    expect(url).not.toContain('/og-image.png');
+    // Keep the crawler's query hash, but request the local build rather than production.
+    const imagePath = new URL(url!);
+    const image = await request.get(imagePath.pathname + imagePath.search);
+    expect(image.status()).toBe(200);
+    expect(image.headers()['content-type']).toContain('image/png');
+    const body = await image.body();
+    expect(body.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+    expect(body.readUInt32BE(16)).toBe(1200);
+    expect(body.readUInt32BE(20)).toBe(630);
+    expect(body.byteLength).toBeLessThan(5_000_000);
+    images.push(body);
+  }
+  expect(images[0].equals(images[1])).toBe(true);
+  expect($('meta[property="og:image:alt"]').attr('content')).toContain('CONTRA\u20bfXND');
+  expect($('meta[name="twitter:image:alt"]').attr('content')).toContain('CONTRA\u20bfXND');
+});
 
 test('merchant map, safe popups, typography, search, and modal lifecycle', async ({ page }) => {
   const errors: string[] = [];

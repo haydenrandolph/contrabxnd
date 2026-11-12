@@ -63,6 +63,8 @@ No MP3s are currently checked in. The player stays hidden until audio metadata c
 
 Next.js downloads these fonts at build time and serves them as local static assets. Page typography makes no browser requests to Google Fonts. The shared `--cb-font-sans`, `--cb-font-display`, and `--cb-font-mono` tokens are the font API; no font API key is required. Standalone share-card SVG generation is separate from page typography.
 
+Social preview PNGs embed static Jost SemiBold and Space Mono Regular TTF files from Google Fonts in `assets/fonts/`, under the included SIL Open Font License. These assets are bundled locally, so crawlers do not depend on an external font service. Open Graph and Twitter use the same renderer.
+
 ---
 
 ## Adding a New Service
